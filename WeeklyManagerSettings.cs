@@ -15,6 +15,48 @@ namespace WeeklyManager
         COMPLETE
     }
 
+    public class ChecklistItemSettings : ObservableObject
+    {
+        public const int MaximumTextLength = 120;
+
+        private Guid id = Guid.NewGuid();
+        private string text = string.Empty;
+        private bool isChecked;
+        private int order;
+
+        public Guid Id
+        {
+            get => id;
+            set => SetValue(ref id, value);
+        }
+
+        public string Text
+        {
+            get => text;
+            set => SetValue(ref text, NormalizeText(value));
+        }
+
+        public bool IsChecked
+        {
+            get => isChecked;
+            set => SetValue(ref isChecked, value);
+        }
+
+        public int Order
+        {
+            get => order;
+            set => SetValue(ref order, Math.Max(0, value));
+        }
+
+        public static string NormalizeText(string value)
+        {
+            var normalized = (value ?? string.Empty).Trim();
+            return normalized.Length > MaximumTextLength
+                ? normalized.Substring(0, MaximumTextLength)
+                : normalized;
+        }
+    }
+
     public class TrackedGameSettings : ObservableObject
     {
         public const int MaximumSecondaryNotificationTitleLength = 40;
@@ -33,6 +75,10 @@ namespace WeeklyManager
         private string secondaryNotificationTitle = "Weekly Reminder";
         private string secondaryNotificationMessage = "A weekly activity may be available now.";
         private DateTime? lastSecondaryReminderProcessedLocal;
+        private ObservableCollection<ChecklistItemSettings> checklist =
+            new ObservableCollection<ChecklistItemSettings>();
+        private bool automaticallyCompleteFromChecklist;
+        private bool completedAutomaticallyByChecklist;
 
         public Guid GameId
         {
@@ -157,6 +203,24 @@ namespace WeeklyManager
             set => SetValue(ref lastSecondaryReminderProcessedLocal, value);
         }
 
+        public ObservableCollection<ChecklistItemSettings> Checklist
+        {
+            get => checklist;
+            set => SetValue(ref checklist, value ?? new ObservableCollection<ChecklistItemSettings>());
+        }
+
+        public bool AutomaticallyCompleteFromChecklist
+        {
+            get => automaticallyCompleteFromChecklist;
+            set => SetValue(ref automaticallyCompleteFromChecklist, value);
+        }
+
+        public bool CompletedAutomaticallyByChecklist
+        {
+            get => completedAutomaticallyByChecklist;
+            set => SetValue(ref completedAutomaticallyByChecklist, value);
+        }
+
         private static string NormalizeTime(string value)
         {
             return WeeklyScheduleCalculator.TryNormalizeTimeInput(value, out var normalizedValue)
@@ -202,6 +266,7 @@ namespace WeeklyManager
         private LibraryGameOption selectedSearchResult;
         private TrackedGameSettings selectedTrackedGame;
         private string gameSearchText = string.Empty;
+        private string newChecklistItemText = string.Empty;
         private bool isGameSearchOpen;
         private bool isApplyingSearchSelection;
 
@@ -287,12 +352,55 @@ namespace WeeklyManager
         public TrackedGameSettings SelectedTrackedGame
         {
             get => selectedTrackedGame;
-            set => SetValue(ref selectedTrackedGame, value);
+            set
+            {
+                if (ReferenceEquals(selectedTrackedGame, value))
+                {
+                    return;
+                }
+
+                selectedTrackedGame = value;
+                OnPropertyChanged();
+                NewChecklistItemText = string.Empty;
+                CommandManager.InvalidateRequerySuggested();
+            }
+        }
+
+        public string NewChecklistItemText
+        {
+            get => newChecklistItemText;
+            set
+            {
+                var boundedValue = value ?? string.Empty;
+                if (boundedValue.Length > ChecklistItemSettings.MaximumTextLength)
+                {
+                    boundedValue = boundedValue.Substring(0, ChecklistItemSettings.MaximumTextLength);
+                }
+
+                if (string.Equals(newChecklistItemText, boundedValue, StringComparison.Ordinal))
+                {
+                    return;
+                }
+
+                newChecklistItemText = boundedValue;
+                OnPropertyChanged();
+                CommandManager.InvalidateRequerySuggested();
+            }
         }
 
         public RelayCommand AddGameCommand { get; }
 
         public RelayCommand RemoveGameCommand { get; }
+
+        public RelayCommand AddChecklistItemCommand { get; }
+
+        public RelayCommand<ChecklistItemSettings> DeleteChecklistItemCommand { get; }
+
+        public RelayCommand<ChecklistItemSettings> MoveChecklistItemUpCommand { get; }
+
+        public RelayCommand<ChecklistItemSettings> MoveChecklistItemDownCommand { get; }
+
+        public RelayCommand ResetChecklistCommand { get; }
 
         public WeeklyManagerSettingsViewModel(WeeklyManager plugin)
         {
@@ -300,6 +408,18 @@ namespace WeeklyManager
             Settings = plugin.LoadPluginSettings<WeeklyManagerSettings>() ?? new WeeklyManagerSettings();
             AddGameCommand = new RelayCommand(AddSelectedGame, () => CanAddSelectedGame);
             RemoveGameCommand = new RelayCommand(RemoveSelectedGame, () => SelectedTrackedGame != null);
+            AddChecklistItemCommand = new RelayCommand(
+                AddChecklistItem,
+                () => SelectedTrackedGame != null &&
+                      !string.IsNullOrWhiteSpace(NewChecklistItemText));
+            DeleteChecklistItemCommand = new RelayCommand<ChecklistItemSettings>(DeleteChecklistItem);
+            MoveChecklistItemUpCommand = new RelayCommand<ChecklistItemSettings>(
+                item => MoveChecklistItem(item, -1));
+            MoveChecklistItemDownCommand = new RelayCommand<ChecklistItemSettings>(
+                item => MoveChecklistItem(item, 1));
+            ResetChecklistCommand = new RelayCommand(
+                () => plugin.ResetChecklist(SelectedTrackedGame, true, false),
+                () => SelectedTrackedGame != null);
         }
 
         public void BeginEdit()
@@ -320,12 +440,13 @@ namespace WeeklyManager
 
         public void EndEdit()
         {
+            var previousSettings = editingClone;
             NormalizePersistedValues();
-            plugin.PrepareSettingsForSave(editingClone, Settings);
+            plugin.PrepareSettingsForSave(previousSettings, Settings);
             plugin.SavePluginSettings(Settings);
-            plugin.ApplySettingsChanges(editingClone, Settings);
             editingClone = null;
             plugin.SetSettingsEditing(false);
+            plugin.ApplySettingsChanges(previousSettings, Settings);
             RefreshLibraryGames();
         }
 
@@ -349,6 +470,29 @@ namespace WeeklyManager
                     errors.Add($"{gameName} has an invalid Playnite game ID.");
                 }
 
+                var duplicateChecklistIds = trackedGame.Checklist
+                    .Where(a => a != null)
+                    .GroupBy(a => a.Id)
+                    .Where(a => a.Key == Guid.Empty || a.Count() > 1)
+                    .Select(a => a.Key)
+                    .ToList();
+                if (duplicateChecklistIds.Count > 0)
+                {
+                    errors.Add($"{gameName}: checklist item IDs must be unique and valid.");
+                }
+
+                foreach (var item in trackedGame.Checklist.Where(a => a != null))
+                {
+                    if (string.IsNullOrWhiteSpace(item.Text))
+                    {
+                        errors.Add($"{gameName}: checklist item text cannot be empty.");
+                    }
+                    else if (item.Text.Length > ChecklistItemSettings.MaximumTextLength)
+                    {
+                        errors.Add($"{gameName}: checklist items cannot exceed 120 characters.");
+                    }
+                }
+
                 if (!WeeklyScheduleCalculator.TryNormalizeTimeInput(
                         trackedGame.WeeklyResetTime, out var normalizedResetTime) ||
                     !string.Equals(
@@ -361,14 +505,14 @@ namespace WeeklyManager
                     trackedGame.SecondaryNotificationTitle.Length >
                     TrackedGameSettings.MaximumSecondaryNotificationTitleLength)
                 {
-                    errors.Add($"{gameName}: reminder title cannot exceed 40 characters.");
+                    errors.Add($"{gameName}: custom reminder title cannot exceed 40 characters.");
                 }
 
                 if (trackedGame.SecondaryNotificationMessage != null &&
                     trackedGame.SecondaryNotificationMessage.Length >
                     TrackedGameSettings.MaximumSecondaryNotificationMessageLength)
                 {
-                    errors.Add($"{gameName}: reminder message cannot exceed 160 characters.");
+                    errors.Add($"{gameName}: custom reminder message cannot exceed 160 characters.");
                 }
 
                 if (trackedGame.SecondaryReminderEnabled)
@@ -380,17 +524,17 @@ namespace WeeklyManager
                             normalizedReminderTime,
                             StringComparison.Ordinal))
                     {
-                        errors.Add($"{gameName}: reminder time must use 24-hour HH:mm format.");
+                        errors.Add($"{gameName}: custom reminder time must use 24-hour HH:mm format.");
                     }
 
                     if (string.IsNullOrWhiteSpace(trackedGame.SecondaryNotificationTitle))
                     {
-                        errors.Add($"{gameName}: reminder title cannot be empty when the reminder is enabled.");
+                        errors.Add($"{gameName}: custom reminder title cannot be empty when the custom reminder is enabled.");
                     }
 
                     if (string.IsNullOrWhiteSpace(trackedGame.SecondaryNotificationMessage))
                     {
-                        errors.Add($"{gameName}: reminder message cannot be empty when the reminder is enabled.");
+                        errors.Add($"{gameName}: custom reminder message cannot be empty when the custom reminder is enabled.");
                     }
                 }
             }
@@ -525,6 +669,57 @@ namespace WeeklyManager
             RefreshLibraryGames();
         }
 
+        public void ChecklistItemChecked(ChecklistItemSettings item, bool isChecked)
+        {
+            if (SelectedTrackedGame == null || item == null ||
+                !SelectedTrackedGame.Checklist.Contains(item))
+            {
+                return;
+            }
+
+            item.IsChecked = isChecked;
+            plugin.ChecklistItemStateChanged(SelectedTrackedGame, false);
+        }
+
+        public void CommitChecklistItemText(ChecklistItemSettings item, string text)
+        {
+            if (SelectedTrackedGame == null || item == null ||
+                !SelectedTrackedGame.Checklist.Contains(item))
+            {
+                return;
+            }
+
+            plugin.EditChecklistItem(SelectedTrackedGame, item.Id, text, false);
+        }
+
+        public void ChecklistAutoCompletionChanged(bool enabled)
+        {
+            if (SelectedTrackedGame != null)
+            {
+                SelectedTrackedGame.AutomaticallyCompleteFromChecklist = enabled;
+            }
+
+            plugin.ChecklistAutoCompletionChanged(SelectedTrackedGame, false);
+        }
+
+        private void AddChecklistItem()
+        {
+            if (plugin.AddChecklistItem(SelectedTrackedGame, NewChecklistItemText, false))
+            {
+                NewChecklistItemText = string.Empty;
+            }
+        }
+
+        private void DeleteChecklistItem(ChecklistItemSettings item)
+        {
+            plugin.DeleteChecklistItem(SelectedTrackedGame, item?.Id ?? Guid.Empty, false);
+        }
+
+        private void MoveChecklistItem(ChecklistItemSettings item, int offset)
+        {
+            plugin.MoveChecklistItem(SelectedTrackedGame, item?.Id ?? Guid.Empty, offset, false);
+        }
+
         private void UpdateGameSearchResults()
         {
             var query = GameSearchText.Trim();
@@ -578,6 +773,7 @@ namespace WeeklyManager
                 trackedGame.SecondaryReminderTime = trackedGame.SecondaryReminderTime;
                 trackedGame.SecondaryNotificationTitle = trackedGame.SecondaryNotificationTitle;
                 trackedGame.SecondaryNotificationMessage = trackedGame.SecondaryNotificationMessage;
+                ChecklistService.Normalize(trackedGame);
             }
         }
 

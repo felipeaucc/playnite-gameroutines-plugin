@@ -287,20 +287,20 @@
                             <Separator Grid.Row="5" Grid.ColumnSpan="2" Margin="0,10,0,6" />
 
                             <TextBlock Grid.Row="6" Grid.Column="0" Margin="0,0,10,0"
-                                       VerticalAlignment="Center" Text="Secondary reminder" />
+                                       VerticalAlignment="Center" Text="Custom reminder" />
                             <CheckBox Grid.Row="6" Grid.Column="1"
                                       VerticalAlignment="Center"
                                       IsChecked="{Binding SecondaryReminderEnabled}"
                                       Content="Enabled" />
 
                             <TextBlock Grid.Row="7" Grid.Column="0" Margin="0,10,10,0"
-                                       VerticalAlignment="Center" Text="Reminder day" />
+                                       VerticalAlignment="Center" Text="Custom reminder day" />
                             <ComboBox Grid.Row="7" Grid.Column="1" Margin="0,10,0,0"
                                       ItemsSource="{Binding DataContext.DaysOfWeek, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                       SelectedItem="{Binding SecondaryReminderDay}" />
 
                             <TextBlock Grid.Row="8" Grid.Column="0" Margin="0,10,10,0"
-                                       VerticalAlignment="Center" Text="Reminder time" />
+                                       VerticalAlignment="Center" Text="Custom reminder time" />
                             <StackPanel Grid.Row="8" Grid.Column="1" Margin="0,10,0,0"
                                         Orientation="Horizontal">
                                 <TextBox Width="72"
@@ -322,13 +322,13 @@
                             </StackPanel>
 
                             <TextBlock Grid.Row="9" Grid.Column="0" Margin="0,10,10,0"
-                                       VerticalAlignment="Center" Text="Notification title" />
+                                       VerticalAlignment="Center" Text="Custom reminder title" />
                             <TextBox Grid.Row="9" Grid.Column="1" Margin="0,10,0,0"
                                      MaxLength="40"
                                      Text="{Binding SecondaryNotificationTitle, UpdateSourceTrigger=PropertyChanged}" />
 
                             <TextBlock Grid.Row="10" Grid.Column="0" Margin="0,10,10,0"
-                                       VerticalAlignment="Top" Text="Notification message" />
+                                       VerticalAlignment="Top" Text="Custom reminder message" />
                             <TextBox Grid.Row="10" Grid.Column="1" Margin="0,10,0,0"
                                      MinHeight="70"
                                      MaxLength="160"
@@ -337,10 +337,129 @@
                                      VerticalScrollBarVisibility="Auto"
                                      Text="{Binding SecondaryNotificationMessage, UpdateSourceTrigger=PropertyChanged}" />
 
-                            <TextBlock Grid.Row="11" Grid.ColumnSpan="2" Margin="0,16,0,0"
-                                       Foreground="{DynamicResource TextBrush}"
-                                       Opacity="0.75" TextWrapping="Wrap"
-                                       Text="Use a game's Weekly Manager context menu to mark it INCOMPLETE or COMPLETE. Reset and reminder times use the local timezone." />
+                            <Separator Grid.Row="11" Grid.ColumnSpan="2" Margin="0,16,0,10" />
+
+                            <StackPanel Grid.Row="12" Grid.ColumnSpan="2">
+                                <TextBlock FontSize="15"
+                                           FontWeight="SemiBold"
+                                           Text="Weekly checklist" />
+                                <CheckBox Margin="0,8,0,0"
+                                          IsChecked="{Binding AutomaticallyCompleteFromChecklist, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          Click="ChecklistAutoCompletionCheckBox_Click"
+                                          Content="Automatically mark weekly complete when checklist is finished" />
+                                <TextBlock Margin="22,3,0,8"
+                                           Opacity="0.7"
+                                           Text="With automatic completion enabled, an empty checklist counts as complete."
+                                           TextWrapping="Wrap" />
+
+                                <Grid MinHeight="58" MaxHeight="280">
+                                    <ListBox ItemsSource="{Binding Checklist}"
+                                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                             VirtualizingStackPanel.IsVirtualizing="True"
+                                             VirtualizingStackPanel.VirtualizationMode="Recycling">
+                                        <ListBox.ItemContainerStyle>
+                                            <Style TargetType="ListBoxItem"
+                                                   BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                                <Setter Property="Padding" Value="3" />
+                                            </Style>
+                                        </ListBox.ItemContainerStyle>
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="0,2">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <CheckBox Grid.Column="0"
+                                                              Margin="0,0,7,0"
+                                                              VerticalAlignment="Center"
+                                                              IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                              Click="ChecklistItemCheckBox_Click" />
+                                                    <TextBox Grid.Column="1"
+                                                             MaxLength="120"
+                                                             Padding="5,3"
+                                                             VerticalContentAlignment="Center"
+                                                             Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=Explicit}"
+                                                             PreviewKeyDown="ChecklistItemTextBox_PreviewKeyDown"
+                                                             PreviewLostKeyboardFocus="ChecklistItemTextBox_PreviewLostKeyboardFocus" />
+                                                    <Button Grid.Column="2"
+                                                            Margin="6,0,0,0"
+                                                            MinWidth="42"
+                                                            Padding="6,3"
+                                                            Content="Up"
+                                                            Command="{Binding DataContext.MoveChecklistItemUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}" />
+                                                    <Button Grid.Column="3"
+                                                            Margin="4,0,0,0"
+                                                            MinWidth="48"
+                                                            Padding="6,3"
+                                                            Content="Down"
+                                                            Command="{Binding DataContext.MoveChecklistItemDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}" />
+                                                    <Button Grid.Column="4"
+                                                            Margin="4,0,0,0"
+                                                            MinWidth="54"
+                                                            Padding="6,3"
+                                                            Content="Delete"
+                                                            Command="{Binding DataContext.DeleteChecklistItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                            CommandParameter="{Binding}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                    <Border Padding="12"
+                                            IsHitTestVisible="False">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Checklist.Count}" Value="0">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   Opacity="0.7"
+                                                   Text="No checklist items yet."
+                                                   TextAlignment="Center" />
+                                    </Border>
+                                </Grid>
+
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox Grid.Column="0"
+                                             MaxLength="120"
+                                             Padding="6,4"
+                                             ToolTip="Checklist items can contain up to 120 characters."
+                                             Text="{Binding DataContext.NewChecklistItemText, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" />
+                                    <Button Grid.Column="1"
+                                            Margin="6,0,0,0"
+                                            MinWidth="76"
+                                            Padding="10,4"
+                                            Content="Add item"
+                                            Command="{Binding DataContext.AddChecklistItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                </Grid>
+
+                                <Button Margin="0,8,0,0"
+                                        Padding="10,4"
+                                        HorizontalAlignment="Left"
+                                        Content="Reset checklist"
+                                        Command="{Binding DataContext.ResetChecklistCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+                                <TextBlock Margin="0,12,0,0"
+                                           Foreground="{DynamicResource TextBrush}"
+                                           Opacity="0.75"
+                                           TextWrapping="Wrap"
+                                           Text="Use a game's Weekly Manager context menu to mark it INCOMPLETE or COMPLETE. Reset and custom reminder times use the local timezone." />
+                            </StackPanel>
                         </Grid>
                     </ScrollViewer>
                 </Grid>

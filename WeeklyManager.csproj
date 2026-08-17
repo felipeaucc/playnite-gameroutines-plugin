@@ -49,8 +49,13 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ChecklistService.cs" />
     <Compile Include="WeeklyManager.cs" />
     <Compile Include="WeeklyScheduleCalculator.cs" />
+    <Compile Include="WeeklyChecklistViewModel.cs" />
+    <Compile Include="WeeklyChecklistView.xaml.cs">
+      <DependentUpon>WeeklyChecklistView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="WeeklyManagerSettings.cs" />
     <Compile Include="WeeklyManagerSettingsView.xaml.cs">
       <DependentUpon>WeeklyManagerSettingsView.xaml</DependentUpon>
@@ -74,6 +79,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="WeeklyManagerSettingsView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WeeklyChecklistView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
