@@ -5,6 +5,7 @@ using Playnite.SDK.Plugins;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 
@@ -19,6 +20,7 @@ namespace WeeklyManager
 
         private readonly WeeklyManagerSettingsViewModel settings;
         private readonly HashSet<Guid> loggedMissingGameIds = new HashSet<Guid>();
+        private readonly Dictionary<Guid, Window> openChecklistWindows = new Dictionary<Guid, Window>();
         private DispatcherTimer schedulerTimer;
         private bool isProcessingSchedules;
         private bool isSettingsEditing;
@@ -52,6 +54,7 @@ namespace WeeklyManager
         public override void OnApplicationStarted(OnApplicationStartedEventArgs args)
         {
             logger.Info($"Weekly Manager startup. Processing {settings.TrackedGames.Count} tracked game(s).");
+            ReconcileAllChecklistStates();
             ReconcileAllReadyTags();
             ProcessDueEvents();
 
@@ -65,12 +68,14 @@ namespace WeeklyManager
 
         public override void OnApplicationStopped(OnApplicationStoppedEventArgs args)
         {
+            CloseChecklistWindows();
             StopScheduler();
             logger.Info("Weekly Manager stopped.");
         }
 
         public override void Dispose()
         {
+            CloseChecklistWindows();
             StopScheduler();
             base.Dispose();
         }
@@ -85,6 +90,13 @@ namespace WeeklyManager
                 yield return new GameMenuItem
                 {
                     MenuSection = "Weekly Manager",
+                    Description = "Open Checklist",
+                    Action = actionArgs => OpenSelectedChecklist(actionArgs.Games)
+                };
+
+                yield return new GameMenuItem
+                {
+                    MenuSection = "Weekly Manager",
                     Description = "Mark Weekly Complete",
                     Action = actionArgs => SetSelectedGamesState(actionArgs.Games, WeeklyState.COMPLETE)
                 };
@@ -94,6 +106,13 @@ namespace WeeklyManager
                     MenuSection = "Weekly Manager",
                     Description = "Mark Weekly Incomplete",
                     Action = actionArgs => SetSelectedGamesState(actionArgs.Games, WeeklyState.READY)
+                };
+
+                yield return new GameMenuItem
+                {
+                    MenuSection = "Weekly Manager",
+                    Description = "Reset Checklist",
+                    Action = actionArgs => ResetSelectedGamesChecklists(actionArgs.Games)
                 };
             }
 
@@ -108,6 +127,12 @@ namespace WeeklyManager
         internal void SetSettingsEditing(bool editing)
         {
             isSettingsEditing = editing;
+            if (!editing)
+            {
+                // A reset can become due while Playnite's modal settings window is open.
+                // Process it as soon as editing ends instead of waiting for the next timer tick.
+                ProcessDueEvents();
+            }
         }
 
         internal bool IsGameTracked(Guid gameId)
@@ -121,6 +146,11 @@ namespace WeeklyManager
             return trackedGame == null ? null : GetUserFacingStateName(trackedGame.CurrentState);
         }
 
+        internal TrackedGameSettings GetTrackedGameSettings(Guid gameId)
+        {
+            return FindTrackedGame(gameId);
+        }
+
         internal bool MarkTrackedGameComplete(Guid gameId)
         {
             return SetTrackedGamesState(new[] { gameId }, WeeklyState.COMPLETE);
@@ -129,6 +159,141 @@ namespace WeeklyManager
         internal bool MarkTrackedGameIncomplete(Guid gameId)
         {
             return SetTrackedGamesState(new[] { gameId }, WeeklyState.READY);
+        }
+
+        internal IReadOnlyList<ChecklistItemSettings> GetTrackedGameChecklist(Guid gameId)
+        {
+            var trackedGame = FindTrackedGame(gameId);
+            return trackedGame?.Checklist?.ToList() ?? new List<ChecklistItemSettings>();
+        }
+
+        internal ChecklistProgress GetChecklistProgress(Guid gameId)
+        {
+            return ChecklistService.GetProgress(FindTrackedGame(gameId));
+        }
+
+        internal bool SetChecklistItemChecked(Guid gameId, Guid itemId, bool isChecked)
+        {
+            var trackedGame = FindTrackedGame(gameId);
+            if (!ChecklistService.SetItemChecked(trackedGame, itemId, isChecked))
+            {
+                return false;
+            }
+
+            CompleteChecklistMutation(trackedGame, true, "checklist item state changed");
+            return true;
+        }
+
+        internal bool ResetChecklist(Guid gameId, bool confirm)
+        {
+            return ResetChecklist(FindTrackedGame(gameId), confirm, true);
+        }
+
+        internal bool AddChecklistItem(
+            TrackedGameSettings trackedGame,
+            string text,
+            bool persistChanges)
+        {
+            if (ChecklistService.AddItem(trackedGame, text) == null)
+            {
+                return false;
+            }
+
+            CompleteChecklistMutation(trackedGame, persistChanges, "checklist item added");
+            return true;
+        }
+
+        internal bool EditChecklistItem(
+            TrackedGameSettings trackedGame,
+            Guid itemId,
+            string text,
+            bool persistChanges)
+        {
+            if (!ChecklistService.EditItem(trackedGame, itemId, text))
+            {
+                return false;
+            }
+
+            CompleteChecklistMutation(trackedGame, persistChanges, "checklist item edited");
+            return true;
+        }
+
+        internal bool DeleteChecklistItem(
+            TrackedGameSettings trackedGame,
+            Guid itemId,
+            bool persistChanges)
+        {
+            if (!ChecklistService.DeleteItem(trackedGame, itemId))
+            {
+                return false;
+            }
+
+            CompleteChecklistMutation(trackedGame, persistChanges, "checklist item deleted");
+            return true;
+        }
+
+        internal bool MoveChecklistItem(
+            TrackedGameSettings trackedGame,
+            Guid itemId,
+            int offset,
+            bool persistChanges)
+        {
+            if (!ChecklistService.MoveItem(trackedGame, itemId, offset))
+            {
+                return false;
+            }
+
+            if (persistChanges)
+            {
+                PersistAndReconcile(new[] { trackedGame });
+            }
+
+            return true;
+        }
+
+        internal void ChecklistItemStateChanged(
+            TrackedGameSettings trackedGame,
+            bool persistChanges)
+        {
+            CompleteChecklistMutation(trackedGame, persistChanges, "checklist item state changed");
+        }
+
+        internal void ChecklistAutoCompletionChanged(
+            TrackedGameSettings trackedGame,
+            bool persistChanges)
+        {
+            CompleteChecklistMutation(trackedGame, persistChanges, "checklist auto-completion setting changed");
+        }
+
+        internal bool ResetChecklist(
+            TrackedGameSettings trackedGame,
+            bool confirm,
+            bool persistChanges)
+        {
+            if (trackedGame == null)
+            {
+                return false;
+            }
+
+            if (confirm && ChecklistService.GetProgress(trackedGame).Completed > 0 &&
+                PlayniteApi.Dialogs.ShowMessage(
+                    $"Reset the checklist for {GetDisplayName(trackedGame, PlayniteApi.Database.Games.Get(trackedGame.GameId))}?",
+                    "Weekly Manager",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question) != MessageBoxResult.Yes)
+            {
+                return false;
+            }
+
+            ChecklistService.Reset(trackedGame);
+            ApplyWeeklyState(trackedGame, WeeklyState.READY, false, "checklist reset");
+            ReconcileChecklistDrivenState(trackedGame, "checklist reset reconciliation");
+            if (persistChanges)
+            {
+                PersistAndReconcile(new[] { trackedGame });
+            }
+
+            return true;
         }
 
         internal void ReconcileTrackedGameTag(Guid gameId)
@@ -149,6 +314,9 @@ namespace WeeklyManager
 
             foreach (var trackedGame in current.TrackedGames)
             {
+                ChecklistService.Normalize(trackedGame);
+                ReconcileChecklistDrivenState(trackedGame, "settings saved");
+
                 if (WeeklyScheduleCalculator.TryParseLocalTime(trackedGame.WeeklyResetTime, out var resetTime) &&
                     (!previousById.TryGetValue(trackedGame.GameId, out var oldGame) ||
                      oldGame.WeeklyResetDay != trackedGame.WeeklyResetDay ||
@@ -176,6 +344,13 @@ namespace WeeklyManager
             try
             {
                 var currentById = current.TrackedGames.ToDictionary(a => a.GameId);
+                foreach (var removedGameId in openChecklistWindows.Keys
+                    .Where(a => !currentById.ContainsKey(a))
+                    .ToList())
+                {
+                    openChecklistWindows[removedGameId].Close();
+                }
+
                 if (previous?.TrackedGames != null)
                 {
                     foreach (var oldGame in previous.TrackedGames)
@@ -227,6 +402,91 @@ namespace WeeklyManager
             schedulerTimer.Stop();
             schedulerTimer.Tick -= SchedulerTimer_Tick;
             schedulerTimer = null;
+        }
+
+        private void OpenSelectedChecklist(IEnumerable<Game> selectedGames)
+        {
+            var game = (selectedGames ?? Enumerable.Empty<Game>()).FirstOrDefault(a => IsGameTracked(a.Id));
+            if (game != null)
+            {
+                OpenChecklistWindow(game.Id);
+            }
+        }
+
+        private void OpenChecklistWindow(Guid gameId)
+        {
+            try
+            {
+                if (!IsGameTracked(gameId))
+                {
+                    return;
+                }
+
+                if (openChecklistWindows.TryGetValue(gameId, out var existingWindow))
+                {
+                    if (existingWindow.WindowState == WindowState.Minimized)
+                    {
+                        existingWindow.WindowState = WindowState.Normal;
+                    }
+
+                    existingWindow.Activate();
+                    return;
+                }
+
+                var viewModel = new WeeklyChecklistViewModel(this, gameId);
+                var window = PlayniteApi.Dialogs.CreateWindow(new WindowCreationOptions
+                {
+                    ShowCloseButton = true,
+                    ShowMaximizeButton = true,
+                    ShowMinimizeButton = true
+                });
+                window.Title = $"Weekly Checklist - {viewModel.GameName}";
+                window.Width = 540;
+                window.Height = 620;
+                window.MinWidth = 420;
+                window.MinHeight = 360;
+                window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                var owner = PlayniteApi.Dialogs.GetCurrentAppWindow();
+                if (owner != null && !ReferenceEquals(owner, window))
+                {
+                    window.Owner = owner;
+                }
+
+                window.Content = new WeeklyChecklistView
+                {
+                    DataContext = viewModel
+                };
+                window.Closed += (sender, args) =>
+                {
+                    if (openChecklistWindows.TryGetValue(gameId, out var registeredWindow) &&
+                        ReferenceEquals(registeredWindow, window))
+                    {
+                        openChecklistWindows.Remove(gameId);
+                    }
+
+                    viewModel.Dispose();
+                };
+
+                openChecklistWindows[gameId] = window;
+                window.Show();
+            }
+            catch (Exception exception)
+            {
+                logger.Error(exception, $"Failed to open checklist window for game {gameId}.");
+                PlayniteApi.Dialogs.ShowErrorMessage(
+                    "Weekly Manager could not open this checklist. See the Playnite log for details.",
+                    "Weekly Manager");
+            }
+        }
+
+        private void CloseChecklistWindows()
+        {
+            foreach (var window in openChecklistWindows.Values.ToList())
+            {
+                window.Close();
+            }
+
+            openChecklistWindows.Clear();
         }
 
         private void ProcessDueEvents()
@@ -336,13 +596,14 @@ namespace WeeklyManager
 
         private void ProcessReset(TrackedGameSettings trackedGame, Game game, DateTime occurrence)
         {
-            trackedGame.CurrentState = WeeklyState.READY;
+            ChecklistService.Reset(trackedGame);
+            ApplyWeeklyState(trackedGame, WeeklyState.READY, false, "weekly reset");
+            ReconcileChecklistDrivenState(trackedGame, "weekly reset checklist reconciliation");
             trackedGame.LastResetProcessedLocal = occurrence;
-            ReconcileReadyTag(trackedGame);
 
             // Persist the occurrence before publishing its notification. If Playnite exits
             // immediately afterward, this reset still cannot be notified a second time.
-            SavePluginSettings(settings.Settings);
+            PersistAndReconcile(new[] { trackedGame });
 
             var name = GetDisplayName(trackedGame, game);
             var notificationId = $"WeeklyManager_Reset_{game.Id:N}_{occurrence.Ticks}";
@@ -371,7 +632,7 @@ namespace WeeklyManager
                 NotificationType.Info));
 
             logger.Info(
-                $"Processed secondary reminder for {GetDisplayName(trackedGame, game)} " +
+                $"Processed custom reminder for {GetDisplayName(trackedGame, game)} " +
                 $"({game.Id}) at {occurrence:O}; weekly state was not changed.");
         }
 
@@ -380,6 +641,50 @@ namespace WeeklyManager
             SetTrackedGamesState(
                 (selectedGames ?? Enumerable.Empty<Game>()).Select(a => a.Id),
                 newState);
+        }
+
+        private void ResetSelectedGamesChecklists(IEnumerable<Game> selectedGames)
+        {
+            try
+            {
+                var trackedGames = (selectedGames ?? Enumerable.Empty<Game>())
+                    .Select(a => FindTrackedGame(a.Id))
+                    .Where(a => a != null)
+                    .Distinct()
+                    .ToList();
+                if (trackedGames.Count == 0)
+                {
+                    return;
+                }
+
+                if (trackedGames.Any(a => ChecklistService.GetProgress(a).Completed > 0) &&
+                    PlayniteApi.Dialogs.ShowMessage(
+                        trackedGames.Count == 1
+                            ? $"Reset the checklist for {GetDisplayName(trackedGames[0], PlayniteApi.Database.Games.Get(trackedGames[0].GameId))}?"
+                            : $"Reset the checklists for {trackedGames.Count} tracked games?",
+                        "Weekly Manager",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Question) != MessageBoxResult.Yes)
+                {
+                    return;
+                }
+
+                foreach (var trackedGame in trackedGames)
+                {
+                    ChecklistService.Reset(trackedGame);
+                    ApplyWeeklyState(trackedGame, WeeklyState.READY, false, "checklist reset");
+                    ReconcileChecklistDrivenState(trackedGame, "checklist reset reconciliation");
+                }
+
+                PersistAndReconcile(trackedGames);
+            }
+            catch (Exception exception)
+            {
+                logger.Error(exception, "Failed to reset selected game checklist(s).");
+                PlayniteApi.Dialogs.ShowErrorMessage(
+                    "Weekly Manager could not reset the selected checklist(s). See the Playnite log for details.",
+                    "Weekly Manager");
+            }
         }
 
         private bool SetTrackedGamesState(IEnumerable<Guid> gameIds, WeeklyState newState)
@@ -395,23 +700,16 @@ namespace WeeklyManager
                         continue;
                     }
 
-                    trackedGame.CurrentState = newState;
+                    ApplyWeeklyState(trackedGame, newState, false, "manual state change");
+                    ReconcileChecklistDrivenState(
+                        trackedGame,
+                        "manual state change checklist reconciliation");
                     changedGames.Add(trackedGame);
-                    var game = PlayniteApi.Database.Games.Get(gameId);
-                    logger.Info(
-                        $"Weekly state for {GetDisplayName(trackedGame, game)} ({gameId}) " +
-                        $"was manually changed to {GetUserFacingStateName(newState)}.");
                 }
 
                 if (changedGames.Count > 0)
                 {
-                    // Persist the state before synchronizing Playnite metadata so startup
-                    // reconciliation can never observe the previous INCOMPLETE/COMPLETE value.
-                    SavePluginSettings(settings.Settings);
-                    foreach (var trackedGame in changedGames)
-                    {
-                        ReconcileTrackedGameTag(trackedGame.GameId);
-                    }
+                    PersistAndReconcile(changedGames);
                 }
 
                 return changedGames.Count > 0;
@@ -425,6 +723,106 @@ namespace WeeklyManager
                     "Weekly Manager could not update the selected game(s). See the Playnite log for details.",
                     "Weekly Manager");
                 return false;
+            }
+        }
+
+        private TrackedGameSettings FindTrackedGame(Guid gameId)
+        {
+            return settings.TrackedGames.FirstOrDefault(a => a.GameId == gameId);
+        }
+
+        private void CompleteChecklistMutation(
+            TrackedGameSettings trackedGame,
+            bool persistChanges,
+            string reason)
+        {
+            if (trackedGame == null)
+            {
+                return;
+            }
+
+            ReconcileChecklistDrivenState(trackedGame, reason);
+            if (persistChanges)
+            {
+                PersistAndReconcile(new[] { trackedGame });
+            }
+        }
+
+        private void ReconcileChecklistDrivenState(TrackedGameSettings trackedGame, string reason)
+        {
+            if (!trackedGame.AutomaticallyCompleteFromChecklist)
+            {
+                trackedGame.CompletedAutomaticallyByChecklist = false;
+                return;
+            }
+
+            var progress = ChecklistService.GetProgress(trackedGame);
+            if (progress.IsComplete)
+            {
+                ApplyWeeklyState(trackedGame, WeeklyState.COMPLETE, true, reason);
+            }
+            else
+            {
+                ApplyWeeklyState(trackedGame, WeeklyState.READY, false, reason);
+            }
+        }
+
+        private void ReconcileAllChecklistStates()
+        {
+            var changed = false;
+            foreach (var trackedGame in settings.TrackedGames)
+            {
+                var oldState = trackedGame.CurrentState;
+                var oldOwnership = trackedGame.CompletedAutomaticallyByChecklist;
+                ReconcileChecklistDrivenState(trackedGame, "startup checklist reconciliation");
+                changed |= oldState != trackedGame.CurrentState ||
+                           oldOwnership != trackedGame.CompletedAutomaticallyByChecklist;
+            }
+
+            if (changed)
+            {
+                SavePluginSettings(settings.Settings);
+            }
+        }
+
+        private void ApplyWeeklyState(
+            TrackedGameSettings trackedGame,
+            WeeklyState newState,
+            bool completedAutomatically,
+            string reason)
+        {
+            var stateChanged = trackedGame.CurrentState != newState;
+            var ownershipChanged =
+                trackedGame.CompletedAutomaticallyByChecklist != completedAutomatically;
+            trackedGame.CurrentState = newState;
+            trackedGame.CompletedAutomaticallyByChecklist = completedAutomatically;
+
+            if (stateChanged || ownershipChanged)
+            {
+                var game = PlayniteApi.Database.Games.Get(trackedGame.GameId);
+                logger.Info(
+                    $"Weekly state for {GetDisplayName(trackedGame, game)} ({trackedGame.GameId}) " +
+                    $"is {GetUserFacingStateName(newState)} after {reason}.");
+            }
+        }
+
+        private void PersistAndReconcile(IEnumerable<TrackedGameSettings> trackedGames)
+        {
+            var affectedGames = (trackedGames ?? Enumerable.Empty<TrackedGameSettings>())
+                .Where(a => a != null)
+                .Distinct()
+                .ToList();
+            if (affectedGames.Count == 0)
+            {
+                return;
+            }
+
+            // Persist state and checklist changes before synchronizing Playnite metadata so
+            // startup reconciliation can never observe an older value after an interruption.
+            SavePluginSettings(settings.Settings);
+            foreach (var trackedGame in affectedGames)
+            {
+                ReconcileReadyTag(trackedGame);
             }
         }
 

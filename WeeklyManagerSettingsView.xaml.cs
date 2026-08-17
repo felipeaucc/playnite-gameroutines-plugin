@@ -211,6 +211,54 @@ namespace WeeklyManager
             textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
         }
 
+        private void ChecklistItemCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is CheckBox checkBox &&
+                checkBox.DataContext is ChecklistItemSettings item)
+            {
+                GetViewModel()?.ChecklistItemChecked(item, checkBox.IsChecked == true);
+            }
+        }
+
+        private void ChecklistAutoCompletionCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is CheckBox checkBox)
+            {
+                GetViewModel()?.ChecklistAutoCompletionChanged(checkBox.IsChecked == true);
+            }
+        }
+
+        private void ChecklistItemTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter && sender is TextBox textBox)
+            {
+                CommitChecklistItemTextBox(textBox);
+                e.Handled = true;
+            }
+        }
+
+        private void ChecklistItemTextBox_PreviewLostKeyboardFocus(
+            object sender,
+            KeyboardFocusChangedEventArgs e)
+        {
+            if (sender is TextBox textBox)
+            {
+                CommitChecklistItemTextBox(textBox);
+            }
+        }
+
+        private void CommitChecklistItemTextBox(TextBox textBox)
+        {
+            if (!(textBox.DataContext is ChecklistItemSettings item))
+            {
+                return;
+            }
+
+            GetViewModel()?.CommitChecklistItemText(item, textBox.Text);
+            textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateTarget();
+            textBox.CaretIndex = textBox.Text.Length;
+        }
+
         private WeeklyManagerSettingsViewModel GetViewModel()
         {
             return DataContext as WeeklyManagerSettingsViewModel;
