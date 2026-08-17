@@ -4,8 +4,348 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              mc:Ignorable="d"
-             d:DesignHeight="120" d:DesignWidth="600">
-    <TextBlock Margin="10"
-               Text="Weekly Manager is installed and working."
-               TextWrapping="Wrap" />
+             d:DesignHeight="620" d:DesignWidth="900"
+             Foreground="{DynamicResource TextBrush}">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="12" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   FontSize="18"
+                   FontWeight="SemiBold"
+                   Text="Weekly Manager" />
+
+        <StackPanel Grid.Row="1" Margin="0,12,0,0">
+            <CheckBox IsChecked="{Binding Settings.UseReadyTag}"
+                      Content="Show incomplete state using Playnite tag" />
+            <TextBlock Margin="22,4,0,0"
+                       Foreground="{DynamicResource TextBrush}"
+                       Opacity="0.75"
+                       Text="Adds the 'Weeklies Available!' tag to tracked games while their weekly activities are incomplete."
+                       TextWrapping="Wrap" />
+        </StackPanel>
+
+        <Grid Grid.Row="2" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0" MinWidth="280">
+                <TextBox x:Name="GameSearchTextBox"
+                         Padding="7,5"
+                         VerticalContentAlignment="Center"
+                         Text="{Binding GameSearchText, UpdateSourceTrigger=PropertyChanged}"
+                         ToolTip="Type any part of a game name to search your Playnite library."
+                         GotKeyboardFocus="GameSearchTextBox_GotKeyboardFocus"
+                         PreviewKeyDown="GameSearchTextBox_PreviewKeyDown"
+                         TextChanged="GameSearchTextBox_TextChanged" />
+                <Popup x:Name="GameSearchPopup"
+                       Placement="Bottom"
+                       PlacementTarget="{Binding ElementName=GameSearchTextBox}"
+                       VerticalOffset="2"
+                       IsOpen="{Binding IsGameSearchOpen, Mode=TwoWay}"
+                       StaysOpen="False"
+                       AllowsTransparency="False"
+                       Closed="GameSearchPopup_Closed">
+                    <Border Width="{Binding ActualWidth, ElementName=GameSearchTextBox}"
+                            MaxHeight="240"
+                            Background="{DynamicResource PopupBackgroundBrush}"
+                            BorderBrush="{DynamicResource PopupBorderBrush}"
+                            BorderThickness="1"
+                            SnapsToDevicePixels="True">
+                        <ListBox x:Name="GameSearchResultsList"
+                                 MaxHeight="236"
+                                 Padding="2"
+                                 Background="{DynamicResource PopupBackgroundBrush}"
+                                 ItemsSource="{Binding GameSearchResults}"
+                                 SelectedItem="{Binding SelectedSearchResult, Mode=TwoWay}"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 VirtualizingStackPanel.IsVirtualizing="True"
+                                 VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                 PreviewKeyDown="GameSearchResultsList_PreviewKeyDown"
+                                 PreviewMouseLeftButtonUp="GameSearchResultsList_PreviewMouseLeftButtonUp">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem"
+                                       BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                    <Setter Property="MinHeight" Value="34" />
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    <Setter Property="VerticalContentAlignment" Value="Center" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Padding="10,7"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource TextBrush}"
+                                               Text="{Binding Name}"
+                                               TextTrimming="CharacterEllipsis" />
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Border>
+                </Popup>
+            </Grid>
+            <Button Grid.Column="1"
+                    Margin="8,0,0,0"
+                    Padding="16,5"
+                    MinWidth="90"
+                    VerticalAlignment="Stretch"
+                    IsEnabled="{Binding CanAddSelectedGame}"
+                    Command="{Binding AddGameCommand}"
+                    Content="Add game" />
+        </Grid>
+
+        <Grid Grid.Row="4">
+            <Border HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding TrackedGames.Count}" Value="0">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <TextBlock HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextBrush}"
+                           Text="No games are being tracked yet. Search for a game above to add it."
+                           TextAlignment="Center"
+                           TextWrapping="Wrap" />
+            </Border>
+
+            <Grid>
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Visibility" Value="Visible" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding TrackedGames.Count}" Value="0">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="260" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0"
+                           Margin="0,0,0,6"
+                           FontWeight="SemiBold"
+                           Text="Tracked games" />
+                <ListBox Grid.Row="1"
+                         ItemsSource="{Binding TrackedGames}"
+                         SelectedItem="{Binding SelectedTrackedGame}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="2,4">
+                                <TextBlock FontWeight="SemiBold"
+                                           Text="{Binding CachedGameName}"
+                                           TextTrimming="CharacterEllipsis" />
+                                <TextBlock FontSize="11" Opacity="0.75">
+                                    <Run Text="State: " />
+                                    <Run Text="{Binding DisplayState, Mode=OneWay}" />
+                                </TextBlock>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+                <Button Grid.Row="2"
+                        Margin="0,8,0,0"
+                        Padding="12,5"
+                        HorizontalAlignment="Left"
+                        Command="{Binding RemoveGameCommand}"
+                        Content="Remove selected" />
+            </Grid>
+
+                <Border Grid.Column="2"
+                    Padding="14"
+                    BorderBrush="{DynamicResource ControlBorderBrush}"
+                    BorderThickness="1"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch">
+                <Grid DataContext="{Binding SelectedTrackedGame}"
+                      HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch">
+                    <Border HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Panel.ZIndex="1">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <TextBlock HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextBrush}"
+                                   Text="Select a tracked game to edit its weekly schedule."
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap" />
+                    </Border>
+
+                    <ScrollViewer HorizontalAlignment="Stretch"
+                                  VerticalAlignment="Stretch"
+                                  VerticalScrollBarVisibility="Auto">
+                        <Grid>
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="18" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="180" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Row="0" Grid.ColumnSpan="2"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Text="{Binding CachedGameName}" />
+
+                            <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,12,10,0"
+                                       VerticalAlignment="Center" Text="Tracking" />
+                            <CheckBox Grid.Row="1" Grid.Column="1" Margin="0,12,0,0"
+                                      VerticalAlignment="Center"
+                                      IsChecked="{Binding Enabled}"
+                                      Content="Enabled" />
+
+                            <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,10,10,0"
+                                       VerticalAlignment="Center" Text="Current state" />
+                            <TextBlock Grid.Row="2" Grid.Column="1" Margin="0,10,0,0"
+                                       VerticalAlignment="Center" FontWeight="SemiBold"
+                                       Text="{Binding DisplayState, Mode=OneWay}" />
+
+                            <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,10,10,0"
+                                       VerticalAlignment="Center" Text="Weekly reset day" />
+                            <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,10,0,0"
+                                      ItemsSource="{Binding DataContext.DaysOfWeek, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      SelectedItem="{Binding WeeklyResetDay}" />
+
+                            <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,10,10,0"
+                                       VerticalAlignment="Center" Text="Weekly reset time" />
+                            <StackPanel Grid.Row="4" Grid.Column="1" Margin="0,10,0,0"
+                                        Orientation="Horizontal">
+                                <TextBox Width="72"
+                                         MaxLength="5"
+                                         Padding="5,3"
+                                         VerticalContentAlignment="Center"
+                                         TextAlignment="Center"
+                                         ToolTip="Enter a 24-hour local time in HH:mm format."
+                                         Text="{Binding WeeklyResetTime, Mode=TwoWay, UpdateSourceTrigger=Explicit}"
+                                         PreviewTextInput="TimeTextBox_PreviewTextInput"
+                                         PreviewKeyDown="TimeTextBox_PreviewKeyDown"
+                                         PreviewLostKeyboardFocus="TimeTextBox_PreviewLostKeyboardFocus"
+                                         TextChanged="TimeTextBox_TextChanged"
+                                         DataObject.Pasting="TimeTextBox_Pasting" />
+                                <TextBlock Margin="8,2,0,0"
+                                           Foreground="{DynamicResource TextBrush}"
+                                           Opacity="0.7"
+                                           Text="24-hour HH:mm, local time" />
+                            </StackPanel>
+
+                            <Separator Grid.Row="5" Grid.ColumnSpan="2" Margin="0,10,0,6" />
+
+                            <TextBlock Grid.Row="6" Grid.Column="0" Margin="0,0,10,0"
+                                       VerticalAlignment="Center" Text="Secondary reminder" />
+                            <CheckBox Grid.Row="6" Grid.Column="1"
+                                      VerticalAlignment="Center"
+                                      IsChecked="{Binding SecondaryReminderEnabled}"
+                                      Content="Enabled" />
+
+                            <TextBlock Grid.Row="7" Grid.Column="0" Margin="0,10,10,0"
+                                       VerticalAlignment="Center" Text="Reminder day" />
+                            <ComboBox Grid.Row="7" Grid.Column="1" Margin="0,10,0,0"
+                                      ItemsSource="{Binding DataContext.DaysOfWeek, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                      SelectedItem="{Binding SecondaryReminderDay}" />
+
+                            <TextBlock Grid.Row="8" Grid.Column="0" Margin="0,10,10,0"
+                                       VerticalAlignment="Center" Text="Reminder time" />
+                            <StackPanel Grid.Row="8" Grid.Column="1" Margin="0,10,0,0"
+                                        Orientation="Horizontal">
+                                <TextBox Width="72"
+                                         MaxLength="5"
+                                         Padding="5,3"
+                                         VerticalContentAlignment="Center"
+                                         TextAlignment="Center"
+                                         ToolTip="Enter a 24-hour local time in HH:mm format."
+                                         Text="{Binding SecondaryReminderTime, Mode=TwoWay, UpdateSourceTrigger=Explicit}"
+                                         PreviewTextInput="TimeTextBox_PreviewTextInput"
+                                         PreviewKeyDown="TimeTextBox_PreviewKeyDown"
+                                         PreviewLostKeyboardFocus="TimeTextBox_PreviewLostKeyboardFocus"
+                                         TextChanged="TimeTextBox_TextChanged"
+                                         DataObject.Pasting="TimeTextBox_Pasting" />
+                                <TextBlock Margin="8,2,0,0"
+                                           Foreground="{DynamicResource TextBrush}"
+                                           Opacity="0.7"
+                                           Text="24-hour HH:mm, local time" />
+                            </StackPanel>
+
+                            <TextBlock Grid.Row="9" Grid.Column="0" Margin="0,10,10,0"
+                                       VerticalAlignment="Center" Text="Notification title" />
+                            <TextBox Grid.Row="9" Grid.Column="1" Margin="0,10,0,0"
+                                     MaxLength="40"
+                                     Text="{Binding SecondaryNotificationTitle, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Grid.Row="10" Grid.Column="0" Margin="0,10,10,0"
+                                       VerticalAlignment="Top" Text="Notification message" />
+                            <TextBox Grid.Row="10" Grid.Column="1" Margin="0,10,0,0"
+                                     MinHeight="70"
+                                     MaxLength="160"
+                                     AcceptsReturn="True"
+                                     TextWrapping="Wrap"
+                                     VerticalScrollBarVisibility="Auto"
+                                     Text="{Binding SecondaryNotificationMessage, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Grid.Row="11" Grid.ColumnSpan="2" Margin="0,16,0,0"
+                                       Foreground="{DynamicResource TextBrush}"
+                                       Opacity="0.75" TextWrapping="Wrap"
+                                       Text="Use a game's Weekly Manager context menu to mark it INCOMPLETE or COMPLETE. Reset and reminder times use the local timezone." />
+                        </Grid>
+                    </ScrollViewer>
+                </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+    </Grid>
 </UserControl>
