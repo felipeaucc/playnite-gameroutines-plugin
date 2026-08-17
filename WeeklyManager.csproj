@@ -50,6 +50,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="WeeklyManager.cs" />
+    <Compile Include="WeeklyScheduleCalculator.cs" />
     <Compile Include="WeeklyManagerSettings.cs" />
     <Compile Include="WeeklyManagerSettingsView.xaml.cs">
       <DependentUpon>WeeklyManagerSettingsView.xaml</DependentUpon>
