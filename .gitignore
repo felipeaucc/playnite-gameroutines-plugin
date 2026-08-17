@@ -1,0 +1,33 @@
+# Visual Studio and build output
+.vs/
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa]rtifacts/
+
+# NuGet packages and generated packages
+packages/
+*.nupkg
+*.snupkg
+
+# User-specific IDE files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Test and analysis output
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# ReSharper
+_ReSharper*/
+*.DotSettings.user
+
+# Playnite packaged extension output
+*.pext
