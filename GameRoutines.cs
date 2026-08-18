@@ -9,22 +9,22 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 
-namespace WeeklyManager
+namespace GameRoutines
 {
-    public class WeeklyManager : GenericPlugin
+    public class GameRoutines : GenericPlugin
     {
         private static readonly ILogger logger = LogManager.GetLogger();
-        private const string ReadyTagName = "Tasks Available!";
+        private const string TasksAvailableTagName = "Tasks Available!";
         private const string LegacyWeekliesTagName = "Weeklies Available!";
         private const string LegacyReadyTagName = "WEEKLY READY";
-        private const string CustomElementSourceName = "WeeklyManager";
+        private const string CustomElementSourceName = "GameRoutines";
         private const string AutomaticCompletionWarningTitle = "Automatic Completion Enabled";
         internal const string ChecklistElementName = "Checklist";
         internal const string StateToggleElementName = "StateToggle";
         internal const string IncompleteIndicatorElementName = "IncompleteIndicator";
         private static readonly TimeSpan SchedulerInterval = TimeSpan.FromMinutes(1);
 
-        private readonly WeeklyManagerSettingsViewModel settings;
+        private readonly GameRoutinesSettingsViewModel settings;
         private readonly HashSet<Guid> loggedMissingGameIds = new HashSet<Guid>();
         private readonly Dictionary<Guid, Window> openChecklistWindows = new Dictionary<Guid, Window>();
         private readonly Dictionary<Guid, Window> openManageChecklistWindows = new Dictionary<Guid, Window>();
@@ -34,14 +34,14 @@ namespace WeeklyManager
 
         internal new IPlayniteAPI PlayniteApi { get; }
 
-        internal event EventHandler<WeeklyManagerUiStateChangedEventArgs> UiStateChanged;
+        internal event EventHandler<GameRoutinesUiStateChangedEventArgs> UiStateChanged;
 
         public override Guid Id { get; } = Guid.Parse("cb076ecb-ea40-4036-8094-f1c554566b49");
 
-        public WeeklyManager(IPlayniteAPI api) : base(api)
+        public GameRoutines(IPlayniteAPI api) : base(api)
         {
             PlayniteApi = api;
-            settings = new WeeklyManagerSettingsViewModel(this);
+            settings = new GameRoutinesSettingsViewModel(this);
             Properties = new GenericPluginProperties
             {
                 HasSettings = true
@@ -58,7 +58,7 @@ namespace WeeklyManager
                 }
             });
 
-            logger.Info($"Weekly Manager initialized. Loaded {settings.TrackedGames.Count} tracked game(s).");
+            logger.Info($"Game Routines initialized. Loaded {settings.TrackedGames.Count} tracked game(s).");
         }
 
         public override ISettings GetSettings(bool firstRunSettings)
@@ -68,7 +68,7 @@ namespace WeeklyManager
 
         public override UserControl GetSettingsView(bool firstRunSettings)
         {
-            return new WeeklyManagerSettingsView();
+            return new GameRoutinesSettingsView();
         }
 
         public override Control GetGameViewControl(GetGameViewControlArgs args)
@@ -76,11 +76,11 @@ namespace WeeklyManager
             switch (args?.Name)
             {
                 case ChecklistElementName:
-                    return new WeeklyManagerChecklistControl(this);
+                    return new GameRoutinesChecklistControl(this);
                 case StateToggleElementName:
-                    return new WeeklyManagerStateToggleControl(this);
+                    return new GameRoutinesStateToggleControl(this);
                 case IncompleteIndicatorElementName:
-                    return new WeeklyManagerIncompleteIndicatorControl(this);
+                    return new GameRoutinesIncompleteIndicatorControl(this);
                 default:
                     return null;
             }
@@ -88,9 +88,9 @@ namespace WeeklyManager
 
         public override void OnApplicationStarted(OnApplicationStartedEventArgs args)
         {
-            logger.Info($"Weekly Manager startup. Processing {settings.TrackedGames.Count} tracked game(s).");
+            logger.Info($"Game Routines startup. Processing {settings.TrackedGames.Count} tracked game(s).");
             ReconcileAllChecklistStates();
-            ReconcileAllReadyTags();
+            ReconcileAllTasksAvailableTags();
             ProcessDueEvents();
 
             schedulerTimer = new DispatcherTimer(DispatcherPriority.Background)
@@ -105,7 +105,7 @@ namespace WeeklyManager
         {
             CloseChecklistWindows();
             StopScheduler();
-            logger.Info("Weekly Manager stopped.");
+            logger.Info("Game Routines stopped.");
         }
 
         public override void Dispose()
@@ -117,35 +117,53 @@ namespace WeeklyManager
 
         public override IEnumerable<GameMenuItem> GetGameMenuItems(GetGameMenuItemsArgs args)
         {
-            var selectedIds = new HashSet<Guid>((args.Games ?? Enumerable.Empty<Game>()).Select(a => a.Id));
+            var selectedGames = (args?.Games ?? Enumerable.Empty<Game>())
+                .Where(a => a != null)
+                .GroupBy(a => a.Id)
+                .Select(a => a.First())
+                .ToList();
+            var selectedIds = new HashSet<Guid>(selectedGames.Select(a => a.Id));
             var hasTrackedGame = selectedIds.Any(IsGameTracked);
+            var hasUntrackedGame = selectedIds.Any(a => !IsGameTracked(a));
+
+            if (hasUntrackedGame)
+            {
+                yield return new GameMenuItem
+                {
+                    MenuSection = "Game Routines",
+                    Description = selectedGames.Count == 1
+                        ? "Start Tracking This Game"
+                        : "Start Tracking Selected Games",
+                    Action = actionArgs => TrackSelectedGames(actionArgs.Games)
+                };
+            }
 
             if (hasTrackedGame)
             {
                 yield return new GameMenuItem
                 {
-                    MenuSection = "Weekly Manager",
+                    MenuSection = "Game Routines",
                     Description = "Open Checklist",
                     Action = actionArgs => OpenSelectedChecklist(actionArgs.Games)
                 };
 
                 yield return new GameMenuItem
                 {
-                    MenuSection = "Weekly Manager",
-                    Description = "Mark Tasks Complete",
-                    Action = actionArgs => SetSelectedGamesState(actionArgs.Games, WeeklyState.COMPLETE)
+                    MenuSection = "Game Routines",
+                    Description = "Mark Tasks as Complete",
+                    Action = actionArgs => SetSelectedGamesState(actionArgs.Games, TaskState.COMPLETE)
                 };
 
                 yield return new GameMenuItem
                 {
-                    MenuSection = "Weekly Manager",
-                    Description = "Mark Tasks Incomplete",
-                    Action = actionArgs => SetSelectedGamesState(actionArgs.Games, WeeklyState.READY)
+                    MenuSection = "Game Routines",
+                    Description = "Mark Tasks as Incomplete",
+                    Action = actionArgs => SetSelectedGamesState(actionArgs.Games, TaskState.INCOMPLETE)
                 };
 
                 yield return new GameMenuItem
                 {
-                    MenuSection = "Weekly Manager",
+                    MenuSection = "Game Routines",
                     Description = "Reset Checklist",
                     Action = actionArgs => ResetSelectedGamesChecklists(actionArgs.Games)
                 };
@@ -153,8 +171,8 @@ namespace WeeklyManager
 
             yield return new GameMenuItem
             {
-                MenuSection = "Weekly Manager",
-                Description = "Edit Weekly Settings",
+                MenuSection = "Game Routines",
+                Description = "Edit Game Routines Settings",
                 Action = _ => OpenSettingsView()
             };
         }
@@ -172,12 +190,57 @@ namespace WeeklyManager
 
         internal void NotifyUiStateChanged(Guid? gameId = null)
         {
-            UiStateChanged?.Invoke(this, new WeeklyManagerUiStateChangedEventArgs(gameId));
+            UiStateChanged?.Invoke(this, new GameRoutinesUiStateChangedEventArgs(gameId));
         }
 
         internal bool IsGameTracked(Guid gameId)
         {
             return settings.TrackedGames.Any(a => a.GameId == gameId);
+        }
+
+        internal IReadOnlyList<TrackedGameSettings> TrackGames(
+            IEnumerable<Game> games,
+            bool persistChanges)
+        {
+            var trackedIds = new HashSet<Guid>(settings.TrackedGames.Select(a => a.GameId));
+            var addedGames = new List<TrackedGameSettings>();
+            foreach (var selectedGame in (games ?? Enumerable.Empty<Game>())
+                .Where(a => a != null && a.Id != Guid.Empty)
+                .GroupBy(a => a.Id)
+                .Select(a => a.First()))
+            {
+                if (!trackedIds.Add(selectedGame.Id))
+                {
+                    continue;
+                }
+
+                var game = PlayniteApi.Database.Games.Get(selectedGame.Id) ?? selectedGame;
+                var trackedGame = new TrackedGameSettings
+                {
+                    GameId = game.Id,
+                    CachedGameName = game.Name,
+                    Enabled = true,
+                    ResetCadence = ResetCadence.Never,
+                    ResetDay = DayOfWeek.Monday,
+                    ResetTime = "00:00",
+                    CurrentState = TaskState.COMPLETE,
+                    AutomaticallyCompleteFromChecklist = false,
+                    ShowIncompleteCoverIndicator = true,
+                    CustomReminderEnabled = false,
+                    ReminderCadence = ReminderCadence.Weekly,
+                    ReminderDay = DayOfWeek.Monday,
+                    ReminderTime = "00:00"
+                };
+                settings.TrackedGames.Add(trackedGame);
+                addedGames.Add(trackedGame);
+            }
+
+            if (persistChanges && addedGames.Count > 0)
+            {
+                PersistAndReconcile(addedGames);
+            }
+
+            return addedGames;
         }
 
         internal string GetTrackedGameState(Guid gameId)
@@ -195,19 +258,19 @@ namespace WeeklyManager
         {
             var trackedGame = FindTrackedGame(gameId);
             return trackedGame != null &&
-                   trackedGame.CurrentState == WeeklyState.READY &&
+                   trackedGame.CurrentState == TaskState.INCOMPLETE &&
                    settings.Settings.ShowIncompleteCoverIndicator &&
                    trackedGame.ShowIncompleteCoverIndicator;
         }
 
         internal bool MarkTrackedGameComplete(Guid gameId)
         {
-            return SetTrackedGamesState(new[] { gameId }, WeeklyState.COMPLETE);
+            return SetTrackedGamesState(new[] { gameId }, TaskState.COMPLETE);
         }
 
         internal bool MarkTrackedGameIncomplete(Guid gameId)
         {
-            return SetTrackedGamesState(new[] { gameId }, WeeklyState.READY);
+            return SetTrackedGamesState(new[] { gameId }, TaskState.INCOMPLETE);
         }
 
         internal IReadOnlyList<ChecklistItemSettings> GetTrackedGameChecklist(Guid gameId)
@@ -361,7 +424,7 @@ namespace WeeklyManager
             if (confirm && ChecklistService.GetProgress(trackedGame).Completed > 0 &&
                 PlayniteApi.Dialogs.ShowMessage(
                     $"Reset the checklist for {GetDisplayName(trackedGame, PlayniteApi.Database.Games.Get(trackedGame.GameId))}?",
-                    "Weekly Manager",
+                    "Game Routines",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Question) != MessageBoxResult.Yes)
             {
@@ -369,7 +432,7 @@ namespace WeeklyManager
             }
 
             ChecklistService.Reset(trackedGame);
-            ApplyWeeklyState(trackedGame, WeeklyState.READY, false, "checklist reset");
+            ApplyTaskState(trackedGame, TaskState.INCOMPLETE, false, "checklist reset");
             ReconcileChecklistDrivenState(trackedGame, "checklist reset reconciliation");
             if (persistChanges)
             {
@@ -384,11 +447,11 @@ namespace WeeklyManager
             var trackedGame = settings.TrackedGames.FirstOrDefault(a => a.GameId == gameId);
             if (trackedGame != null)
             {
-                ReconcileReadyTag(trackedGame);
+                ReconcileTasksAvailableTag(trackedGame);
             }
         }
 
-        internal void PrepareSettingsForSave(WeeklyManagerSettings previous, WeeklyManagerSettings current)
+        internal void PrepareSettingsForSave(GameRoutinesSettings previous, GameRoutinesSettings current)
         {
             var now = DateTime.Now;
             var previousById = (previous?.TrackedGames ?? new System.Collections.ObjectModel.ObservableCollection<TrackedGameSettings>())
@@ -400,29 +463,33 @@ namespace WeeklyManager
                 ChecklistService.Normalize(trackedGame);
                 ReconcileChecklistDrivenState(trackedGame, "settings saved");
 
-                if (WeeklyScheduleCalculator.TryParseLocalTime(trackedGame.WeeklyResetTime, out var resetTime) &&
+                if (trackedGame.ResetCadence != ResetCadence.Never &&
+                    ScheduleCalculator.TryParseLocalTime(trackedGame.ResetTime, out var resetTime) &&
                     (!previousById.TryGetValue(trackedGame.GameId, out var oldGame) ||
-                     oldGame.WeeklyResetDay != trackedGame.WeeklyResetDay ||
-                     !TimesEqual(oldGame.WeeklyResetTime, trackedGame.WeeklyResetTime)))
+                     HasResetScheduleChanged(oldGame, trackedGame)) &&
+                    ScheduleCalculator.TryGetMostRecentOccurrence(
+                        now,
+                        trackedGame.ResetCadence,
+                        trackedGame.ResetDay,
+                        resetTime,
+                        out var resetOccurrence))
                 {
-                    trackedGame.LastResetProcessedLocal = WeeklyScheduleCalculator.GetMostRecentOccurrence(
-                        now, trackedGame.WeeklyResetDay, resetTime);
+                    trackedGame.LastResetProcessedLocal = resetOccurrence;
                 }
 
-                if (WeeklyScheduleCalculator.TryParseLocalTime(
-                        trackedGame.SecondaryReminderTime, out var reminderTime) &&
+                if (trackedGame.CustomReminderEnabled &&
+                    ScheduleCalculator.TryParseLocalTime(
+                        trackedGame.ReminderTime, out var reminderTime) &&
                     (!previousById.TryGetValue(trackedGame.GameId, out oldGame) ||
-                     !oldGame.SecondaryReminderEnabled ||
-                     oldGame.SecondaryReminderDay != trackedGame.SecondaryReminderDay ||
-                     !TimesEqual(oldGame.SecondaryReminderTime, trackedGame.SecondaryReminderTime)))
+                     HasReminderScheduleChanged(oldGame, trackedGame)))
                 {
-                    trackedGame.LastSecondaryReminderProcessedLocal = WeeklyScheduleCalculator.GetMostRecentOccurrence(
-                        now, trackedGame.SecondaryReminderDay, reminderTime);
+                    trackedGame.LastReminderProcessedLocal = ScheduleCalculator.GetMostRecentOccurrence(
+                        now, trackedGame.ReminderCadence, trackedGame.ReminderDay, reminderTime);
                 }
             }
         }
 
-        internal void ApplySettingsChanges(WeeklyManagerSettings previous, WeeklyManagerSettings current)
+        internal void ApplySettingsChanges(GameRoutinesSettings previous, GameRoutinesSettings current)
         {
             try
             {
@@ -447,14 +514,14 @@ namespace WeeklyManager
                     {
                         if (!currentById.TryGetValue(oldGame.GameId, out var newGame) || !newGame.Enabled)
                         {
-                            UpdateReadyTag(oldGame.GameId, false);
+                            UpdateTasksAvailableTag(oldGame.GameId, false);
                         }
                     }
                 }
 
                 foreach (var trackedGame in current.TrackedGames)
                 {
-                    ReconcileReadyTag(trackedGame);
+                    ReconcileTasksAvailableTag(trackedGame);
                 }
 
                 ProcessDueEvents();
@@ -462,7 +529,7 @@ namespace WeeklyManager
             }
             catch (Exception exception)
             {
-                LogException(exception, "Failed to apply Weekly Manager settings changes.");
+                LogException(exception, "Failed to apply Game Routines settings changes.");
             }
         }
 
@@ -473,9 +540,30 @@ namespace WeeklyManager
 
         private static bool TimesEqual(string first, string second)
         {
-            return WeeklyScheduleCalculator.TryParseLocalTime(first, out var firstTime) &&
-                   WeeklyScheduleCalculator.TryParseLocalTime(second, out var secondTime) &&
+            return ScheduleCalculator.TryParseLocalTime(first, out var firstTime) &&
+                   ScheduleCalculator.TryParseLocalTime(second, out var secondTime) &&
                    firstTime == secondTime;
+        }
+
+        private static bool HasResetScheduleChanged(
+            TrackedGameSettings previous,
+            TrackedGameSettings current)
+        {
+            return previous.ResetCadence != current.ResetCadence ||
+                   (current.ResetCadence == ResetCadence.Weekly &&
+                    previous.ResetDay != current.ResetDay) ||
+                   !TimesEqual(previous.ResetTime, current.ResetTime);
+        }
+
+        private static bool HasReminderScheduleChanged(
+            TrackedGameSettings previous,
+            TrackedGameSettings current)
+        {
+            return !previous.CustomReminderEnabled ||
+                   previous.ReminderCadence != current.ReminderCadence ||
+                   (current.ReminderCadence == ReminderCadence.Weekly &&
+                    previous.ReminderDay != current.ReminderDay) ||
+                   !TimesEqual(previous.ReminderTime, current.ReminderTime);
         }
 
         private void SchedulerTimer_Tick(object sender, EventArgs args)
@@ -524,7 +612,7 @@ namespace WeeklyManager
                     return;
                 }
 
-                var viewModel = new WeeklyChecklistViewModel(this, gameId);
+                var viewModel = new GameChecklistViewModel(this, gameId);
                 var window = PlayniteApi.Dialogs.CreateWindow(new WindowCreationOptions
                 {
                     ShowCloseButton = true,
@@ -543,7 +631,7 @@ namespace WeeklyManager
                     window.Owner = owner;
                 }
 
-                window.Content = new WeeklyChecklistView
+                window.Content = new GameChecklistView
                 {
                     DataContext = viewModel
                 };
@@ -565,8 +653,8 @@ namespace WeeklyManager
             {
                 logger.Error(exception, $"Failed to open checklist window for game {gameId}.");
                 PlayniteApi.Dialogs.ShowErrorMessage(
-                    "Weekly Manager could not open this checklist. See the Playnite log for details.",
-                    "Weekly Manager");
+                    "Game Routines could not open this checklist. See the Playnite log for details.",
+                    "Game Routines");
             }
         }
 
@@ -631,8 +719,8 @@ namespace WeeklyManager
             {
                 logger.Error(exception, $"Failed to open checklist management window for game {gameId}.");
                 PlayniteApi.Dialogs.ShowErrorMessage(
-                    "Weekly Manager could not open checklist management. See the Playnite log for details.",
-                    "Weekly Manager");
+                    "Game Routines could not open checklist management. See the Playnite log for details.",
+                    "Game Routines");
             }
         }
 
@@ -680,7 +768,7 @@ namespace WeeklyManager
             }
             catch (Exception exception)
             {
-                logger.Error(exception, "Unhandled exception while processing Weekly Manager schedules.");
+                logger.Error(exception, "Unhandled exception while processing Game Routines schedules.");
             }
             finally
             {
@@ -708,11 +796,15 @@ namespace WeeklyManager
                 settingsChanged = true;
             }
 
-            if (WeeklyScheduleCalculator.TryParseLocalTime(trackedGame.WeeklyResetTime, out var resetTime))
+            if (ScheduleCalculator.TryParseLocalTime(trackedGame.ResetTime, out var resetTime) &&
+                ScheduleCalculator.TryGetMostRecentOccurrence(
+                    now,
+                    trackedGame.ResetCadence,
+                    trackedGame.ResetDay,
+                    resetTime,
+                    out var resetOccurrence))
             {
-                var resetOccurrence = WeeklyScheduleCalculator.GetMostRecentOccurrence(
-                    now, trackedGame.WeeklyResetDay, resetTime);
-                if (WeeklyScheduleCalculator.IsOccurrenceDue(
+                if (ScheduleCalculator.IsOccurrenceDue(
                     trackedGame.LastResetProcessedLocal, resetOccurrence))
                 {
                     ProcessReset(trackedGame, game, resetOccurrence);
@@ -720,15 +812,15 @@ namespace WeeklyManager
                 }
             }
 
-            if (trackedGame.SecondaryReminderEnabled &&
-                WeeklyScheduleCalculator.TryParseLocalTime(trackedGame.SecondaryReminderTime, out var reminderTime))
+            if (trackedGame.CustomReminderEnabled &&
+                ScheduleCalculator.TryParseLocalTime(trackedGame.ReminderTime, out var reminderTime))
             {
-                var reminderOccurrence = WeeklyScheduleCalculator.GetMostRecentOccurrence(
-                    now, trackedGame.SecondaryReminderDay, reminderTime);
-                if (WeeklyScheduleCalculator.IsOccurrenceDue(
-                    trackedGame.LastSecondaryReminderProcessedLocal, reminderOccurrence))
+                var reminderOccurrence = ScheduleCalculator.GetMostRecentOccurrence(
+                    now, trackedGame.ReminderCadence, trackedGame.ReminderDay, reminderTime);
+                if (ScheduleCalculator.IsOccurrenceDue(
+                    trackedGame.LastReminderProcessedLocal, reminderOccurrence))
                 {
-                    ProcessSecondaryReminder(trackedGame, game, reminderOccurrence);
+                    ProcessCustomReminder(trackedGame, game, reminderOccurrence);
                     settingsChanged = false;
                 }
             }
@@ -760,9 +852,13 @@ namespace WeeklyManager
 
         private void ProcessReset(TrackedGameSettings trackedGame, Game game, DateTime occurrence)
         {
+            var cadenceName = trackedGame.ResetCadence == ResetCadence.Daily
+                ? "DAILY"
+                : "WEEKLY";
+            var reason = $"{cadenceName.ToLowerInvariant()} reset";
             ChecklistService.Reset(trackedGame);
-            ApplyWeeklyState(trackedGame, WeeklyState.READY, false, "weekly reset");
-            ReconcileChecklistDrivenState(trackedGame, "weekly reset checklist reconciliation");
+            ApplyTaskState(trackedGame, TaskState.INCOMPLETE, false, reason);
+            ReconcileChecklistDrivenState(trackedGame, $"{reason} checklist reconciliation");
             trackedGame.LastResetProcessedLocal = occurrence;
 
             // Persist the occurrence before publishing its notification. If Playnite exits
@@ -770,37 +866,69 @@ namespace WeeklyManager
             PersistAndReconcile(new[] { trackedGame });
 
             var name = GetDisplayName(trackedGame, game);
-            var notificationId = $"WeeklyManager_Reset_{game.Id:N}_{occurrence.Ticks}";
+            var notificationId =
+                $"GameRoutines_Reset_{trackedGame.ResetCadence}_{game.Id:N}_{occurrence.Ticks}";
             PlayniteApi.Notifications.Add(new NotificationMessage(
                 notificationId,
-                $"{name.ToUpperInvariant()}: WEEKLY RESET\r\nWeekly activities are available.",
+                $"{name.ToUpperInvariant()}: {cadenceName} TASKS RESET\r\nTasks are available.",
                 NotificationType.Info));
 
-            logger.Info($"Processed weekly reset for {name} ({game.Id}) at {occurrence:O}; state is INCOMPLETE.");
+            logger.Info(
+                $"Processed {cadenceName.ToLowerInvariant()} reset for {name} ({game.Id}) " +
+                $"at {occurrence:O}; task state is {GetUserFacingStateName(trackedGame.CurrentState)}.");
         }
 
-        private void ProcessSecondaryReminder(
+        private void ProcessCustomReminder(
             TrackedGameSettings trackedGame,
             Game game,
             DateTime occurrence)
         {
-            trackedGame.LastSecondaryReminderProcessedLocal = occurrence;
+            trackedGame.LastReminderProcessedLocal = occurrence;
             SavePluginSettings(settings.Settings);
 
-            var notificationId = $"WeeklyManager_Reminder_{game.Id:N}_{occurrence.Ticks}";
+            var notificationId =
+                $"GameRoutines_Reminder_{trackedGame.ReminderCadence}_{game.Id:N}_{occurrence.Ticks}";
             var name = GetDisplayName(trackedGame, game).ToUpperInvariant();
             PlayniteApi.Notifications.Add(new NotificationMessage(
                 notificationId,
-                $"{name}: {trackedGame.SecondaryNotificationTitle}\r\n" +
-                trackedGame.SecondaryNotificationMessage,
+                $"{name}: {trackedGame.CustomReminderTitle}\r\n" +
+                trackedGame.CustomReminderMessage,
                 NotificationType.Info));
 
             logger.Info(
                 $"Processed custom reminder for {GetDisplayName(trackedGame, game)} " +
-                $"({game.Id}) at {occurrence:O}; weekly state was not changed.");
+                $"({game.Id}) at {occurrence:O}; task state and checklist were not changed.");
         }
 
-        private void SetSelectedGamesState(IEnumerable<Game> selectedGames, WeeklyState newState)
+        private void TrackSelectedGames(IEnumerable<Game> selectedGames)
+        {
+            try
+            {
+                var selection = (selectedGames ?? Enumerable.Empty<Game>())
+                    .Where(a => a != null)
+                    .GroupBy(a => a.Id)
+                    .Select(a => a.First())
+                    .ToList();
+                var addedGames = TrackGames(selection, true);
+                if (selection.Count > 1 && addedGames.Count > 0)
+                {
+                    var gameLabel = addedGames.Count == 1 ? "game" : "games";
+                    PlayniteApi.Notifications.Add(new NotificationMessage(
+                        "GameRoutines_Tracking_Result",
+                        $"GAME ROUTINES\r\nStarted tracking {addedGames.Count} {gameLabel}.",
+                        NotificationType.Info));
+                }
+            }
+            catch (Exception exception)
+            {
+                logger.Error(exception, "Failed to track selected game(s).");
+                PlayniteApi.Dialogs.ShowErrorMessage(
+                    "Game Routines could not track the selected game(s). See the Playnite log for details.",
+                    "Game Routines");
+            }
+        }
+
+        private void SetSelectedGamesState(IEnumerable<Game> selectedGames, TaskState newState)
         {
             SetTrackedGamesState(
                 (selectedGames ?? Enumerable.Empty<Game>()).Select(a => a.Id),
@@ -826,7 +954,7 @@ namespace WeeklyManager
                         trackedGames.Count == 1
                             ? $"Reset the checklist for {GetDisplayName(trackedGames[0], PlayniteApi.Database.Games.Get(trackedGames[0].GameId))}?"
                             : $"Reset the checklists for {trackedGames.Count} tracked games?",
-                        "Weekly Manager",
+                        "Game Routines",
                         MessageBoxButton.YesNo,
                         MessageBoxImage.Question) != MessageBoxResult.Yes)
                 {
@@ -836,7 +964,7 @@ namespace WeeklyManager
                 foreach (var trackedGame in trackedGames)
                 {
                     ChecklistService.Reset(trackedGame);
-                    ApplyWeeklyState(trackedGame, WeeklyState.READY, false, "checklist reset");
+                    ApplyTaskState(trackedGame, TaskState.INCOMPLETE, false, "checklist reset");
                     ReconcileChecklistDrivenState(trackedGame, "checklist reset reconciliation");
                 }
 
@@ -846,12 +974,12 @@ namespace WeeklyManager
             {
                 logger.Error(exception, "Failed to reset selected game checklist(s).");
                 PlayniteApi.Dialogs.ShowErrorMessage(
-                    "Weekly Manager could not reset the selected checklist(s). See the Playnite log for details.",
-                    "Weekly Manager");
+                    "Game Routines could not reset the selected checklist(s). See the Playnite log for details.",
+                    "Game Routines");
             }
         }
 
-        private bool SetTrackedGamesState(IEnumerable<Guid> gameIds, WeeklyState newState)
+        private bool SetTrackedGamesState(IEnumerable<Guid> gameIds, TaskState newState)
         {
             try
             {
@@ -871,7 +999,7 @@ namespace WeeklyManager
                         continue;
                     }
 
-                    ApplyWeeklyState(trackedGame, newState, false, "manual state change");
+                    ApplyTaskState(trackedGame, newState, false, "manual task-state change");
                     changedGames.Add(trackedGame);
                 }
 
@@ -893,8 +1021,8 @@ namespace WeeklyManager
                     exception,
                     $"Failed to mark selected game(s) {GetUserFacingStateName(newState)}.");
                 PlayniteApi.Dialogs.ShowErrorMessage(
-                    "Weekly Manager could not update the selected game(s). See the Playnite log for details.",
-                    "Weekly Manager");
+                    "Game Routines could not update the selected game tasks. See the Playnite log for details.",
+                    "Game Routines");
                 return false;
             }
         }
@@ -974,11 +1102,11 @@ namespace WeeklyManager
             var progress = ChecklistService.GetProgress(trackedGame);
             if (progress.IsComplete)
             {
-                ApplyWeeklyState(trackedGame, WeeklyState.COMPLETE, true, reason);
+                ApplyTaskState(trackedGame, TaskState.COMPLETE, true, reason);
             }
             else
             {
-                ApplyWeeklyState(trackedGame, WeeklyState.READY, false, reason);
+                ApplyTaskState(trackedGame, TaskState.INCOMPLETE, false, reason);
             }
         }
 
@@ -1000,9 +1128,9 @@ namespace WeeklyManager
             }
         }
 
-        private void ApplyWeeklyState(
+        private void ApplyTaskState(
             TrackedGameSettings trackedGame,
-            WeeklyState newState,
+            TaskState newState,
             bool completedAutomatically,
             string reason)
         {
@@ -1016,7 +1144,7 @@ namespace WeeklyManager
             {
                 var game = PlayniteApi.Database.Games.Get(trackedGame.GameId);
                 logger.Info(
-                    $"Weekly state for {GetDisplayName(trackedGame, game)} ({trackedGame.GameId}) " +
+                    $"Task state for {GetDisplayName(trackedGame, game)} ({trackedGame.GameId}) " +
                     $"is {GetUserFacingStateName(newState)} after {reason}.");
             }
         }
@@ -1037,7 +1165,7 @@ namespace WeeklyManager
             SavePluginSettings(settings.Settings);
             foreach (var trackedGame in affectedGames)
             {
-                ReconcileReadyTag(trackedGame);
+                ReconcileTasksAvailableTag(trackedGame);
             }
 
             foreach (var trackedGame in affectedGames)
@@ -1046,33 +1174,33 @@ namespace WeeklyManager
             }
         }
 
-        private void ReconcileReadyTag(TrackedGameSettings trackedGame)
+        private void ReconcileTasksAvailableTag(TrackedGameSettings trackedGame)
         {
-            UpdateReadyTag(
+            UpdateTasksAvailableTag(
                 trackedGame.GameId,
-                settings.Settings.UseReadyTag &&
+                settings.Settings.UseTasksAvailableTag &&
                 trackedGame.Enabled &&
-                trackedGame.CurrentState == WeeklyState.READY);
+                trackedGame.CurrentState == TaskState.INCOMPLETE);
         }
 
-        private void ReconcileAllReadyTags()
+        private void ReconcileAllTasksAvailableTags()
         {
             foreach (var trackedGame in settings.TrackedGames)
             {
                 try
                 {
-                    ReconcileReadyTag(trackedGame);
+                    ReconcileTasksAvailableTag(trackedGame);
                 }
                 catch (Exception exception)
                 {
                     logger.Error(
                         exception,
-                        $"Failed to reconcile Weekly Manager tags for game {trackedGame.GameId}.");
+                        $"Failed to reconcile Game Routines tags for game {trackedGame.GameId}.");
                 }
             }
         }
 
-        private void UpdateReadyTag(Guid gameId, bool shouldHaveTag)
+        private void UpdateTasksAvailableTag(Guid gameId, bool shouldHaveTag)
         {
             // Context-menu game objects can be older than the database object after an
             // earlier metadata update. Always re-fetch by authoritative Game.Id before
@@ -1082,14 +1210,14 @@ namespace WeeklyManager
             {
                 return;
             }
-            var readyTag = FindTag(ReadyTagName);
+            var tasksAvailableTag = FindTag(TasksAvailableTagName);
             var legacyWeekliesTag = FindTag(LegacyWeekliesTagName);
             var legacyReadyTag = FindTag(LegacyReadyTagName);
 
-            if (readyTag == null && shouldHaveTag)
+            if (tasksAvailableTag == null && shouldHaveTag)
             {
-                readyTag = PlayniteApi.Database.Tags.Add(
-                    ReadyTagName,
+                tasksAvailableTag = PlayniteApi.Database.Tags.Add(
+                    TasksAvailableTagName,
                     (existing, requestedName) => string.Equals(
                         existing.Name, requestedName, StringComparison.Ordinal));
             }
@@ -1108,14 +1236,16 @@ namespace WeeklyManager
                 changed |= updatedTagIds.RemoveAll(a => a == legacyReadyTag.Id) > 0;
             }
 
-            if (readyTag != null && shouldHaveTag && !updatedTagIds.Contains(readyTag.Id))
+            if (tasksAvailableTag != null &&
+                shouldHaveTag &&
+                !updatedTagIds.Contains(tasksAvailableTag.Id))
             {
-                updatedTagIds.Add(readyTag.Id);
+                updatedTagIds.Add(tasksAvailableTag.Id);
                 changed = true;
             }
-            else if (readyTag != null && !shouldHaveTag)
+            else if (tasksAvailableTag != null && !shouldHaveTag)
             {
-                changed |= updatedTagIds.RemoveAll(a => a == readyTag.Id) > 0;
+                changed |= updatedTagIds.RemoveAll(a => a == tasksAvailableTag.Id) > 0;
             }
 
             if (!changed)
@@ -1146,9 +1276,9 @@ namespace WeeklyManager
                 : trackedGame.CachedGameName;
         }
 
-        private static string GetUserFacingStateName(WeeklyState state)
+        private static string GetUserFacingStateName(TaskState state)
         {
-            return state == WeeklyState.COMPLETE ? "COMPLETE" : "INCOMPLETE";
+            return state == TaskState.COMPLETE ? "COMPLETE" : "INCOMPLETE";
         }
     }
 }

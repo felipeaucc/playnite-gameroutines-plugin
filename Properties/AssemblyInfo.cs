@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("WeeklyManager")]
-[assembly: AssemblyDescription("Manage recurring weekly game activities in Playnite.")]
+[assembly: AssemblyTitle("GameRoutines")]
+[assembly: AssemblyDescription("Manage recurring and persistent per-game tasks in Playnite.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Felipe Aucc")]
-[assembly: AssemblyProduct("Weekly Manager")]
+[assembly: AssemblyProduct("Game Routines")]
 [assembly: AssemblyCopyright("Copyright © 2026 Felipe Aucc")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

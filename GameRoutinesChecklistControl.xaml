@@ -1,10 +1,10 @@
-<playnite:PluginUserControl x:Class="WeeklyManager.WeeklyManagerChecklistControl"
+<playnite:PluginUserControl x:Class="GameRoutines.GameRoutinesChecklistControl"
                             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                            xmlns:local="clr-namespace:WeeklyManager"
+                            xmlns:local="clr-namespace:GameRoutines"
                             xmlns:playnite="clr-namespace:Playnite.SDK.Controls;assembly=Playnite.SDK">
     <playnite:PluginUserControl.Style>
-        <Style TargetType="{x:Type local:WeeklyManagerChecklistControl}">
+        <Style TargetType="{x:Type local:GameRoutinesChecklistControl}">
             <Setter Property="Visibility" Value="Collapsed" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsTracked}" Value="True">
@@ -14,5 +14,5 @@
         </Style>
     </playnite:PluginUserControl.Style>
 
-    <local:WeeklyChecklistView ShowOpenWindowButton="True" />
+    <local:GameChecklistView ShowOpenWindowButton="True" />
 </playnite:PluginUserControl>

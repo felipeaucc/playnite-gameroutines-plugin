@@ -6,11 +6,11 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows.Input;
 
-namespace WeeklyManager
+namespace GameRoutines
 {
     internal sealed class ManageChecklistViewModel : ObservableObject, IDisposable
     {
-        private readonly WeeklyManager plugin;
+        private readonly GameRoutines plugin;
         private readonly Guid gameId;
         private readonly ObservableCollection<ChecklistItemSettings> emptyChecklist =
             new ObservableCollection<ChecklistItemSettings>();
@@ -60,7 +60,7 @@ namespace WeeklyManager
 
         public RelayCommand<ChecklistItemSettings> MoveItemDownCommand { get; }
 
-        internal ManageChecklistViewModel(WeeklyManager plugin, Guid gameId)
+        internal ManageChecklistViewModel(GameRoutines plugin, Guid gameId)
         {
             this.plugin = plugin ?? throw new ArgumentNullException(nameof(plugin));
             this.gameId = gameId;
@@ -117,7 +117,7 @@ namespace WeeklyManager
             }
         }
 
-        private void Plugin_UiStateChanged(object sender, WeeklyManagerUiStateChangedEventArgs args)
+        private void Plugin_UiStateChanged(object sender, GameRoutinesUiStateChangedEventArgs args)
         {
             if (args.Affects(gameId))
             {

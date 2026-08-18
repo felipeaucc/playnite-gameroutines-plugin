@@ -5,9 +5,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 
-namespace WeeklyManager
+namespace GameRoutines
 {
-    public partial class WeeklyManagerSettingsView : UserControl
+    public partial class GameRoutinesSettingsView : UserControl
     {
         private ScrollViewer trackedGamesScrollViewer;
         private DockPanel settingsFooterPanel;
@@ -15,7 +15,7 @@ namespace WeeklyManager
         private double approvedRemoveSelectedButtonHeight;
         private bool removeSelectedInFooter;
 
-        public WeeklyManagerSettingsView()
+        public GameRoutinesSettingsView()
         {
             InitializeComponent();
             Loaded += UserControl_Loaded;
@@ -29,7 +29,7 @@ namespace WeeklyManager
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            (DataContext as WeeklyManagerSettingsViewModel)?.RefreshLibraryGames();
+            (DataContext as GameRoutinesSettingsViewModel)?.RefreshLibraryGames();
             Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
             {
                 ApplySettingsFooterSpacing();
@@ -379,7 +379,7 @@ namespace WeeklyManager
         private void TimeTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (sender is TextBox textBox &&
-                WeeklyScheduleCalculator.TryNormalizeTimeInput(textBox.Text, out var normalizedValue) &&
+                ScheduleCalculator.TryNormalizeTimeInput(textBox.Text, out var normalizedValue) &&
                 string.Equals(textBox.Text, normalizedValue, StringComparison.Ordinal))
             {
                 textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateSource();
@@ -409,7 +409,7 @@ namespace WeeklyManager
             if (!(sender is TextBox textBox) ||
                 !e.SourceDataObject.GetDataPresent(DataFormats.UnicodeText, true) ||
                 !(e.SourceDataObject.GetData(DataFormats.UnicodeText, true) is string pastedText) ||
-                !WeeklyScheduleCalculator.TryNormalizeTimeInput(pastedText, out var normalizedValue))
+                !ScheduleCalculator.TryNormalizeTimeInput(pastedText, out var normalizedValue))
             {
                 e.CancelCommand();
                 return;
@@ -422,7 +422,7 @@ namespace WeeklyManager
 
         private static void CommitTimeTextBox(TextBox textBox)
         {
-            if (!WeeklyScheduleCalculator.TryNormalizeTimeInput(textBox.Text, out var normalizedValue))
+            if (!ScheduleCalculator.TryNormalizeTimeInput(textBox.Text, out var normalizedValue))
             {
                 normalizedValue = "00:00";
             }
@@ -484,9 +484,9 @@ namespace WeeklyManager
             textBox.CaretIndex = textBox.Text.Length;
         }
 
-        private WeeklyManagerSettingsViewModel GetViewModel()
+        private GameRoutinesSettingsViewModel GetViewModel()
         {
-            return DataContext as WeeklyManagerSettingsViewModel;
+            return DataContext as GameRoutinesSettingsViewModel;
         }
     }
 }

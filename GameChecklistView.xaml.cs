@@ -1,15 +1,15 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace WeeklyManager
+namespace GameRoutines
 {
-    public partial class WeeklyChecklistView : UserControl
+    public partial class GameChecklistView : UserControl
     {
         public static readonly DependencyProperty ShowOpenWindowButtonProperty =
             DependencyProperty.Register(
                 nameof(ShowOpenWindowButton),
                 typeof(bool),
-                typeof(WeeklyChecklistView),
+                typeof(GameChecklistView),
                 new PropertyMetadata(false));
 
         public bool ShowOpenWindowButton
@@ -18,7 +18,7 @@ namespace WeeklyManager
             set => SetValue(ShowOpenWindowButtonProperty, value);
         }
 
-        public WeeklyChecklistView()
+        public GameChecklistView()
         {
             InitializeComponent();
         }

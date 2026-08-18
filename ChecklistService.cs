@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
-namespace WeeklyManager
+namespace GameRoutines
 {
     public struct ChecklistProgress
     {

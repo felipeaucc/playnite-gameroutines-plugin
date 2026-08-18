@@ -2,14 +2,14 @@ using Playnite.SDK.Controls;
 using Playnite.SDK.Models;
 using System;
 
-namespace WeeklyManager
+namespace GameRoutines
 {
-    public partial class WeeklyManagerChecklistControl : PluginUserControl
+    public partial class GameRoutinesStateToggleControl : PluginUserControl
     {
-        private readonly WeeklyManager plugin;
-        private WeeklyChecklistViewModel viewModel;
+        private readonly GameRoutines plugin;
+        private GameTaskStateViewModel viewModel;
 
-        internal WeeklyManagerChecklistControl(WeeklyManager plugin)
+        internal GameRoutinesStateToggleControl(GameRoutines plugin)
         {
             this.plugin = plugin ?? throw new ArgumentNullException(nameof(plugin));
             InitializeComponent();
@@ -24,12 +24,6 @@ namespace WeeklyManager
 
         private void BindGame(Game game)
         {
-            if (viewModel != null && game != null && viewModel.TrackedGame?.GameId == game.Id)
-            {
-                viewModel.RefreshStatus();
-                return;
-            }
-
             DisposeViewModel();
             if (game == null)
             {
@@ -37,7 +31,7 @@ namespace WeeklyManager
                 return;
             }
 
-            viewModel = new WeeklyChecklistViewModel(plugin, game.Id);
+            viewModel = new GameTaskStateViewModel(plugin, game.Id);
             DataContext = viewModel;
         }
 

@@ -7,8 +7,8 @@
     <ProjectGuid>{4FDF1E89-5BC3-4C72-8FDA-0D580E7A5D5F}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WeeklyManager</RootNamespace>
-    <AssemblyName>WeeklyManager</AssemblyName>
+    <RootNamespace>GameRoutines</RootNamespace>
+    <AssemblyName>GameRoutines</AssemblyName>
     <TargetFrameworkIdentifier>.NETFramework</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -50,22 +50,22 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ChecklistService.cs" />
-    <Compile Include="WeeklyManager.cs" />
-    <Compile Include="WeeklyManagerUiStateChangedEventArgs.cs" />
-    <Compile Include="WeeklyGameStateViewModel.cs" />
-    <Compile Include="WeeklyScheduleCalculator.cs" />
-    <Compile Include="WeeklyChecklistViewModel.cs" />
-    <Compile Include="WeeklyChecklistView.xaml.cs">
-      <DependentUpon>WeeklyChecklistView.xaml</DependentUpon>
+    <Compile Include="GameRoutines.cs" />
+    <Compile Include="GameRoutinesUiStateChangedEventArgs.cs" />
+    <Compile Include="GameTaskStateViewModel.cs" />
+    <Compile Include="ScheduleCalculator.cs" />
+    <Compile Include="GameChecklistViewModel.cs" />
+    <Compile Include="GameChecklistView.xaml.cs">
+      <DependentUpon>GameChecklistView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="WeeklyManagerChecklistControl.xaml.cs">
-      <DependentUpon>WeeklyManagerChecklistControl.xaml</DependentUpon>
+    <Compile Include="GameRoutinesChecklistControl.xaml.cs">
+      <DependentUpon>GameRoutinesChecklistControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="WeeklyManagerStateToggleControl.xaml.cs">
-      <DependentUpon>WeeklyManagerStateToggleControl.xaml</DependentUpon>
+    <Compile Include="GameRoutinesStateToggleControl.xaml.cs">
+      <DependentUpon>GameRoutinesStateToggleControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="WeeklyManagerIncompleteIndicatorControl.xaml.cs">
-      <DependentUpon>WeeklyManagerIncompleteIndicatorControl.xaml</DependentUpon>
+    <Compile Include="GameRoutinesIncompleteIndicatorControl.xaml.cs">
+      <DependentUpon>GameRoutinesIncompleteIndicatorControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="BlockedManualStateWarningView.xaml.cs">
       <DependentUpon>BlockedManualStateWarningView.xaml</DependentUpon>
@@ -74,9 +74,9 @@
     <Compile Include="ManageChecklistView.xaml.cs">
       <DependentUpon>ManageChecklistView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="WeeklyManagerSettings.cs" />
-    <Compile Include="WeeklyManagerSettingsView.xaml.cs">
-      <DependentUpon>WeeklyManagerSettingsView.xaml</DependentUpon>
+    <Compile Include="GameRoutinesSettings.cs" />
+    <Compile Include="GameRoutinesSettingsView.xaml.cs">
+      <DependentUpon>GameRoutinesSettingsView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -96,23 +96,23 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="WeeklyManagerSettingsView.xaml">
+    <Page Include="GameRoutinesSettingsView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="WeeklyChecklistView.xaml">
+    <Page Include="GameChecklistView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="WeeklyManagerChecklistControl.xaml">
+    <Page Include="GameRoutinesChecklistControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="WeeklyManagerStateToggleControl.xaml">
+    <Page Include="GameRoutinesStateToggleControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="WeeklyManagerIncompleteIndicatorControl.xaml">
+    <Page Include="GameRoutinesIncompleteIndicatorControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
