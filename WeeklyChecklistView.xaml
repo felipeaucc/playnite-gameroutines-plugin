@@ -1,6 +1,7 @@
 <UserControl x:Class="WeeklyManager.WeeklyChecklistView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:WeeklyManager"
              Foreground="{DynamicResource TextBrush}">
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -21,7 +22,7 @@
                    Margin="0,3,0,0"
                    FontSize="15"
                    Opacity="0.8"
-                   Text="Weekly Checklist" />
+                   Text="Checklist" />
 
         <Border Grid.Row="2"
                 Margin="0,14,0,0"
@@ -38,7 +39,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,0,12,4"
-                           Text="Current weekly state:" />
+                           Text="Task status:" />
                 <TextBlock Grid.Row="0" Grid.Column="1" Margin="0,0,0,4"
                            FontWeight="SemiBold"
                            Text="{Binding CurrentState}" />
@@ -97,11 +98,36 @@
             </Border>
         </Grid>
 
-        <Button Grid.Row="5"
-                Margin="0,12,0,0"
-                Padding="12,5"
-                HorizontalAlignment="Left"
-                Content="Reset Checklist"
-                Command="{Binding ResetChecklistCommand}" />
+        <StackPanel Grid.Row="5"
+                    Margin="0,12,0,0"
+                    HorizontalAlignment="Left"
+                    Orientation="Horizontal">
+            <Button Padding="12,5"
+                    Content="Reset Checklist"
+                    Command="{Binding ResetChecklistCommand}" />
+            <Button Margin="8,0,0,0"
+                    Padding="12,5"
+                    Content="Manage Checklist"
+                    Command="{Binding OpenManageChecklistWindowCommand}"
+                    ToolTip="Manage Checklist" />
+            <Button Margin="8,0,0,0"
+                    Padding="12,5"
+                    Content="Open Checklist Window"
+                    Command="{Binding OpenChecklistWindowCommand}"
+                    ToolTip="Open Checklist Window">
+                <Button.Style>
+                    <Style TargetType="{x:Type Button}"
+                           BasedOn="{StaticResource {x:Type Button}}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ShowOpenWindowButton, RelativeSource={RelativeSource AncestorType={x:Type local:WeeklyChecklistView}}}"
+                                         Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+        </StackPanel>
     </Grid>
 </UserControl>

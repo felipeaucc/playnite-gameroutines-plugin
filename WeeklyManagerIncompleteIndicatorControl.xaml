@@ -1,0 +1,35 @@
+<playnite:PluginUserControl x:Class="WeeklyManager.WeeklyManagerIncompleteIndicatorControl"
+                            xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                            xmlns:local="clr-namespace:WeeklyManager"
+                            xmlns:playnite="clr-namespace:Playnite.SDK.Controls;assembly=Playnite.SDK"
+                            IsHitTestVisible="False">
+    <playnite:PluginUserControl.Style>
+        <Style TargetType="{x:Type local:WeeklyManagerIncompleteIndicatorControl}">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsIncompleteIndicatorVisible}" Value="True">
+                    <Setter Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </playnite:PluginUserControl.Style>
+
+    <Grid>
+        <Border x:Name="IncompleteIndicatorLine"
+                Height="3"
+                Margin="12,0,12,0"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Top"
+                Background="#FF2C2C">
+            <Border.Effect>
+                <DropShadowEffect BlurRadius="8"
+                                  Color="#FF2C2C"
+                                  Direction="0"
+                                  Opacity="0.7"
+                                  RenderingBias="Quality"
+                                  ShadowDepth="0" />
+            </Border.Effect>
+        </Border>
+    </Grid>
+</playnite:PluginUserControl>

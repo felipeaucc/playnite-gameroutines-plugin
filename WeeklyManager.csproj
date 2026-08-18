@@ -51,10 +51,28 @@
   <ItemGroup>
     <Compile Include="ChecklistService.cs" />
     <Compile Include="WeeklyManager.cs" />
+    <Compile Include="WeeklyManagerUiStateChangedEventArgs.cs" />
+    <Compile Include="WeeklyGameStateViewModel.cs" />
     <Compile Include="WeeklyScheduleCalculator.cs" />
     <Compile Include="WeeklyChecklistViewModel.cs" />
     <Compile Include="WeeklyChecklistView.xaml.cs">
       <DependentUpon>WeeklyChecklistView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WeeklyManagerChecklistControl.xaml.cs">
+      <DependentUpon>WeeklyManagerChecklistControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WeeklyManagerStateToggleControl.xaml.cs">
+      <DependentUpon>WeeklyManagerStateToggleControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="WeeklyManagerIncompleteIndicatorControl.xaml.cs">
+      <DependentUpon>WeeklyManagerIncompleteIndicatorControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="BlockedManualStateWarningView.xaml.cs">
+      <DependentUpon>BlockedManualStateWarningView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ManageChecklistViewModel.cs" />
+    <Compile Include="ManageChecklistView.xaml.cs">
+      <DependentUpon>ManageChecklistView.xaml</DependentUpon>
     </Compile>
     <Compile Include="WeeklyManagerSettings.cs" />
     <Compile Include="WeeklyManagerSettingsView.xaml.cs">
@@ -83,6 +101,26 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="WeeklyChecklistView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WeeklyManagerChecklistControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WeeklyManagerStateToggleControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WeeklyManagerIncompleteIndicatorControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="BlockedManualStateWarningView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="ManageChecklistView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
