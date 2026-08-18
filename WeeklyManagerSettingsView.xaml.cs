@@ -2,21 +2,246 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace WeeklyManager
 {
     public partial class WeeklyManagerSettingsView : UserControl
     {
+        private ScrollViewer trackedGamesScrollViewer;
+        private DockPanel settingsFooterPanel;
+        private double removeSelectedInlineReservedHeight;
+        private double approvedRemoveSelectedButtonHeight;
+        private bool removeSelectedInFooter;
+
         public WeeklyManagerSettingsView()
         {
             InitializeComponent();
             Loaded += UserControl_Loaded;
+            Unloaded += UserControl_Unloaded;
+            TrackedGamesPane.SizeChanged += (sender, args) =>
+            {
+                UpdateTrackedGamesListMaximumHeight();
+                QueueRemoveSelectedPlacementUpdate();
+            };
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
             (DataContext as WeeklyManagerSettingsViewModel)?.RefreshLibraryGames();
+            Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+            {
+                ApplySettingsFooterSpacing();
+                InitializeTrackedGamesScrollViewer();
+                UpdateTrackedGamesListMaximumHeight();
+                UpdateRemoveSelectedPlacement();
+            }));
+        }
+
+        private void UserControl_Unloaded(object sender, RoutedEventArgs e)
+        {
+            if (trackedGamesScrollViewer != null)
+            {
+                trackedGamesScrollViewer.ScrollChanged -= TrackedGamesScrollViewer_ScrollChanged;
+                trackedGamesScrollViewer = null;
+            }
+
+            RestoreRemoveSelectedInline();
+        }
+
+        private void UpdateTrackedGamesListMaximumHeight()
+        {
+            if (removeSelectedInlineReservedHeight <= 0 &&
+                ReferenceEquals(RemoveSelectedButton.Parent, TrackedGamesStack))
+            {
+                removeSelectedInlineReservedHeight = GetRenderedHeight(RemoveSelectedButton);
+            }
+
+            var availableHeight = TrackedGamesPane.ActualHeight -
+                GetRenderedHeight(TrackedGamesHeader) -
+                removeSelectedInlineReservedHeight;
+            TrackedGamesList.MaxHeight = Math.Max(0, availableHeight);
+        }
+
+        private static double GetRenderedHeight(FrameworkElement element)
+        {
+            return element.ActualHeight + element.Margin.Top + element.Margin.Bottom;
+        }
+
+        private void ApplySettingsFooterSpacing()
+        {
+            var settingsWindow = Window.GetWindow(this);
+            if (settingsWindow == null)
+            {
+                return;
+            }
+
+            CaptureApprovedRemoveSelectedButtonHeight();
+
+            if (settingsWindow.FindName("ButtonOK") is Button saveButton)
+            {
+                saveButton.Margin = new Thickness(4, 4, 4, 16);
+                ApplyRemoveSelectedVisualStyle(saveButton);
+                MatchApprovedRemoveSelectedButtonHeight(saveButton);
+            }
+
+            if (settingsWindow.FindName("ButtonCancel") is Button cancelButton)
+            {
+                cancelButton.Margin = new Thickness(4, 4, 16, 16);
+                ApplyRemoveSelectedVisualStyle(cancelButton);
+                MatchApprovedRemoveSelectedButtonHeight(cancelButton);
+                settingsFooterPanel = cancelButton.Parent as DockPanel;
+            }
+        }
+
+        private void ApplyRemoveSelectedVisualStyle(Button button)
+        {
+            var normalButtonStyle = RemoveSelectedButton.Style ??
+                RemoveSelectedButton.TryFindResource(typeof(Button)) as Style;
+            if (normalButtonStyle != null)
+            {
+                button.Style = normalButtonStyle;
+            }
+        }
+
+        private void CaptureApprovedRemoveSelectedButtonHeight()
+        {
+            if (approvedRemoveSelectedButtonHeight > 0)
+            {
+                return;
+            }
+
+            approvedRemoveSelectedButtonHeight = RemoveSelectedButton.ActualHeight;
+            if (approvedRemoveSelectedButtonHeight <= 0)
+            {
+                RemoveSelectedButton.Measure(
+                    new Size(double.PositiveInfinity, double.PositiveInfinity));
+                approvedRemoveSelectedButtonHeight = RemoveSelectedButton.DesiredSize.Height;
+            }
+
+            if (approvedRemoveSelectedButtonHeight > 0)
+            {
+                RemoveSelectedButton.Height = approvedRemoveSelectedButtonHeight;
+            }
+        }
+
+        private void MatchApprovedRemoveSelectedButtonHeight(Button button)
+        {
+            if (approvedRemoveSelectedButtonHeight <= 0)
+            {
+                return;
+            }
+
+            button.Height = approvedRemoveSelectedButtonHeight;
+            button.Padding = RemoveSelectedButton.Padding;
+            button.VerticalContentAlignment = VerticalAlignment.Center;
+            button.ApplyTemplate();
+
+            var template = button.Template;
+            if (template != null &&
+                template.FindName("Border", button) is FrameworkElement buttonChrome)
+            {
+                buttonChrome.Height = approvedRemoveSelectedButtonHeight;
+            }
+        }
+
+        private void InitializeTrackedGamesScrollViewer()
+        {
+            if (trackedGamesScrollViewer != null)
+            {
+                return;
+            }
+
+            trackedGamesScrollViewer = FindVisualChild<ScrollViewer>(TrackedGamesList);
+            if (trackedGamesScrollViewer != null)
+            {
+                trackedGamesScrollViewer.ScrollChanged += TrackedGamesScrollViewer_ScrollChanged;
+            }
+        }
+
+        private void TrackedGamesScrollViewer_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            UpdateRemoveSelectedPlacement();
+        }
+
+        private void QueueRemoveSelectedPlacementUpdate()
+        {
+            Dispatcher.BeginInvoke(
+                DispatcherPriority.Loaded,
+                new Action(UpdateRemoveSelectedPlacement));
+        }
+
+        private void UpdateRemoveSelectedPlacement()
+        {
+            if (trackedGamesScrollViewer == null || settingsFooterPanel == null)
+            {
+                return;
+            }
+
+            var shouldUseFooter =
+                trackedGamesScrollViewer.ComputedVerticalScrollBarVisibility == Visibility.Visible;
+            if (shouldUseFooter == removeSelectedInFooter)
+            {
+                return;
+            }
+
+            if (shouldUseFooter)
+            {
+                TrackedGamesStack.Children.Remove(RemoveSelectedButton);
+                RemoveSelectedButton.DataContext = DataContext;
+                RemoveSelectedButton.Margin = new Thickness(10, 4, 4, 16);
+                RemoveSelectedButton.HorizontalAlignment = HorizontalAlignment.Left;
+                RemoveSelectedButton.VerticalAlignment = VerticalAlignment.Bottom;
+                DockPanel.SetDock(RemoveSelectedButton, Dock.Left);
+                settingsFooterPanel.Children.Add(RemoveSelectedButton);
+                removeSelectedInFooter = true;
+            }
+            else
+            {
+                RestoreRemoveSelectedInline();
+            }
+        }
+
+        private void RestoreRemoveSelectedInline()
+        {
+            if (!removeSelectedInFooter)
+            {
+                return;
+            }
+
+            settingsFooterPanel?.Children.Remove(RemoveSelectedButton);
+            RemoveSelectedButton.ClearValue(DataContextProperty);
+            RemoveSelectedButton.Margin = new Thickness(0, 8, 0, 0);
+            RemoveSelectedButton.HorizontalAlignment = HorizontalAlignment.Center;
+            RemoveSelectedButton.VerticalAlignment = VerticalAlignment.Stretch;
+            TrackedGamesStack.Children.Add(RemoveSelectedButton);
+            removeSelectedInFooter = false;
+        }
+
+        private static T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+        {
+            if (parent == null)
+            {
+                return null;
+            }
+
+            for (var index = 0; index < VisualTreeHelper.GetChildrenCount(parent); index++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, index);
+                if (child is T match)
+                {
+                    return match;
+                }
+
+                var descendant = FindVisualChild<T>(child);
+                if (descendant != null)
+                {
+                    return descendant;
+                }
+            }
+
+            return null;
         }
 
         private void GameSearchTextBox_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)

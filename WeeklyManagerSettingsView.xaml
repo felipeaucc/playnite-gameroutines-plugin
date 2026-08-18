@@ -9,28 +9,11 @@
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="12" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0"
-                   FontSize="18"
-                   FontWeight="SemiBold"
-                   Text="Weekly Manager" />
-
-        <StackPanel Grid.Row="1" Margin="0,12,0,0">
-            <CheckBox IsChecked="{Binding Settings.UseReadyTag}"
-                      Content="Show incomplete state using Playnite tag" />
-            <TextBlock Margin="22,4,0,0"
-                       Foreground="{DynamicResource TextBrush}"
-                       Opacity="0.75"
-                       Text="Adds the 'Weeklies Available!' tag to tracked games while their weekly activities are incomplete."
-                       TextWrapping="Wrap" />
-        </StackPanel>
-
-        <Grid Grid.Row="2" Margin="0,12,0,0">
+        <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -101,7 +84,7 @@
                     Content="Add game" />
         </Grid>
 
-        <Grid Grid.Row="4">
+        <Grid Grid.Row="2">
             <Border HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch">
                 <Border.Style>
@@ -139,19 +122,17 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-            <Grid Grid.Column="0">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <TextBlock Grid.Row="0"
+            <Grid x:Name="TrackedGamesPane" Grid.Column="0">
+                <StackPanel x:Name="TrackedGamesStack" VerticalAlignment="Top">
+                <TextBlock x:Name="TrackedGamesHeader"
                            Margin="0,0,0,6"
                            FontWeight="SemiBold"
                            Text="Tracked games" />
-                <ListBox Grid.Row="1"
-                         ItemsSource="{Binding TrackedGames}"
-                         SelectedItem="{Binding SelectedTrackedGame}">
+                <ListBox x:Name="TrackedGamesList"
+                          ItemsSource="{Binding TrackedGames}"
+                          SelectedItem="{Binding SelectedTrackedGame}"
+                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                          ScrollViewer.VerticalScrollBarVisibility="Auto">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Margin="2,4">
@@ -166,12 +147,13 @@
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
-                <Button Grid.Row="2"
+                <Button x:Name="RemoveSelectedButton"
                         Margin="0,8,0,0"
                         Padding="12,5"
-                        HorizontalAlignment="Left"
+                        HorizontalAlignment="Center"
                         Command="{Binding RemoveGameCommand}"
                         Content="Remove selected" />
+                </StackPanel>
             </Grid>
 
                 <Border Grid.Column="2"
@@ -180,9 +162,13 @@
                     BorderThickness="1"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch">
+                <ScrollViewer HorizontalAlignment="Stretch"
+                              VerticalAlignment="Stretch"
+                              VerticalScrollBarVisibility="Auto">
+                    <StackPanel>
                 <Grid DataContext="{Binding SelectedTrackedGame}"
-                      HorizontalAlignment="Stretch"
-                      VerticalAlignment="Stretch">
+                      MinHeight="160"
+                      HorizontalAlignment="Stretch">
                     <Border HorizontalAlignment="Stretch"
                             VerticalAlignment="Stretch"
                             Panel.ZIndex="1">
@@ -204,9 +190,6 @@
                                    TextWrapping="Wrap" />
                     </Border>
 
-                    <ScrollViewer HorizontalAlignment="Stretch"
-                                  VerticalAlignment="Stretch"
-                                  VerticalScrollBarVisibility="Auto">
                         <Grid>
                             <Grid.Style>
                                 <Style TargetType="Grid">
@@ -250,11 +233,24 @@
                                       IsChecked="{Binding Enabled}"
                                       Content="Enabled" />
 
-                            <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,10,10,0"
-                                       VerticalAlignment="Center" Text="Current state" />
-                            <TextBlock Grid.Row="2" Grid.Column="1" Margin="0,10,0,0"
-                                       VerticalAlignment="Center" FontWeight="SemiBold"
-                                       Text="{Binding DisplayState, Mode=OneWay}" />
+                            <Grid Grid.Row="2" Grid.ColumnSpan="2" Margin="0,10,0,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,0,10,0"
+                                           VerticalAlignment="Center" Text="Task status" />
+                                <TextBlock Grid.Row="0" Grid.Column="1"
+                                           VerticalAlignment="Center" FontWeight="SemiBold"
+                                           Text="{Binding DisplayState, Mode=OneWay}" />
+                                <CheckBox Grid.Row="1" Grid.Column="1" Margin="0,8,0,0"
+                                          IsChecked="{Binding ShowIncompleteCoverIndicator, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          Content="Show incomplete cover indicator for this game" />
+                            </Grid>
 
                             <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,10,10,0"
                                        VerticalAlignment="Center" Text="Weekly reset day" />
@@ -342,11 +338,11 @@
                             <StackPanel Grid.Row="12" Grid.ColumnSpan="2">
                                 <TextBlock FontSize="15"
                                            FontWeight="SemiBold"
-                                           Text="Weekly checklist" />
+                                           Text="Checklist" />
                                 <CheckBox Margin="0,8,0,0"
                                           IsChecked="{Binding AutomaticallyCompleteFromChecklist, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                           Click="ChecklistAutoCompletionCheckBox_Click"
-                                          Content="Automatically mark weekly complete when checklist is finished" />
+                                          Content="Automatically mark the game tasks as COMPLETE when checklist is finished" />
                                 <TextBlock Margin="22,3,0,8"
                                            Opacity="0.7"
                                            Text="With automatic completion enabled, an empty checklist counts as complete."
@@ -458,11 +454,65 @@
                                            Foreground="{DynamicResource TextBrush}"
                                            Opacity="0.75"
                                            TextWrapping="Wrap"
-                                           Text="Use a game's Weekly Manager context menu to mark it INCOMPLETE or COMPLETE. Reset and custom reminder times use the local timezone." />
+                                           Text="Use the Weekly Manager controls in supported themes or the game context menu to mark the game tasks COMPLETE or INCOMPLETE. Reset and custom reminder times use the local timezone." />
                             </StackPanel>
                         </Grid>
-                    </ScrollViewer>
                 </Grid>
+
+                <StackPanel Margin="0,20,0,0">
+                    <TextBlock Margin="0,0,0,7"
+                               FontWeight="SemiBold"
+                               Text="General options" />
+                    <CheckBox VerticalContentAlignment="Top"
+                              IsChecked="{Binding Settings.UseReadyTag}">
+                        <StackPanel>
+                            <TextBlock Text="Show incomplete state using Playnite tag"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Margin="0,3,0,0"
+                                       FontSize="{DynamicResource FontSizeSmall}"
+                                       Foreground="{DynamicResource TextBrush}"
+                                       LineHeight="18"
+                                       LineStackingStrategy="BlockLineHeight"
+                                       Opacity="0.75"
+                                       Text="Adds the 'Tasks Available!' tag to tracked games while their tasks are incomplete."
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </CheckBox>
+                    <CheckBox Margin="0,10,0,0"
+                              VerticalContentAlignment="Top"
+                              IsChecked="{Binding Settings.ShowIncompleteCoverIndicator, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        <StackPanel>
+                            <TextBlock Text="Show incomplete cover indicator in supported themes"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Margin="0,3,0,0"
+                                       FontSize="{DynamicResource FontSizeSmall}"
+                                       Foreground="{DynamicResource TextBrush}"
+                                       LineHeight="18"
+                                       LineStackingStrategy="BlockLineHeight"
+                                       Opacity="0.75"
+                                       Text="Shows a red indicator on the cover for tracked games whose tasks are INCOMPLETE. If disabled, indicators are hidden for all games regardless of each game's individual setting."
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </CheckBox>
+                    <CheckBox Margin="0,10,0,0"
+                              VerticalContentAlignment="Top"
+                              IsChecked="{Binding Settings.ShowBlockedManualStateWarning}">
+                        <StackPanel>
+                            <TextBlock Text="Show warning when manual status changes are blocked"
+                                       TextWrapping="Wrap" />
+                            <TextBlock Margin="0,3,0,0"
+                                       FontSize="{DynamicResource FontSizeSmall}"
+                                       Foreground="{DynamicResource TextBrush}"
+                                       LineHeight="18"
+                                       LineStackingStrategy="BlockLineHeight"
+                                       Opacity="0.75"
+                                       Text="Shows an explanation when automatic checklist completion blocks a manual status change."
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </CheckBox>
+                </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
                 </Border>
             </Grid>
         </Grid>

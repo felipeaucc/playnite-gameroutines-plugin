@@ -14,18 +14,27 @@ namespace WeeklyManager
     public class WeeklyManager : GenericPlugin
     {
         private static readonly ILogger logger = LogManager.GetLogger();
-        private const string ReadyTagName = "Weeklies Available!";
+        private const string ReadyTagName = "Tasks Available!";
+        private const string LegacyWeekliesTagName = "Weeklies Available!";
         private const string LegacyReadyTagName = "WEEKLY READY";
+        private const string CustomElementSourceName = "WeeklyManager";
+        private const string AutomaticCompletionWarningTitle = "Automatic Completion Enabled";
+        internal const string ChecklistElementName = "Checklist";
+        internal const string StateToggleElementName = "StateToggle";
+        internal const string IncompleteIndicatorElementName = "IncompleteIndicator";
         private static readonly TimeSpan SchedulerInterval = TimeSpan.FromMinutes(1);
 
         private readonly WeeklyManagerSettingsViewModel settings;
         private readonly HashSet<Guid> loggedMissingGameIds = new HashSet<Guid>();
         private readonly Dictionary<Guid, Window> openChecklistWindows = new Dictionary<Guid, Window>();
+        private readonly Dictionary<Guid, Window> openManageChecklistWindows = new Dictionary<Guid, Window>();
         private DispatcherTimer schedulerTimer;
         private bool isProcessingSchedules;
         private bool isSettingsEditing;
 
         internal new IPlayniteAPI PlayniteApi { get; }
+
+        internal event EventHandler<WeeklyManagerUiStateChangedEventArgs> UiStateChanged;
 
         public override Guid Id { get; } = Guid.Parse("cb076ecb-ea40-4036-8094-f1c554566b49");
 
@@ -38,6 +47,17 @@ namespace WeeklyManager
                 HasSettings = true
             };
 
+            AddCustomElementSupport(new AddCustomElementSupportArgs
+            {
+                SourceName = CustomElementSourceName,
+                ElementList = new List<string>
+                {
+                    ChecklistElementName,
+                    StateToggleElementName,
+                    IncompleteIndicatorElementName
+                }
+            });
+
             logger.Info($"Weekly Manager initialized. Loaded {settings.TrackedGames.Count} tracked game(s).");
         }
 
@@ -49,6 +69,21 @@ namespace WeeklyManager
         public override UserControl GetSettingsView(bool firstRunSettings)
         {
             return new WeeklyManagerSettingsView();
+        }
+
+        public override Control GetGameViewControl(GetGameViewControlArgs args)
+        {
+            switch (args?.Name)
+            {
+                case ChecklistElementName:
+                    return new WeeklyManagerChecklistControl(this);
+                case StateToggleElementName:
+                    return new WeeklyManagerStateToggleControl(this);
+                case IncompleteIndicatorElementName:
+                    return new WeeklyManagerIncompleteIndicatorControl(this);
+                default:
+                    return null;
+            }
         }
 
         public override void OnApplicationStarted(OnApplicationStartedEventArgs args)
@@ -97,14 +132,14 @@ namespace WeeklyManager
                 yield return new GameMenuItem
                 {
                     MenuSection = "Weekly Manager",
-                    Description = "Mark Weekly Complete",
+                    Description = "Mark Tasks Complete",
                     Action = actionArgs => SetSelectedGamesState(actionArgs.Games, WeeklyState.COMPLETE)
                 };
 
                 yield return new GameMenuItem
                 {
                     MenuSection = "Weekly Manager",
-                    Description = "Mark Weekly Incomplete",
+                    Description = "Mark Tasks Incomplete",
                     Action = actionArgs => SetSelectedGamesState(actionArgs.Games, WeeklyState.READY)
                 };
 
@@ -135,6 +170,11 @@ namespace WeeklyManager
             }
         }
 
+        internal void NotifyUiStateChanged(Guid? gameId = null)
+        {
+            UiStateChanged?.Invoke(this, new WeeklyManagerUiStateChangedEventArgs(gameId));
+        }
+
         internal bool IsGameTracked(Guid gameId)
         {
             return settings.TrackedGames.Any(a => a.GameId == gameId);
@@ -149,6 +189,15 @@ namespace WeeklyManager
         internal TrackedGameSettings GetTrackedGameSettings(Guid gameId)
         {
             return FindTrackedGame(gameId);
+        }
+
+        internal bool ShouldShowIncompleteCoverIndicator(Guid gameId)
+        {
+            var trackedGame = FindTrackedGame(gameId);
+            return trackedGame != null &&
+                   trackedGame.CurrentState == WeeklyState.READY &&
+                   settings.Settings.ShowIncompleteCoverIndicator &&
+                   trackedGame.ShowIncompleteCoverIndicator;
         }
 
         internal bool MarkTrackedGameComplete(Guid gameId)
@@ -203,6 +252,11 @@ namespace WeeklyManager
             return true;
         }
 
+        internal bool AddChecklistItem(Guid gameId, string text)
+        {
+            return AddChecklistItem(FindTrackedGame(gameId), text, true);
+        }
+
         internal bool EditChecklistItem(
             TrackedGameSettings trackedGame,
             Guid itemId,
@@ -218,6 +272,11 @@ namespace WeeklyManager
             return true;
         }
 
+        internal bool EditChecklistItem(Guid gameId, Guid itemId, string text)
+        {
+            return EditChecklistItem(FindTrackedGame(gameId), itemId, text, true);
+        }
+
         internal bool DeleteChecklistItem(
             TrackedGameSettings trackedGame,
             Guid itemId,
@@ -230,6 +289,11 @@ namespace WeeklyManager
 
             CompleteChecklistMutation(trackedGame, persistChanges, "checklist item deleted");
             return true;
+        }
+
+        internal bool DeleteChecklistItem(Guid gameId, Guid itemId)
+        {
+            return DeleteChecklistItem(FindTrackedGame(gameId), itemId, true);
         }
 
         internal bool MoveChecklistItem(
@@ -251,6 +315,11 @@ namespace WeeklyManager
             return true;
         }
 
+        internal bool MoveChecklistItem(Guid gameId, Guid itemId, int offset)
+        {
+            return MoveChecklistItem(FindTrackedGame(gameId), itemId, offset, true);
+        }
+
         internal void ChecklistItemStateChanged(
             TrackedGameSettings trackedGame,
             bool persistChanges)
@@ -263,6 +332,20 @@ namespace WeeklyManager
             bool persistChanges)
         {
             CompleteChecklistMutation(trackedGame, persistChanges, "checklist auto-completion setting changed");
+        }
+
+        internal bool SetChecklistAutoCompletion(Guid gameId, bool enabled)
+        {
+            var trackedGame = FindTrackedGame(gameId);
+            if (trackedGame == null ||
+                trackedGame.AutomaticallyCompleteFromChecklist == enabled)
+            {
+                return false;
+            }
+
+            trackedGame.AutomaticallyCompleteFromChecklist = enabled;
+            ChecklistAutoCompletionChanged(trackedGame, true);
+            return true;
         }
 
         internal bool ResetChecklist(
@@ -351,6 +434,13 @@ namespace WeeklyManager
                     openChecklistWindows[removedGameId].Close();
                 }
 
+                foreach (var removedGameId in openManageChecklistWindows.Keys
+                    .Where(a => !currentById.ContainsKey(a))
+                    .ToList())
+                {
+                    openManageChecklistWindows[removedGameId].Close();
+                }
+
                 if (previous?.TrackedGames != null)
                 {
                     foreach (var oldGame in previous.TrackedGames)
@@ -368,6 +458,7 @@ namespace WeeklyManager
                 }
 
                 ProcessDueEvents();
+                NotifyUiStateChanged();
             }
             catch (Exception exception)
             {
@@ -413,7 +504,7 @@ namespace WeeklyManager
             }
         }
 
-        private void OpenChecklistWindow(Guid gameId)
+        internal void OpenChecklistWindow(Guid gameId)
         {
             try
             {
@@ -440,7 +531,7 @@ namespace WeeklyManager
                     ShowMaximizeButton = true,
                     ShowMinimizeButton = true
                 });
-                window.Title = $"Weekly Checklist - {viewModel.GameName}";
+                window.Title = "Checklist";
                 window.Width = 540;
                 window.Height = 620;
                 window.MinWidth = 420;
@@ -479,6 +570,72 @@ namespace WeeklyManager
             }
         }
 
+        internal void OpenManageChecklistWindow(Guid gameId)
+        {
+            try
+            {
+                if (!IsGameTracked(gameId))
+                {
+                    return;
+                }
+
+                if (openManageChecklistWindows.TryGetValue(gameId, out var existingWindow))
+                {
+                    if (existingWindow.WindowState == WindowState.Minimized)
+                    {
+                        existingWindow.WindowState = WindowState.Normal;
+                    }
+
+                    existingWindow.Activate();
+                    return;
+                }
+
+                var viewModel = new ManageChecklistViewModel(this, gameId);
+                var window = PlayniteApi.Dialogs.CreateWindow(new WindowCreationOptions
+                {
+                    ShowCloseButton = true,
+                    ShowMaximizeButton = true,
+                    ShowMinimizeButton = true
+                });
+                window.Title = "Manage Checklist";
+                window.Width = 620;
+                window.Height = 560;
+                window.MinWidth = 480;
+                window.MinHeight = 340;
+                window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                var owner = PlayniteApi.Dialogs.GetCurrentAppWindow();
+                if (owner != null && !ReferenceEquals(owner, window))
+                {
+                    window.Owner = owner;
+                }
+
+                window.Content = new ManageChecklistView
+                {
+                    DataContext = viewModel
+                };
+                window.Closed += (sender, args) =>
+                {
+                    if (openManageChecklistWindows.TryGetValue(gameId, out var registeredWindow) &&
+                        ReferenceEquals(registeredWindow, window))
+                    {
+                        openManageChecklistWindows.Remove(gameId);
+                    }
+
+                    viewModel.Dispose();
+                };
+
+                openManageChecklistWindows[gameId] = window;
+                window.Show();
+            }
+            catch (Exception exception)
+            {
+                logger.Error(exception, $"Failed to open checklist management window for game {gameId}.");
+                PlayniteApi.Dialogs.ShowErrorMessage(
+                    "Weekly Manager could not open checklist management. See the Playnite log for details.",
+                    "Weekly Manager");
+            }
+        }
+
         private void CloseChecklistWindows()
         {
             foreach (var window in openChecklistWindows.Values.ToList())
@@ -487,6 +644,13 @@ namespace WeeklyManager
             }
 
             openChecklistWindows.Clear();
+
+            foreach (var window in openManageChecklistWindows.Values.ToList())
+            {
+                window.Close();
+            }
+
+            openManageChecklistWindows.Clear();
         }
 
         private void ProcessDueEvents()
@@ -693,6 +857,7 @@ namespace WeeklyManager
             {
                 var trackedById = settings.TrackedGames.ToDictionary(a => a.GameId);
                 var changedGames = new List<TrackedGameSettings>();
+                var wasBlocked = false;
                 foreach (var gameId in (gameIds ?? Enumerable.Empty<Guid>()).Distinct())
                 {
                     if (!trackedById.TryGetValue(gameId, out var trackedGame))
@@ -700,11 +865,19 @@ namespace WeeklyManager
                         continue;
                     }
 
+                    if (trackedGame.AutomaticallyCompleteFromChecklist)
+                    {
+                        wasBlocked = true;
+                        continue;
+                    }
+
                     ApplyWeeklyState(trackedGame, newState, false, "manual state change");
-                    ReconcileChecklistDrivenState(
-                        trackedGame,
-                        "manual state change checklist reconciliation");
                     changedGames.Add(trackedGame);
+                }
+
+                if (wasBlocked)
+                {
+                    ShowAutomaticCompletionWarning();
                 }
 
                 if (changedGames.Count > 0)
@@ -723,6 +896,48 @@ namespace WeeklyManager
                     "Weekly Manager could not update the selected game(s). See the Playnite log for details.",
                     "Weekly Manager");
                 return false;
+            }
+        }
+
+        private void ShowAutomaticCompletionWarning()
+        {
+            if (!settings.Settings.ShowBlockedManualStateWarning)
+            {
+                return;
+            }
+
+            try
+            {
+                var warningView = new BlockedManualStateWarningView();
+                var window = PlayniteApi.Dialogs.CreateWindow(new WindowCreationOptions
+                {
+                    ShowCloseButton = true,
+                    ShowMaximizeButton = false,
+                    ShowMinimizeButton = false
+                });
+                window.Title = AutomaticCompletionWarningTitle;
+                window.Width = 500;
+                window.SizeToContent = SizeToContent.Height;
+                window.ResizeMode = ResizeMode.NoResize;
+                window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                var owner = PlayniteApi.Dialogs.GetCurrentAppWindow();
+                if (owner != null && !ReferenceEquals(owner, window))
+                {
+                    window.Owner = owner;
+                }
+
+                window.Content = warningView;
+                window.ShowDialog();
+
+                if (warningView.DontShowAgain)
+                {
+                    settings.Settings.ShowBlockedManualStateWarning = false;
+                    SavePluginSettings(settings.Settings);
+                }
+            }
+            catch (Exception exception)
+            {
+                logger.Error(exception, "Failed to show the blocked manual status warning.");
             }
         }
 
@@ -824,6 +1039,11 @@ namespace WeeklyManager
             {
                 ReconcileReadyTag(trackedGame);
             }
+
+            foreach (var trackedGame in affectedGames)
+            {
+                NotifyUiStateChanged(trackedGame.GameId);
+            }
         }
 
         private void ReconcileReadyTag(TrackedGameSettings trackedGame)
@@ -863,6 +1083,7 @@ namespace WeeklyManager
                 return;
             }
             var readyTag = FindTag(ReadyTagName);
+            var legacyWeekliesTag = FindTag(LegacyWeekliesTagName);
             var legacyReadyTag = FindTag(LegacyReadyTagName);
 
             if (readyTag == null && shouldHaveTag)
@@ -876,6 +1097,11 @@ namespace WeeklyManager
             var tagIds = game.TagIds ?? new List<Guid>();
             var updatedTagIds = new List<Guid>(tagIds);
             var changed = false;
+
+            if (legacyWeekliesTag != null)
+            {
+                changed |= updatedTagIds.RemoveAll(a => a == legacyWeekliesTag.Id) > 0;
+            }
 
             if (legacyReadyTag != null)
             {

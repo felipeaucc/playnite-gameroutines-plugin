@@ -1,0 +1,128 @@
+<playnite:PluginUserControl x:Class="WeeklyManager.WeeklyManagerStateToggleControl"
+                            xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                            xmlns:local="clr-namespace:WeeklyManager"
+                            xmlns:playnite="clr-namespace:Playnite.SDK.Controls;assembly=Playnite.SDK"
+                            Width="60"
+                            VerticalAlignment="Bottom">
+    <playnite:PluginUserControl.Style>
+        <Style TargetType="{x:Type local:WeeklyManagerStateToggleControl}">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsTracked}" Value="True">
+                    <Setter Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </playnite:PluginUserControl.Style>
+
+    <Border x:Name="TasksControls"
+            MinHeight="58"
+            Style="{DynamicResource ActionControlPanel}"
+            ToolTip="{Binding ToggleToolTip}">
+        <StackPanel VerticalAlignment="Bottom">
+            <Border Margin="0,0,0,12"
+                    Padding="0,0,0,12"
+                    BorderBrush="{DynamicResource PopupSeparatorBrush}"
+                    BorderThickness="0,0,0,1">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ElementName=TasksControls, Path=IsMouseOver}"
+                                         Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+
+                <ToggleButton Width="20"
+                              Height="20"
+                              HorizontalAlignment="Center"
+                              Focusable="False"
+                              ClipToBounds="False"
+                              Background="Transparent"
+                              BorderThickness="0"
+                              IsChecked="{Binding IsAutomaticCompletionEnabled, Mode=OneWay}"
+                              Command="{Binding ToggleAutomaticCompletionCommand}"
+                              ToolTip="{Binding AutomaticCompletionToolTip}">
+                    <ToggleButton.Template>
+                        <ControlTemplate TargetType="{x:Type ToggleButton}">
+                            <Border Background="Transparent" ClipToBounds="False">
+                                <Canvas Width="20" Height="20" ClipToBounds="False">
+                                    <Viewbox Width="18"
+                                             Height="18"
+                                             Canvas.Left="0"
+                                             Canvas.Top="1">
+                                        <TextBlock x:Name="RepeatIcon"
+                                                   Text="&#xE895;"
+                                                   Foreground="{DynamicResource ControlHoverBorderBrush}"
+                                                   Style="{DynamicResource IconFontStyle}" />
+                                    </Viewbox>
+                                    <Border Width="12"
+                                            Height="12"
+                                            Canvas.Left="12"
+                                            Canvas.Top="16"
+                                            ClipToBounds="False"
+                                            Background="{DynamicResource ControlBackgroundBrush}"
+                                            CornerRadius="6">
+                                        <Grid ClipToBounds="False">
+                                            <Viewbox Width="8"
+                                                     Height="8"
+                                                     HorizontalAlignment="Center"
+                                                     VerticalAlignment="Center"
+                                                     ClipToBounds="False">
+                                                <Path x:Name="AutomaticCompletionOffIcon"
+                                                      Data="M1,1 L7,7 M7,1 L1,7"
+                                                      Stroke="#80FFFFFF"
+                                                      StrokeEndLineCap="Round"
+                                                      StrokeStartLineCap="Round"
+                                                      StrokeThickness="1.1" />
+                                            </Viewbox>
+                                            <Viewbox Width="11"
+                                                     Height="11"
+                                                     HorizontalAlignment="Center"
+                                                     VerticalAlignment="Center"
+                                                     ClipToBounds="False">
+                                                <TextBlock x:Name="AutomaticCompletionOnIcon"
+                                                           Text="&#xE73E;"
+                                                           FontWeight="Normal"
+                                                           Foreground="{DynamicResource ControlHoverBorderBrush}"
+                                                           Style="{DynamicResource IconFontStyle}"
+                                                           Visibility="Collapsed" />
+                                            </Viewbox>
+                                        </Grid>
+                                    </Border>
+                                </Canvas>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True">
+                                    <Setter TargetName="AutomaticCompletionOffIcon"
+                                            Property="Visibility"
+                                            Value="Collapsed" />
+                                    <Setter TargetName="AutomaticCompletionOnIcon"
+                                            Property="Visibility"
+                                            Value="Visible" />
+                                </Trigger>
+                                <Trigger Property="IsPressed" Value="True">
+                                    <Setter Property="Opacity" Value="0.65" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </ToggleButton.Template>
+                </ToggleButton>
+            </Border>
+
+            <ToggleButton HorizontalAlignment="Center"
+                          Focusable="False"
+                          IsChecked="{Binding IsComplete, Mode=OneWay}"
+                          Command="{Binding ToggleStateCommand}"
+                          Style="{DynamicResource SwitcherToggleButton}"
+                          ToolTip="{Binding ToggleToolTip}" />
+            <TextBlock Margin="0,8,0,0"
+                       Style="{DynamicResource ActionControlLabelStyle}"
+                       Text="{Binding StateText}" />
+        </StackPanel>
+    </Border>
+</playnite:PluginUserControl>

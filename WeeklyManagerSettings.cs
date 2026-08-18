@@ -4,6 +4,7 @@ using Playnite.SDK.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows.Input;
 
@@ -79,6 +80,7 @@ namespace WeeklyManager
             new ObservableCollection<ChecklistItemSettings>();
         private bool automaticallyCompleteFromChecklist;
         private bool completedAutomaticallyByChecklist;
+        private bool showIncompleteCoverIndicator = true;
 
         public Guid GameId
         {
@@ -221,6 +223,12 @@ namespace WeeklyManager
             set => SetValue(ref completedAutomaticallyByChecklist, value);
         }
 
+        public bool ShowIncompleteCoverIndicator
+        {
+            get => showIncompleteCoverIndicator;
+            set => SetValue(ref showIncompleteCoverIndicator, value);
+        }
+
         private static string NormalizeTime(string value)
         {
             return WeeklyScheduleCalculator.TryNormalizeTimeInput(value, out var normalizedValue)
@@ -232,6 +240,8 @@ namespace WeeklyManager
     public class WeeklyManagerSettings : ObservableObject
     {
         private bool useReadyTag;
+        private bool showBlockedManualStateWarning = true;
+        private bool showIncompleteCoverIndicator = true;
         private ObservableCollection<TrackedGameSettings> trackedGames =
             new ObservableCollection<TrackedGameSettings>();
 
@@ -239,6 +249,18 @@ namespace WeeklyManager
         {
             get => useReadyTag;
             set => SetValue(ref useReadyTag, value);
+        }
+
+        public bool ShowBlockedManualStateWarning
+        {
+            get => showBlockedManualStateWarning;
+            set => SetValue(ref showBlockedManualStateWarning, value);
+        }
+
+        public bool ShowIncompleteCoverIndicator
+        {
+            get => showIncompleteCoverIndicator;
+            set => SetValue(ref showIncompleteCoverIndicator, value);
         }
 
         public ObservableCollection<TrackedGameSettings> TrackedGames
@@ -275,7 +297,13 @@ namespace WeeklyManager
             get => settings;
             set
             {
+                if (settings != null)
+                {
+                    settings.PropertyChanged -= Settings_PropertyChanged;
+                }
+
                 settings = value ?? new WeeklyManagerSettings();
+                settings.PropertyChanged += Settings_PropertyChanged;
                 EnsureCollections();
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(TrackedGames));
@@ -435,6 +463,7 @@ namespace WeeklyManager
             editingClone = null;
             SelectedTrackedGame = null;
             plugin.SetSettingsEditing(false);
+            plugin.NotifyUiStateChanged();
             RefreshLibraryGames();
         }
 
@@ -644,6 +673,7 @@ namespace WeeklyManager
                 GameId = selected.Id,
                 CachedGameName = selected.Name,
                 Enabled = true,
+                ShowIncompleteCoverIndicator = true,
                 CurrentState = WeeklyState.READY,
                 LastResetProcessedLocal = WeeklyScheduleCalculator.GetMostRecentOccurrence(
                     now, DayOfWeek.Monday, TimeSpan.Zero),
@@ -654,6 +684,17 @@ namespace WeeklyManager
             TrackedGames.Add(trackedGame);
             SelectedTrackedGame = trackedGame;
             RefreshLibraryGames();
+        }
+
+        private void Settings_PropertyChanged(object sender, PropertyChangedEventArgs args)
+        {
+            if (string.Equals(
+                    args.PropertyName,
+                    nameof(WeeklyManagerSettings.ShowIncompleteCoverIndicator),
+                    StringComparison.Ordinal))
+            {
+                plugin.NotifyUiStateChanged();
+            }
         }
 
         private void RemoveSelectedGame()

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Windows.Input;
 
 namespace WeeklyManager
 {
@@ -11,14 +12,24 @@ namespace WeeklyManager
     {
         private readonly WeeklyManager plugin;
         private readonly Guid gameId;
-        private readonly TrackedGameSettings trackedGame;
+        private readonly ObservableCollection<ChecklistItemSettings> emptyChecklist =
+            new ObservableCollection<ChecklistItemSettings>();
+        private TrackedGameSettings trackedGame;
         private ObservableCollection<ChecklistItemSettings> subscribedChecklist;
+        private string gameName;
         private string currentState;
         private string progressText;
 
-        public string GameName { get; }
+        public string GameName
+        {
+            get => gameName;
+            private set => SetValue(ref gameName, value);
+        }
 
-        public ObservableCollection<ChecklistItemSettings> Items => trackedGame.Checklist;
+        public ObservableCollection<ChecklistItemSettings> Items =>
+            trackedGame?.Checklist ?? emptyChecklist;
+
+        public bool IsTracked => trackedGame != null;
 
         public string CurrentState
         {
@@ -36,35 +47,40 @@ namespace WeeklyManager
 
         public RelayCommand ResetChecklistCommand { get; }
 
+        public RelayCommand OpenChecklistWindowCommand { get; }
+
+        public RelayCommand OpenManageChecklistWindowCommand { get; }
+
+        internal TrackedGameSettings TrackedGame => trackedGame;
+
         internal WeeklyChecklistViewModel(WeeklyManager plugin, Guid gameId)
         {
             this.plugin = plugin ?? throw new ArgumentNullException(nameof(plugin));
             this.gameId = gameId;
-            trackedGame = plugin.GetTrackedGameSettings(gameId) ??
-                throw new ArgumentException("The game is not tracked by Weekly Manager.", nameof(gameId));
-
-            var game = plugin.PlayniteApi.Database.Games.Get(gameId);
-            GameName = !string.IsNullOrWhiteSpace(game?.Name)
-                ? game.Name
-                : trackedGame.CachedGameName ?? "Game";
 
             ToggleItemCommand = new RelayCommand<ChecklistItemSettings>(ToggleItem);
-            ResetChecklistCommand = new RelayCommand(ResetChecklist);
+            ResetChecklistCommand = new RelayCommand(ResetChecklist, () => IsTracked);
+            OpenChecklistWindowCommand = new RelayCommand(OpenChecklistWindow, () => IsTracked);
+            OpenManageChecklistWindowCommand = new RelayCommand(OpenManageChecklistWindow, () => IsTracked);
 
-            trackedGame.PropertyChanged += TrackedGame_PropertyChanged;
-            SubscribeToChecklist(trackedGame.Checklist);
-            RefreshStatus();
+            plugin.UiStateChanged += Plugin_UiStateChanged;
+            RebindTrackedGame();
         }
 
         public void Dispose()
         {
-            trackedGame.PropertyChanged -= TrackedGame_PropertyChanged;
+            plugin.UiStateChanged -= Plugin_UiStateChanged;
+            if (trackedGame != null)
+            {
+                trackedGame.PropertyChanged -= TrackedGame_PropertyChanged;
+            }
+
             SubscribeToChecklist(null);
         }
 
         private void ToggleItem(ChecklistItemSettings item)
         {
-            if (item == null || !Items.Contains(item))
+            if (trackedGame == null || item == null || !Items.Contains(item))
             {
                 return;
             }
@@ -76,6 +92,54 @@ namespace WeeklyManager
         private void ResetChecklist()
         {
             plugin.ResetChecklist(gameId, true);
+            RefreshStatus();
+        }
+
+        private void OpenChecklistWindow()
+        {
+            plugin.OpenChecklistWindow(gameId);
+        }
+
+        private void OpenManageChecklistWindow()
+        {
+            plugin.OpenManageChecklistWindow(gameId);
+        }
+
+        private void Plugin_UiStateChanged(object sender, WeeklyManagerUiStateChangedEventArgs args)
+        {
+            if (args.Affects(gameId))
+            {
+                RebindTrackedGame();
+            }
+        }
+
+        private void RebindTrackedGame()
+        {
+            var latestTrackedGame = plugin.GetTrackedGameSettings(gameId);
+            if (!ReferenceEquals(trackedGame, latestTrackedGame))
+            {
+                if (trackedGame != null)
+                {
+                    trackedGame.PropertyChanged -= TrackedGame_PropertyChanged;
+                }
+
+                SubscribeToChecklist(null);
+                trackedGame = latestTrackedGame;
+                if (trackedGame != null)
+                {
+                    trackedGame.PropertyChanged += TrackedGame_PropertyChanged;
+                    SubscribeToChecklist(trackedGame.Checklist);
+                }
+
+                OnPropertyChanged(nameof(Items));
+                OnPropertyChanged(nameof(IsTracked));
+                CommandManager.InvalidateRequerySuggested();
+            }
+
+            var game = plugin.PlayniteApi.Database.Games.Get(gameId);
+            GameName = !string.IsNullOrWhiteSpace(game?.Name)
+                ? game.Name
+                : trackedGame?.CachedGameName ?? "Game";
             RefreshStatus();
         }
 
@@ -159,9 +223,9 @@ namespace WeeklyManager
             }
         }
 
-        private void RefreshStatus()
+        internal void RefreshStatus()
         {
-            CurrentState = plugin.GetTrackedGameState(gameId) ?? "INCOMPLETE";
+            CurrentState = plugin.GetTrackedGameState(gameId) ?? string.Empty;
             var progress = plugin.GetChecklistProgress(gameId);
             ProgressText = $"{progress.Completed} / {progress.Total} completed";
         }
