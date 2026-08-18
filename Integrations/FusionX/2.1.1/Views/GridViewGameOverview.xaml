@@ -185,7 +185,7 @@
                                                             </Grid.RowDefinitions>
                                                             
                                                             <!--ImageCover-->
-                                                            <Grid x:Name="WeeklyManager_CoverReference" Grid.Column="2" Grid.RowSpan="2" Height="{Settings GameDetailsCoverHeight}" 
+                                                            <Grid x:Name="GameRoutines_CoverReference" Grid.Column="2" Grid.RowSpan="2" Height="{Settings GameDetailsCoverHeight}" 
                                                                   HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="16,0,0,0">
                                                                 <Grid.Style>
                                                                     <Style TargetType="Grid">
@@ -243,10 +243,10 @@
                                                                     </ContentControl.Style>
                                                                 </ContentControl>
                                                             </Grid>
-                                                            <ContentControl x:Name="WeeklyManager_IncompleteIndicator"
+                                                            <ContentControl x:Name="GameRoutines_IncompleteIndicator"
                                                                     Grid.Column="2" Grid.RowSpan="2"
-                                                                    Width="{Binding ElementName=WeeklyManager_CoverReference, Path=ActualWidth}"
-                                                                    Height="{Binding ElementName=WeeklyManager_CoverReference, Path=ActualHeight}"
+                                                                    Width="{Binding ElementName=GameRoutines_CoverReference, Path=ActualWidth}"
+                                                                    Height="{Binding ElementName=GameRoutines_CoverReference, Path=ActualHeight}"
                                                                     HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="16,0,0,0"
                                                                     HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
                                                                     IsHitTestVisible="False"
@@ -562,7 +562,7 @@
                                                                         <TextBlock Text="Video ON" Style="{DynamicResource ActionControlLabelStyle}" Margin="0,8,0,0" />
                                                                     </StackPanel>
                                                                 </Border>
-                                                                <ContentControl x:Name="WeeklyManager_StateToggle" DockPanel.Dock="Right"
+                                                                <ContentControl x:Name="GameRoutines_StateToggle" DockPanel.Dock="Right"
                                                                         Margin="8,0,0,0" VerticalAlignment="Bottom" VerticalContentAlignment="Bottom"
                                                                         Visibility="{Binding RelativeSource={RelativeSource Self}, Path=Content.Visibility, FallbackValue=Collapsed, TargetNullValue=Collapsed}" />
                                                                 <ContentControl x:Name="DuplicateHider_ContentControl1" DockPanel.Dock="Right" VerticalAlignment="Bottom"
@@ -806,15 +806,15 @@
                                                                     </TabItem>
                                                                     <!--Tab Notes Ends-->
 
-                                                                    <!--Weekly Manager Checklist-->
+                                                                    <!--Game Routines Checklist-->
                                                                     <TabItem Header="Checklist" FontSize="16"
-                                                                            Visibility="{Binding ElementName=WeeklyManager_Checklist, Path=Content.Visibility, FallbackValue=Collapsed, TargetNullValue=Collapsed}">
-                                                                        <ContentControl x:Name="WeeklyManager_Checklist"
+                                                                            Visibility="{Binding ElementName=GameRoutines_Checklist, Path=Content.Visibility, FallbackValue=Collapsed, TargetNullValue=Collapsed}">
+                                                                        <ContentControl x:Name="GameRoutines_Checklist"
                                                                                 Margin="0,4,0,0"
                                                                                 HorizontalContentAlignment="Stretch"
                                                                                 VerticalContentAlignment="Stretch" />
                                                                     </TabItem>
-                                                                    <!--Weekly Manager Checklist Ends-->
+                                                                    <!--Game Routines Checklist Ends-->
 
                                                                     <TabItem Header="{DynamicResource LOCSuccessStoryAchievements}" FontSize="16"
                                                                             Visibility="{PluginSettings Plugin=SuccessStory, Path=HasData, FallbackValue=Collapsed, Converter={StaticResource BooleanToVisibilityConverter}}">

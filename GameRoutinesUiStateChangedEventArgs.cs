@@ -1,12 +1,12 @@
 using System;
 
-namespace WeeklyManager
+namespace GameRoutines
 {
-    internal sealed class WeeklyManagerUiStateChangedEventArgs : EventArgs
+    internal sealed class GameRoutinesUiStateChangedEventArgs : EventArgs
     {
         public Guid? GameId { get; }
 
-        public WeeklyManagerUiStateChangedEventArgs(Guid? gameId)
+        public GameRoutinesUiStateChangedEventArgs(Guid? gameId)
         {
             GameId = gameId;
         }

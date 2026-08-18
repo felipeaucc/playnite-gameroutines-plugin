@@ -6,11 +6,11 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows.Input;
 
-namespace WeeklyManager
+namespace GameRoutines
 {
-    public sealed class WeeklyChecklistViewModel : ObservableObject, IDisposable
+    public sealed class GameChecklistViewModel : ObservableObject, IDisposable
     {
-        private readonly WeeklyManager plugin;
+        private readonly GameRoutines plugin;
         private readonly Guid gameId;
         private readonly ObservableCollection<ChecklistItemSettings> emptyChecklist =
             new ObservableCollection<ChecklistItemSettings>();
@@ -53,7 +53,7 @@ namespace WeeklyManager
 
         internal TrackedGameSettings TrackedGame => trackedGame;
 
-        internal WeeklyChecklistViewModel(WeeklyManager plugin, Guid gameId)
+        internal GameChecklistViewModel(GameRoutines plugin, Guid gameId)
         {
             this.plugin = plugin ?? throw new ArgumentNullException(nameof(plugin));
             this.gameId = gameId;
@@ -105,7 +105,7 @@ namespace WeeklyManager
             plugin.OpenManageChecklistWindow(gameId);
         }
 
-        private void Plugin_UiStateChanged(object sender, WeeklyManagerUiStateChangedEventArgs args)
+        private void Plugin_UiStateChanged(object sender, GameRoutinesUiStateChangedEventArgs args)
         {
             if (args.Affects(gameId))
             {

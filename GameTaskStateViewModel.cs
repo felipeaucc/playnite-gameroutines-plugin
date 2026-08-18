@@ -4,11 +4,11 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows.Input;
 
-namespace WeeklyManager
+namespace GameRoutines
 {
-    internal sealed class WeeklyGameStateViewModel : ObservableObject, IDisposable
+    internal sealed class GameTaskStateViewModel : ObservableObject, IDisposable
     {
-        private readonly WeeklyManager plugin;
+        private readonly GameRoutines plugin;
         private readonly Guid gameId;
         private TrackedGameSettings trackedGame;
         private bool isTracked;
@@ -67,7 +67,7 @@ namespace WeeklyManager
 
         public RelayCommand ToggleAutomaticCompletionCommand { get; }
 
-        public WeeklyGameStateViewModel(WeeklyManager plugin, Guid gameId)
+        public GameTaskStateViewModel(GameRoutines plugin, Guid gameId)
         {
             this.plugin = plugin ?? throw new ArgumentNullException(nameof(plugin));
             this.gameId = gameId;
@@ -102,7 +102,7 @@ namespace WeeklyManager
                 OnPropertyChanged(nameof(IsComplete));
             }
 
-            if (trackedGame.CurrentState == WeeklyState.COMPLETE)
+            if (trackedGame.CurrentState == TaskState.COMPLETE)
             {
                 plugin.MarkTrackedGameIncomplete(gameId);
             }
@@ -129,7 +129,7 @@ namespace WeeklyManager
             OnPropertyChanged(nameof(IsAutomaticCompletionEnabled));
         }
 
-        private void Plugin_UiStateChanged(object sender, WeeklyManagerUiStateChangedEventArgs args)
+        private void Plugin_UiStateChanged(object sender, GameRoutinesUiStateChangedEventArgs args)
         {
             if (args.Affects(gameId))
             {
@@ -176,7 +176,7 @@ namespace WeeklyManager
         private void RefreshValues()
         {
             IsTracked = trackedGame != null;
-            IsIncomplete = trackedGame != null && trackedGame.CurrentState == WeeklyState.READY;
+            IsIncomplete = trackedGame != null && trackedGame.CurrentState == TaskState.INCOMPLETE;
             IsIncompleteIndicatorVisible = plugin.ShouldShowIncompleteCoverIndicator(gameId);
             IsAutomaticCompletionEnabled =
                 trackedGame?.AutomaticallyCompleteFromChecklist == true;
@@ -190,11 +190,11 @@ namespace WeeklyManager
             else
             {
                 var statusToolTip = IsIncomplete
-                    ? "Tasks status: INCOMPLETE"
-                    : "Tasks status: COMPLETE";
+                    ? "Task status: INCOMPLETE"
+                    : "Task status: COMPLETE";
                 ToggleToolTip = trackedGame.AutomaticallyCompleteFromChecklist
                     ? statusToolTip + Environment.NewLine +
-                      "Automatic completion is enabled. Tasks status is controlled by the checklist."
+                      "Automatic completion is enabled. Task status is controlled by the checklist."
                     : statusToolTip;
                 AutomaticCompletionToolTip = IsAutomaticCompletionEnabled
                     ? "Automatic completion of tasks: ON"

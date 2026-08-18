@@ -1,37 +1,33 @@
-# Weekly Manager
+# Game Routines
 
-Weekly Manager is a Playnite generic plugin for managing recurring weekly game activities, resets, reminders, status, and per-game checklists.
+Game Routines is a Playnite generic plugin for recurring or persistent per-game tasks. It is currently in early development and has not been published as a packaged release.
 
-**Status:** Early development. Weekly Manager provides configurable weekly resets, INCOMPLETE/COMPLETE state, internal Playnite notifications, optional custom reminders, optional `Tasks Available!` tag synchronization, and recurring per-game checklists.
+## Features
 
-## Checklist Features
+- Track games by their authoritative Playnite `Game.Id`, either from the searchable settings picker or directly from the game context menu. Multi-selection adds only games that are not already tracked.
+- Maintain one ordered checklist per tracked game, including independent checked states and a focused standalone checklist window.
+- Mark game tasks **COMPLETE** or **INCOMPLETE** without changing Playnite's built-in game completion status.
+- Optionally derive task status automatically from checklist completion.
+- Choose a per-game reset schedule:
+  - **Never** keeps checklist state until it is reset manually.
+  - **Daily** resets once per local calendar day at the configured time.
+  - **Weekly** resets once per week on the configured day and time.
+- Process only the latest missed reset after Playnite starts, with exact-once occurrence tracking.
+- Configure an independent **Custom reminder** with its own Daily or Weekly frequency, time, title, and message. Reminders are notification-only and never reset the checklist or change task status.
+- Optionally synchronize the canonical `Tasks Available!` tag while tasks are INCOMPLETE.
+- Optionally show the approved incomplete-task cover indicator globally and per game.
 
-- Create an ordered checklist for each tracked game, with independent checked state.
-- Check, edit, delete, and reorder checklist items from the extension settings.
-- Open a focused checklist window from a tracked game's context menu or a supported theme to check off tasks without opening extension settings.
-- Automatically clear checked items when that game's weekly reset is processed, including a missed reset detected after Playnite starts.
-- Optionally mark a game's weekly state COMPLETE when every remaining checklist item is checked. With automatic completion enabled, an empty checklist is COMPLETE because no requirements remain.
-- Reset a checklist manually without deleting its items.
+Newly tracked games default to a **Never** reset schedule, automatic checklist completion off, the per-game cover indicator on, an empty checklist, COMPLETE task status, and Custom reminder off.
 
-## Other Features
+## Theme integration
 
-- Configurable weekly reset schedules
-- Playnite notifications
-- INCOMPLETE / COMPLETE weekly state
-- Optional `Tasks Available!` tag synchronization
-- Optional custom reminders
+Game Routines remains theme-independent: settings, scheduling, Playnite notifications, context-menu actions, tags, and standalone checklist windows work without theme support.
 
-## Theme Integration
-
-Weekly Manager remains a theme-independent Playnite plugin. Settings, the game context menu, scheduling, reminders, tag synchronization, and the standalone checklist window continue to work with normal Playnite regardless of the selected theme.
-
-Themes that explicitly support Weekly Manager can expose its registered custom UI elements in game details. The version-scoped FusionX 2.1.1 integration in [`Integrations/FusionX/2.1.1`](Integrations/FusionX/2.1.1) adds:
+Themes can opt into the registered Game Routines custom elements. The version-scoped [FusionX 2.1.1 integration](Integrations/FusionX/2.1.1) adds:
 
 - a **Checklist** details tab for tracked games;
-- a fixed-width **TASKS** switch beside FusionX's **VIDEO ON** control, with OFF meaning INCOMPLETE and ON meaning COMPLETE;
-- a thin red top-edge cover indicator shown only while a tracked game is INCOMPLETE;
-- access to the existing standalone checklist window from the tab.
+- the approved fixed-width **TASKS** card and hover actions;
+- the approved red incomplete-task cover indicator, including its glow and proportional scaling; and
+- **Manage Checklist** and pop-out **Checklist** access.
 
-The Checklist tab and standalone Checklist window also provide a **Manage Checklist** action. It opens a focused, per-game editor for adding, renaming, deleting, and reordering checklist items without exposing unrelated schedule or reminder settings.
-
-This does not imply universal theme compatibility. A theme must include the Weekly Manager element placeholders, and a FusionX update can replace its modified view files.
+The global and per-game cover-indicator settings remain authoritative. A FusionX update can replace modified theme view files, so integrations are kept as reproducible, version-specific source copies.

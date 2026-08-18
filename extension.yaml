@@ -1,8 +1,8 @@
-﻿Id: WeeklyManager_cb076ecb-ea40-4036-8094-f1c554566b49
-Name: Weekly Manager
+Id: GameRoutines_cb076ecb-ea40-4036-8094-f1c554566b49
+Name: Game Routines
 Author: Felipe Aucc
 Version: 0.1.0
-Module: WeeklyManager.dll
+Module: GameRoutines.dll
 Type: GenericPlugin
 Icon: icon.png
 Links:

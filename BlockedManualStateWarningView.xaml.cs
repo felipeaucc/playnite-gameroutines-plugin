@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 
-namespace WeeklyManager
+namespace GameRoutines
 {
     public partial class BlockedManualStateWarningView : UserControl
     {

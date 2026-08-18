@@ -2,9 +2,9 @@ using System;
 using System.Globalization;
 using System.Linq;
 
-namespace WeeklyManager
+namespace GameRoutines
 {
-    public static class WeeklyScheduleCalculator
+    public static class ScheduleCalculator
     {
         private static readonly string[] AcceptedTimeFormats =
         {
@@ -80,7 +80,51 @@ namespace WeeklyManager
             return value >= '0' && value <= '9';
         }
 
-        public static DateTime GetMostRecentOccurrence(DateTime localNow, DayOfWeek day, TimeSpan time)
+        public static bool TryGetMostRecentOccurrence(
+            DateTime localNow,
+            ResetCadence cadence,
+            DayOfWeek day,
+            TimeSpan time,
+            out DateTime occurrence)
+        {
+            if (cadence == ResetCadence.Never)
+            {
+                occurrence = default(DateTime);
+                return false;
+            }
+
+            occurrence = cadence == ResetCadence.Daily
+                ? GetMostRecentDailyOccurrence(localNow, time)
+                : GetMostRecentWeeklyOccurrence(localNow, day, time);
+            return true;
+        }
+
+        public static DateTime GetMostRecentOccurrence(
+            DateTime localNow,
+            ReminderCadence cadence,
+            DayOfWeek day,
+            TimeSpan time)
+        {
+            return cadence == ReminderCadence.Daily
+                ? GetMostRecentDailyOccurrence(localNow, time)
+                : GetMostRecentWeeklyOccurrence(localNow, day, time);
+        }
+
+        private static DateTime GetMostRecentDailyOccurrence(DateTime localNow, TimeSpan time)
+        {
+            var occurrence = localNow.Date.Add(time);
+            if (occurrence > localNow)
+            {
+                occurrence = occurrence.AddDays(-1);
+            }
+
+            return DateTime.SpecifyKind(occurrence, DateTimeKind.Local);
+        }
+
+        private static DateTime GetMostRecentWeeklyOccurrence(
+            DateTime localNow,
+            DayOfWeek day,
+            TimeSpan time)
         {
             var daysSinceScheduledDay = ((int)localNow.DayOfWeek - (int)day + 7) % 7;
             var occurrence = localNow.Date.AddDays(-daysSinceScheduledDay).Add(time);

@@ -1,12 +1,12 @@
-<playnite:PluginUserControl x:Class="WeeklyManager.WeeklyManagerStateToggleControl"
+<playnite:PluginUserControl x:Class="GameRoutines.GameRoutinesStateToggleControl"
                             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                            xmlns:local="clr-namespace:WeeklyManager"
+                            xmlns:local="clr-namespace:GameRoutines"
                             xmlns:playnite="clr-namespace:Playnite.SDK.Controls;assembly=Playnite.SDK"
                             Width="60"
                             VerticalAlignment="Bottom">
     <playnite:PluginUserControl.Style>
-        <Style TargetType="{x:Type local:WeeklyManagerStateToggleControl}">
+        <Style TargetType="{x:Type local:GameRoutinesStateToggleControl}">
             <Setter Property="Visibility" Value="Collapsed" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsTracked}" Value="True">

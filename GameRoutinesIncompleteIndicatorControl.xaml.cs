@@ -3,9 +3,9 @@ using Playnite.SDK.Models;
 using System;
 using System.Windows;
 
-namespace WeeklyManager
+namespace GameRoutines
 {
-    public partial class WeeklyManagerIncompleteIndicatorControl : PluginUserControl
+    public partial class GameRoutinesIncompleteIndicatorControl : PluginUserControl
     {
         private const double ReferenceRenderedCoverHeight = 220.0;
         private const double ReferenceRenderedCoverWidth = ReferenceRenderedCoverHeight * 2.0 / 3.0;
@@ -15,10 +15,10 @@ namespace WeeklyManager
         private const double MinimumScale = 0.5;
         private const double MaximumScale = 2.0;
 
-        private readonly WeeklyManager plugin;
-        private WeeklyGameStateViewModel viewModel;
+        private readonly GameRoutines plugin;
+        private GameTaskStateViewModel viewModel;
 
-        internal WeeklyManagerIncompleteIndicatorControl(WeeklyManager plugin)
+        internal GameRoutinesIncompleteIndicatorControl(GameRoutines plugin)
         {
             this.plugin = plugin ?? throw new ArgumentNullException(nameof(plugin));
             InitializeComponent();
@@ -45,7 +45,7 @@ namespace WeeklyManager
                 return;
             }
 
-            viewModel = new WeeklyGameStateViewModel(plugin, game.Id);
+            viewModel = new GameTaskStateViewModel(plugin, game.Id);
             DataContext = viewModel;
         }
 

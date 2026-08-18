@@ -1,7 +1,7 @@
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace WeeklyManager
+namespace GameRoutines
 {
     public partial class ManageChecklistView : UserControl
     {

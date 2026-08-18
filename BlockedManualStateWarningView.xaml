@@ -1,4 +1,4 @@
-<UserControl x:Class="WeeklyManager.BlockedManualStateWarningView"
+<UserControl x:Class="GameRoutines.BlockedManualStateWarningView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Foreground="{DynamicResource TextBrush}">
@@ -11,7 +11,7 @@
         <TextBlock MaxWidth="440"
                    VerticalAlignment="Center"
                    FontSize="14"
-                   Text="Automatic checklist completion is enabled for this game. Its status is controlled by the checklist. Turn off automatic completion in Weekly Manager settings to change the status manually."
+                   Text="Automatic checklist completion is enabled for this game. Its task status is controlled by the checklist. Turn off automatic completion in Game Routines settings to change the task status manually."
                    TextWrapping="Wrap" />
 
         <Grid Grid.Row="1" Margin="0,16,0,0">
