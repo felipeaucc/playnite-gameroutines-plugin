@@ -1,0 +1,303 @@
+<UserControl x:Class="GameRoutines.RoutineChecklistCard"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:GameRoutines"
+             Foreground="{DynamicResource TextBrush}">
+    <UserControl.Resources>
+        <Style x:Key="RoutineIconButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="5" />
+            <Setter Property="Margin" Value="0,0,5,0" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonBorder"
+                                Padding="{TemplateBinding Padding}"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonBorder"
+                                        Property="Background"
+                                        Value="{DynamicResource ControlHoverBackgroundBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Opacity" Value="0.65" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.35" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="RoutineDeleteIconButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource RoutineIconButtonStyle}">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="Padding" Value="1" />
+            <Setter Property="Margin" Value="4,0,0,0" />
+        </Style>
+        <Style x:Key="RoutineChecklistItemCheckBoxStyle"
+               TargetType="CheckBox"
+               BasedOn="{StaticResource {x:Type CheckBox}}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <Border Padding="{TemplateBinding Padding}"
+                                Background="{TemplateBinding Background}">
+                            <DockPanel>
+                                <Border x:Name="BulletBorder"
+                                        DockPanel.Dock="Left"
+                                        VerticalAlignment="Center"
+                                        Background="{DynamicResource ControlBackgroundBrush}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        CornerRadius="{DynamicResource ControlCornerRadiusSmall}">
+                                    <Grid Width="16" Height="16">
+                                        <Viewbox x:Name="CheckIcon" Visibility="Collapsed">
+                                            <TextBlock Foreground="{DynamicResource SelectedBrush}"
+                                                       Text="&#xF13E;"
+                                                       Style="{DynamicResource IconFontStyle}" />
+                                        </Viewbox>
+                                        <Viewbox x:Name="IndeterminateIcon" Margin="2" Visibility="Collapsed">
+                                            <TextBlock HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center"
+                                                       FontFamily="Marlett"
+                                                       Foreground="{DynamicResource GlyphBrush}"
+                                                       Text="g" />
+                                        </Viewbox>
+                                    </Grid>
+                                </Border>
+                                <ContentPresenter Margin="7,0,0,0"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Center"
+                                                  RecognizesAccessKey="True" />
+                            </DockPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsChecked" Value="{x:Null}" />
+                                    <Condition Property="IsThreeState" Value="True" />
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="IndeterminateIcon" Property="Visibility" Value="Visible" />
+                            </MultiTrigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="CheckIcon" Property="Visibility" Value="Visible" />
+                                <Setter Property="Foreground" Value="{DynamicResource SelectedBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="BulletBorder" Property="BorderBrush" Value="{DynamicResource ControlHoverBorderBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource HoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsFocused" Value="True">
+                                <Setter TargetName="BulletBorder" Property="BorderBrush" Value="{DynamicResource ControlSelectedBorderBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <Border Margin="0,0,0,10"
+            Padding="12"
+            BorderBrush="{DynamicResource ControlBorderBrush}"
+            BorderThickness="1">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="72" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock FontSize="16"
+                                   FontWeight="SemiBold"
+                                   Text="{Binding Name, Mode=OneWay}"
+                                   TextTrimming="CharacterEllipsis" />
+                        <TextBlock Margin="10,0,0,0"
+                                   VerticalAlignment="Center"
+                                   FontSize="11"
+                                   Opacity="0.7"
+                                   Text="{Binding ResetCadenceText, Mode=OneWay}" />
+                        <Button Command="{Binding DeleteRoutineCommand}"
+                                ToolTip="Delete Checklist">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource RoutineDeleteIconButtonStyle}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding ShowDeleteButton, RelativeSource={RelativeSource AncestorType={x:Type local:RoutineChecklistCard}}}" Value="False">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <TextBlock FontSize="8" Text="&#xE8BB;" Style="{DynamicResource IconFontStyle}" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+
+                <Grid Margin="0,9,0,0" HorizontalAlignment="Left">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="8" />
+                        <ColumnDefinition Width="84" />
+                        <ColumnDefinition Width="6" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock VerticalAlignment="Center" Text="Routine status:" />
+                    <TextBlock Grid.Column="2"
+                               VerticalAlignment="Center"
+                               Margin="-2,0,0,0"
+                               Padding="0,0,2,0"
+                               FontWeight="SemiBold"
+                               TextAlignment="Right"
+                               Text="{Binding StateText, Mode=OneWay}" />
+                    <local:RoutineStateSwitch Grid.Column="4"
+                                               IsChecked="{Binding IsComplete, Mode=OneWay}"
+                                               Command="{Binding ToggleRoutineStateCommand}"
+                                               ToolTipText="Toggle this routine between COMPLETE and INCOMPLETE." />
+                </Grid>
+
+                <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
+                    <TextBlock Text="Checklist progress:" />
+                    <TextBlock Margin="7,0,0,0"
+                               FontWeight="SemiBold"
+                               Text="{Binding ProgressText, Mode=OneWay}" />
+                </StackPanel>
+
+                <Grid Margin="0,12,0,0">
+                    <ListBox ItemsSource="{Binding Items}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                             VirtualizingStackPanel.IsVirtualizing="False">
+                        <ListBox.Style>
+                            <Style TargetType="ListBox" BasedOn="{StaticResource {x:Type ListBox}}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasItems}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ListBox.Style>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Padding" Value="4,3" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox VerticalAlignment="Center"
+                                          Style="{StaticResource RoutineChecklistItemCheckBoxStyle}"
+                                          IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                          Command="{Binding DataContext.ToggleItemCommand, RelativeSource={RelativeSource AncestorType={x:Type local:RoutineChecklistCard}}}"
+                                          CommandParameter="{Binding}">
+                                    <TextBlock Margin="7,0,0,0"
+                                               VerticalAlignment="Center"
+                                               Text="{Binding Text, Mode=OneWay}"
+                                               TextWrapping="Wrap" />
+                                </CheckBox>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                    <TextBlock HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               Margin="0,4,0,6"
+                               Opacity="0.7"
+                               Text="No checklist items"
+                               TextAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasItems}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </Grid>
+
+                <StackPanel Margin="0,8,0,0" Orientation="Horizontal">
+                    <Button Style="{StaticResource RoutineIconButtonStyle}"
+                            Command="{Binding ResetChecklistCommand}"
+                            ToolTip="Reset Checklist">
+                        <TextBlock Text="&#xE72C;" Style="{DynamicResource IconFontStyle}" />
+                    </Button>
+                    <Button Style="{StaticResource RoutineIconButtonStyle}"
+                            Command="{Binding OpenManageChecklistWindowCommand}"
+                            ToolTip="Manage Checklist">
+                        <TextBlock Text="&#xE70F;" Style="{DynamicResource IconFontStyle}" />
+                    </Button>
+                    <Button Command="{Binding OpenRoutineChecklistWindowCommand}"
+                            ToolTip="Pop-out Checklist">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource RoutineIconButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ShowPopOutButton, RelativeSource={RelativeSource AncestorType={x:Type local:RoutineChecklistCard}}}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <TextBlock Text="&#xE8A7;" Style="{DynamicResource IconFontStyle}" />
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding DataContext.IsFocusedRoutineView, RelativeSource={RelativeSource AncestorType={x:Type local:MultiRoutineChecklistView}}}" Value="True">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
+                    <Button Style="{StaticResource RoutineIconButtonStyle}"
+                            IsEnabled="{Binding CanMoveUp, Mode=OneWay}"
+                            Command="{Binding MoveRoutineUpCommand}"
+                            ToolTip="Move Routine Up">
+                        <TextBlock Text="&#xE70E;" Style="{DynamicResource IconFontStyle}" />
+                    </Button>
+                    <Button Margin="0"
+                            Style="{StaticResource RoutineIconButtonStyle}"
+                            IsEnabled="{Binding CanMoveDown, Mode=OneWay}"
+                            Command="{Binding MoveRoutineDownCommand}"
+                            ToolTip="Move Routine Down">
+                        <TextBlock Text="&#xE70D;" Style="{DynamicResource IconFontStyle}" />
+                    </Button>
+                </StackPanel>
+                <local:RoutineAutoCompletionToggle Grid.Row="1"
+                                                   Margin="0,8,0,0"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   IsChecked="{Binding IsAutomaticCompletionEnabled, Mode=OneWay}"
+                                                   Command="{Binding ToggleAutomaticCompletionCommand}"
+                                                   ToolTipText="{Binding AutomaticCompletionToolTip, Mode=OneWay}" />
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

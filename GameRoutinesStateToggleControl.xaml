@@ -5,6 +5,39 @@
                             xmlns:playnite="clr-namespace:Playnite.SDK.Controls;assembly=Playnite.SDK"
                             Width="60"
                             VerticalAlignment="Bottom">
+    <playnite:PluginUserControl.Resources>
+        <Style x:Key="TasksUtilityButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="26" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Padding" Value="3" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource ControlHoverBorderBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="HoverBorder"
+                                Padding="{TemplateBinding Padding}"
+                                Background="Transparent"
+                                CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="HoverBorder"
+                                        Property="Background"
+                                        Value="{DynamicResource ControlHoverBackgroundBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Opacity" Value="0.65" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </playnite:PluginUserControl.Resources>
+
     <playnite:PluginUserControl.Style>
         <Style TargetType="{x:Type local:GameRoutinesStateToggleControl}">
             <Setter Property="Visibility" Value="Collapsed" />
@@ -21,7 +54,7 @@
             Style="{DynamicResource ActionControlPanel}"
             ToolTip="{Binding ToggleToolTip}">
         <StackPanel VerticalAlignment="Bottom">
-            <Border Margin="0,0,0,12"
+            <Border Margin="0,0,0,10"
                     Padding="0,0,0,12"
                     BorderBrush="{DynamicResource PopupSeparatorBrush}"
                     BorderThickness="0,0,0,1">
@@ -29,89 +62,26 @@
                     <Style TargetType="Border">
                         <Setter Property="Visibility" Value="Collapsed" />
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding ElementName=TasksControls, Path=IsMouseOver}"
-                                         Value="True">
+                            <DataTrigger Binding="{Binding ElementName=TasksControls, Path=IsMouseOver}" Value="True">
                                 <Setter Property="Visibility" Value="Visible" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
                 </Border.Style>
-
-                <ToggleButton Width="20"
-                              Height="20"
-                              HorizontalAlignment="Center"
-                              Focusable="False"
-                              ClipToBounds="False"
-                              Background="Transparent"
-                              BorderThickness="0"
-                              IsChecked="{Binding IsAutomaticCompletionEnabled, Mode=OneWay}"
-                              Command="{Binding ToggleAutomaticCompletionCommand}"
-                              ToolTip="{Binding AutomaticCompletionToolTip}">
-                    <ToggleButton.Template>
-                        <ControlTemplate TargetType="{x:Type ToggleButton}">
-                            <Border Background="Transparent" ClipToBounds="False">
-                                <Canvas Width="20" Height="20" ClipToBounds="False">
-                                    <Viewbox Width="18"
-                                             Height="18"
-                                             Canvas.Left="0"
-                                             Canvas.Top="1">
-                                        <TextBlock x:Name="RepeatIcon"
-                                                   Text="&#xE895;"
-                                                   Foreground="{DynamicResource ControlHoverBorderBrush}"
-                                                   Style="{DynamicResource IconFontStyle}" />
-                                    </Viewbox>
-                                    <Border Width="12"
-                                            Height="12"
-                                            Canvas.Left="12"
-                                            Canvas.Top="16"
-                                            ClipToBounds="False"
-                                            Background="{DynamicResource ControlBackgroundBrush}"
-                                            CornerRadius="6">
-                                        <Grid ClipToBounds="False">
-                                            <Viewbox Width="8"
-                                                     Height="8"
-                                                     HorizontalAlignment="Center"
-                                                     VerticalAlignment="Center"
-                                                     ClipToBounds="False">
-                                                <Path x:Name="AutomaticCompletionOffIcon"
-                                                      Data="M1,1 L7,7 M7,1 L1,7"
-                                                      Stroke="#80FFFFFF"
-                                                      StrokeEndLineCap="Round"
-                                                      StrokeStartLineCap="Round"
-                                                      StrokeThickness="1.1" />
-                                            </Viewbox>
-                                            <Viewbox Width="11"
-                                                     Height="11"
-                                                     HorizontalAlignment="Center"
-                                                     VerticalAlignment="Center"
-                                                     ClipToBounds="False">
-                                                <TextBlock x:Name="AutomaticCompletionOnIcon"
-                                                           Text="&#xE73E;"
-                                                           FontWeight="Normal"
-                                                           Foreground="{DynamicResource ControlHoverBorderBrush}"
-                                                           Style="{DynamicResource IconFontStyle}"
-                                                           Visibility="Collapsed" />
-                                            </Viewbox>
-                                        </Grid>
-                                    </Border>
-                                </Canvas>
-                            </Border>
-                            <ControlTemplate.Triggers>
-                                <Trigger Property="IsChecked" Value="True">
-                                    <Setter TargetName="AutomaticCompletionOffIcon"
-                                            Property="Visibility"
-                                            Value="Collapsed" />
-                                    <Setter TargetName="AutomaticCompletionOnIcon"
-                                            Property="Visibility"
-                                            Value="Visible" />
-                                </Trigger>
-                                <Trigger Property="IsPressed" Value="True">
-                                    <Setter Property="Opacity" Value="0.65" />
-                                </Trigger>
-                            </ControlTemplate.Triggers>
-                        </ControlTemplate>
-                    </ToggleButton.Template>
-                </ToggleButton>
+                <StackPanel Width="26" HorizontalAlignment="Center" Orientation="Vertical">
+                    <Button Margin="0,4,0,0"
+                            Style="{StaticResource TasksUtilityButtonStyle}"
+                            Command="{Binding OpenSettingsCommand}"
+                            ToolTip="Game Routines Settings">
+                        <TextBlock FontSize="18" FontWeight="Light" Text="&#xE713;" Style="{DynamicResource IconFontStyle}" />
+                    </Button>
+                    <Button Margin="0,6,0,0"
+                            Style="{StaticResource TasksUtilityButtonStyle}"
+                            Command="{Binding OpenCustomReminderCommand}"
+                            ToolTip="Custom Reminder">
+                        <TextBlock FontSize="18" FontWeight="Light" Text="&#xEA8F;" Style="{DynamicResource IconFontStyle}" />
+                    </Button>
+                </StackPanel>
             </Border>
 
             <ToggleButton HorizontalAlignment="Center"
@@ -119,10 +89,11 @@
                           IsChecked="{Binding IsComplete, Mode=OneWay}"
                           Command="{Binding ToggleStateCommand}"
                           Style="{DynamicResource SwitcherToggleButton}"
+                          ToolTipService.ShowOnDisabled="True"
                           ToolTip="{Binding ToggleToolTip}" />
             <TextBlock Margin="0,8,0,0"
                        Style="{DynamicResource ActionControlLabelStyle}"
-                       Text="{Binding StateText}" />
+                       Text="{Binding StateText, Mode=OneWay}" />
         </StackPanel>
     </Border>
 </playnite:PluginUserControl>

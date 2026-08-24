@@ -4,6 +4,7 @@ using Playnite.SDK.Models;
 using Playnite.SDK.Plugins;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -27,7 +28,10 @@ namespace GameRoutines
         private readonly GameRoutinesSettingsViewModel settings;
         private readonly HashSet<Guid> loggedMissingGameIds = new HashSet<Guid>();
         private readonly Dictionary<Guid, Window> openChecklistWindows = new Dictionary<Guid, Window>();
+        private readonly Dictionary<string, Window> openRoutineChecklistWindows = new Dictionary<string, Window>();
         private readonly Dictionary<Guid, Window> openManageChecklistWindows = new Dictionary<Guid, Window>();
+        private readonly Dictionary<Guid, Window> openCustomReminderWindows = new Dictionary<Guid, Window>();
+        private readonly PersistentNotificationService persistentNotifications;
         private DispatcherTimer schedulerTimer;
         private bool isProcessingSchedules;
         private bool isSettingsEditing;
@@ -42,6 +46,7 @@ namespace GameRoutines
         {
             PlayniteApi = api;
             settings = new GameRoutinesSettingsViewModel(this);
+            persistentNotifications = new PersistentNotificationService(this);
             Properties = new GenericPluginProperties
             {
                 HasSettings = true
@@ -89,6 +94,7 @@ namespace GameRoutines
         public override void OnApplicationStarted(OnApplicationStartedEventArgs args)
         {
             logger.Info($"Game Routines startup. Processing {settings.TrackedGames.Count} tracked game(s).");
+            persistentNotifications.Start();
             ReconcileAllChecklistStates();
             ReconcileAllTasksAvailableTags();
             ProcessDueEvents();
@@ -105,6 +111,7 @@ namespace GameRoutines
         {
             CloseChecklistWindows();
             StopScheduler();
+            persistentNotifications.Stop();
             logger.Info("Game Routines stopped.");
         }
 
@@ -112,6 +119,7 @@ namespace GameRoutines
         {
             CloseChecklistWindows();
             StopScheduler();
+            persistentNotifications.Dispose();
             base.Dispose();
         }
 
@@ -164,7 +172,7 @@ namespace GameRoutines
                 yield return new GameMenuItem
                 {
                     MenuSection = "Game Routines",
-                    Description = "Reset Checklist",
+                    Description = "Reset All Routine Checklists",
                     Action = actionArgs => ResetSelectedGamesChecklists(actionArgs.Games)
                 };
             }
@@ -182,10 +190,88 @@ namespace GameRoutines
             isSettingsEditing = editing;
             if (!editing)
             {
-                // A reset can become due while Playnite's modal settings window is open.
-                // Process it as soon as editing ends instead of waiting for the next timer tick.
                 ProcessDueEvents();
             }
+        }
+
+        internal void OpenSettingsForGame(Guid gameId)
+        {
+            settings.SelectTrackedGame(gameId);
+            OpenSettingsView();
+        }
+
+        internal void OpenCustomReminderWindow(Guid gameId)
+        {
+            try
+            {
+                if (!IsGameTracked(gameId))
+                {
+                    return;
+                }
+
+                if (openCustomReminderWindows.TryGetValue(gameId, out var existingWindow))
+                {
+                    ActivateWindow(existingWindow);
+                    return;
+                }
+
+                var viewModel = new CustomReminderViewModel(this, gameId);
+                var window = PlayniteApi.Dialogs.CreateWindow(new WindowCreationOptions
+                {
+                    ShowCloseButton = true,
+                    ShowMaximizeButton = false,
+                    ShowMinimizeButton = true
+                });
+                window.Title = "Custom Reminder";
+                window.Width = 650;
+                window.Height = 520;
+                window.MinWidth = 520;
+                window.MinHeight = 420;
+                window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                var owner = PlayniteApi.Dialogs.GetCurrentAppWindow();
+                if (owner != null && !ReferenceEquals(owner, window))
+                {
+                    window.Owner = owner;
+                }
+
+                window.Content = new CustomReminderWindowView { DataContext = viewModel };
+                window.Closed += (sender, args) =>
+                {
+                    if (openCustomReminderWindows.TryGetValue(gameId, out var registeredWindow) &&
+                        ReferenceEquals(registeredWindow, window))
+                    {
+                        openCustomReminderWindows.Remove(gameId);
+                    }
+                };
+
+                openCustomReminderWindows[gameId] = window;
+                window.Show();
+            }
+            catch (Exception exception)
+            {
+                logger.Error(exception, $"Failed to open custom reminder editor for game {gameId}.");
+                PlayniteApi.Dialogs.ShowErrorMessage(
+                    "Game Routines could not open the Custom Reminder editor. See the Playnite log for details.",
+                    "Game Routines");
+            }
+        }
+
+        internal bool SaveCustomReminder(Guid gameId, TrackedGameSettings editedReminder)
+        {
+            var trackedGame = FindTrackedGame(gameId);
+            if (trackedGame == null || editedReminder == null)
+            {
+                return false;
+            }
+
+            var scheduleChanged = HasReminderScheduleChanged(trackedGame, editedReminder);
+            CustomReminderService.Apply(editedReminder, trackedGame);
+            if (scheduleChanged)
+            {
+                PrepareReminderScheduleAfterChange(trackedGame, DateTime.Now);
+            }
+            PersistAndReconcile(new[] { trackedGame });
+            return true;
         }
 
         internal void NotifyUiStateChanged(Guid? gameId = null)
@@ -220,17 +306,13 @@ namespace GameRoutines
                     GameId = game.Id,
                     CachedGameName = game.Name,
                     Enabled = true,
-                    ResetCadence = ResetCadence.Never,
-                    ResetDay = DayOfWeek.Monday,
-                    ResetTime = "00:00",
-                    CurrentState = TaskState.COMPLETE,
-                    AutomaticallyCompleteFromChecklist = false,
                     ShowIncompleteCoverIndicator = true,
                     CustomReminderEnabled = false,
                     ReminderCadence = ReminderCadence.Weekly,
                     ReminderDay = DayOfWeek.Monday,
                     ReminderTime = "00:00"
                 };
+                trackedGame.Routines.Add(RoutineService.CreateDefault("Tasks", 0));
                 settings.TrackedGames.Add(trackedGame);
                 addedGames.Add(trackedGame);
             }
@@ -243,21 +325,28 @@ namespace GameRoutines
             return addedGames;
         }
 
-        internal string GetTrackedGameState(Guid gameId)
-        {
-            var trackedGame = settings.TrackedGames.FirstOrDefault(a => a.GameId == gameId);
-            return trackedGame == null ? null : GetUserFacingStateName(trackedGame.CurrentState);
-        }
-
         internal TrackedGameSettings GetTrackedGameSettings(Guid gameId)
         {
             return FindTrackedGame(gameId);
+        }
+
+        internal RoutineSettings GetRoutine(Guid gameId, Guid routineId)
+        {
+            return FindTrackedGame(gameId)?.Routines?
+                .FirstOrDefault(a => a != null && a.Id == routineId);
+        }
+
+        internal string GetTrackedGameState(Guid gameId)
+        {
+            var trackedGame = FindTrackedGame(gameId);
+            return trackedGame == null ? null : GetUserFacingStateName(trackedGame.CurrentState);
         }
 
         internal bool ShouldShowIncompleteCoverIndicator(Guid gameId)
         {
             var trackedGame = FindTrackedGame(gameId);
             return trackedGame != null &&
+                   trackedGame.Enabled &&
                    trackedGame.CurrentState == TaskState.INCOMPLETE &&
                    settings.Settings.ShowIncompleteCoverIndicator &&
                    trackedGame.ShowIncompleteCoverIndicator;
@@ -273,99 +362,310 @@ namespace GameRoutines
             return SetTrackedGamesState(new[] { gameId }, TaskState.INCOMPLETE);
         }
 
-        internal IReadOnlyList<ChecklistItemSettings> GetTrackedGameChecklist(Guid gameId)
+        internal ChecklistProgress GetChecklistProgress(Guid gameId, Guid routineId)
         {
-            var trackedGame = FindTrackedGame(gameId);
-            return trackedGame?.Checklist?.ToList() ?? new List<ChecklistItemSettings>();
+            return ChecklistService.GetProgress(GetRoutine(gameId, routineId));
         }
 
-        internal ChecklistProgress GetChecklistProgress(Guid gameId)
+        internal RoutineSettings AddRoutine(TrackedGameSettings trackedGame, bool persistChanges)
         {
-            return ChecklistService.GetProgress(FindTrackedGame(gameId));
+            if (trackedGame == null)
+            {
+                return null;
+            }
+
+            var routine = RoutineService.CreateDefault(
+                RoutineService.GenerateUniqueName(trackedGame.Routines),
+                trackedGame.Routines.Count);
+            trackedGame.Routines.Add(routine);
+            trackedGame.NotifyOverallStateChanged();
+            CompleteRoutineMutation(trackedGame, persistChanges);
+            return routine;
         }
 
-        internal bool SetChecklistItemChecked(Guid gameId, Guid itemId, bool isChecked)
+        internal bool RenameRoutine(
+            TrackedGameSettings trackedGame,
+            Guid routineId,
+            string name,
+            bool persistChanges)
         {
-            var trackedGame = FindTrackedGame(gameId);
-            if (!ChecklistService.SetItemChecked(trackedGame, itemId, isChecked))
+            var routine = trackedGame?.Routines?.FirstOrDefault(a => a != null && a.Id == routineId);
+            if (routine == null)
             {
                 return false;
             }
 
-            CompleteChecklistMutation(trackedGame, true, "checklist item state changed");
+            if (!RoutineService.TryValidateName(
+                    trackedGame, routineId, name, out var normalizedName, out var error))
+            {
+                PlayniteApi.Dialogs.ShowMessage(
+                    error,
+                    "Game Routines",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+                return false;
+            }
+
+            if (string.Equals(routine.Name, normalizedName, StringComparison.Ordinal))
+            {
+                return true;
+            }
+
+            routine.Name = normalizedName;
+            CompleteRoutineMutation(trackedGame, persistChanges);
             return true;
         }
 
-        internal bool ResetChecklist(Guid gameId, bool confirm)
+        internal bool DeleteRoutine(
+            TrackedGameSettings trackedGame,
+            Guid routineId,
+            bool confirm,
+            bool persistChanges)
         {
-            return ResetChecklist(FindTrackedGame(gameId), confirm, true);
+            var routine = trackedGame?.Routines?.FirstOrDefault(a => a != null && a.Id == routineId);
+            if (routine == null)
+            {
+                return false;
+            }
+
+            if (confirm && PlayniteApi.Dialogs.ShowMessage(
+                    $"Delete the \"{routine.Name}\" checklist?\r\n\r\n" +
+                    "This will permanently remove its checklist items and routine settings.",
+                    "Delete Checklist",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Question) != MessageBoxResult.Yes)
+            {
+                return false;
+            }
+
+            trackedGame.Routines.Remove(routine);
+            CloseRoutineChecklistWindow(trackedGame.GameId, routine.Id);
+            for (var index = 0; index < trackedGame.Routines.Count; index++)
+            {
+                trackedGame.Routines[index].Order = index;
+            }
+
+            trackedGame.NotifyOverallStateChanged();
+            CompleteRoutineMutation(trackedGame, persistChanges);
+            return true;
+        }
+
+        internal bool MoveRoutine(
+            TrackedGameSettings trackedGame,
+            Guid routineId,
+            int offset,
+            bool persistChanges)
+        {
+            if (!RoutineService.MoveRoutine(trackedGame, routineId, offset))
+            {
+                return false;
+            }
+
+            CompleteRoutineMutation(trackedGame, persistChanges);
+            return true;
+        }
+
+        internal bool CommitRoutineScheduleChange(Guid gameId, Guid routineId)
+        {
+            var trackedGame = FindTrackedGame(gameId);
+            var routine = trackedGame?.Routines?.FirstOrDefault(a => a != null && a.Id == routineId);
+            if (routine == null)
+            {
+                return false;
+            }
+
+            PrepareResetScheduleAfterChange(routine, DateTime.Now);
+            PersistAndReconcile(new[] { trackedGame });
+            return true;
+        }
+
+        internal bool SetRoutineState(
+            TrackedGameSettings trackedGame,
+            RoutineSettings routine,
+            TaskState newState,
+            bool persistChanges)
+        {
+            if (trackedGame == null || routine == null || !trackedGame.Routines.Contains(routine))
+            {
+                return false;
+            }
+
+            if (routine.AutomaticallyCompleteFromChecklist)
+            {
+                var checklistState = GetChecklistDerivedState(routine);
+                if (checklistState != newState)
+                {
+                    ShowAutomaticCompletionWarning(
+                        new[] { new AutomaticCompletionBlocker(trackedGame, routine, checklistState) },
+                        newState,
+                        false);
+                    return false;
+                }
+            }
+
+            ApplyRoutineState(
+                trackedGame,
+                routine,
+                newState,
+                routine.AutomaticallyCompleteFromChecklist && newState == TaskState.COMPLETE,
+                "manual routine-state change");
+            if (persistChanges)
+            {
+                PersistAndReconcile(new[] { trackedGame });
+            }
+            else
+            {
+                trackedGame.NotifyOverallStateChanged();
+                ReconcileTasksAvailableTag(trackedGame);
+                NotifyUiStateChanged(trackedGame.GameId);
+            }
+
+            return true;
+        }
+
+        internal bool SetRoutineState(Guid gameId, Guid routineId, TaskState newState)
+        {
+            var trackedGame = FindTrackedGame(gameId);
+            return SetRoutineState(trackedGame, GetRoutine(gameId, routineId), newState, true);
+        }
+
+        internal void RoutineAggregateSettingChanged(
+            TrackedGameSettings trackedGame,
+            bool persistChanges)
+        {
+            if (trackedGame == null)
+            {
+                return;
+            }
+
+            trackedGame.NotifyOverallStateChanged();
+            if (persistChanges)
+            {
+                PersistAndReconcile(new[] { trackedGame });
+            }
+            else
+            {
+                ReconcileTasksAvailableTag(trackedGame);
+                NotifyUiStateChanged(trackedGame.GameId);
+            }
+        }
+
+        internal bool SetRoutineCountTowardOverallTaskStatus(
+            Guid gameId,
+            Guid routineId,
+            bool enabled)
+        {
+            var trackedGame = FindTrackedGame(gameId);
+            var routine = trackedGame?.Routines?
+                .FirstOrDefault(a => a != null && a.Id == routineId);
+            if (routine == null)
+            {
+                return false;
+            }
+
+            if (routine.CountTowardOverallTaskStatus == enabled)
+            {
+                return true;
+            }
+
+            routine.CountTowardOverallTaskStatus = enabled;
+            RoutineAggregateSettingChanged(trackedGame, true);
+            return true;
+        }
+
+        internal bool SetChecklistItemChecked(
+            Guid gameId,
+            Guid routineId,
+            Guid itemId,
+            bool isChecked)
+        {
+            var trackedGame = FindTrackedGame(gameId);
+            var routine = GetRoutine(gameId, routineId);
+            if (!ChecklistService.SetItemChecked(routine, itemId, isChecked))
+            {
+                return false;
+            }
+
+            CompleteChecklistMutation(trackedGame, routine, true, "checklist item state changed");
+            return true;
         }
 
         internal bool AddChecklistItem(
             TrackedGameSettings trackedGame,
+            RoutineSettings routine,
             string text,
             bool persistChanges)
         {
-            if (ChecklistService.AddItem(trackedGame, text) == null)
+            if (trackedGame == null || routine == null || !trackedGame.Routines.Contains(routine) ||
+                ChecklistService.AddItem(routine, text) == null)
             {
                 return false;
             }
 
-            CompleteChecklistMutation(trackedGame, persistChanges, "checklist item added");
+            CompleteChecklistMutation(trackedGame, routine, persistChanges, "checklist item added");
             return true;
         }
 
-        internal bool AddChecklistItem(Guid gameId, string text)
+        internal bool AddChecklistItem(Guid gameId, Guid routineId, string text)
         {
-            return AddChecklistItem(FindTrackedGame(gameId), text, true);
+            var trackedGame = FindTrackedGame(gameId);
+            return AddChecklistItem(trackedGame, GetRoutine(gameId, routineId), text, true);
         }
 
         internal bool EditChecklistItem(
             TrackedGameSettings trackedGame,
+            RoutineSettings routine,
             Guid itemId,
             string text,
             bool persistChanges)
         {
-            if (!ChecklistService.EditItem(trackedGame, itemId, text))
+            if (trackedGame == null || routine == null || !trackedGame.Routines.Contains(routine) ||
+                !ChecklistService.EditItem(routine, itemId, text))
             {
                 return false;
             }
 
-            CompleteChecklistMutation(trackedGame, persistChanges, "checklist item edited");
+            CompleteChecklistMutation(trackedGame, routine, persistChanges, "checklist item edited");
             return true;
         }
 
-        internal bool EditChecklistItem(Guid gameId, Guid itemId, string text)
+        internal bool EditChecklistItem(Guid gameId, Guid routineId, Guid itemId, string text)
         {
-            return EditChecklistItem(FindTrackedGame(gameId), itemId, text, true);
+            var trackedGame = FindTrackedGame(gameId);
+            return EditChecklistItem(trackedGame, GetRoutine(gameId, routineId), itemId, text, true);
         }
 
         internal bool DeleteChecklistItem(
             TrackedGameSettings trackedGame,
+            RoutineSettings routine,
             Guid itemId,
             bool persistChanges)
         {
-            if (!ChecklistService.DeleteItem(trackedGame, itemId))
+            if (trackedGame == null || routine == null || !trackedGame.Routines.Contains(routine) ||
+                !ChecklistService.DeleteItem(routine, itemId))
             {
                 return false;
             }
 
-            CompleteChecklistMutation(trackedGame, persistChanges, "checklist item deleted");
+            CompleteChecklistMutation(trackedGame, routine, persistChanges, "checklist item deleted");
             return true;
         }
 
-        internal bool DeleteChecklistItem(Guid gameId, Guid itemId)
+        internal bool DeleteChecklistItem(Guid gameId, Guid routineId, Guid itemId)
         {
-            return DeleteChecklistItem(FindTrackedGame(gameId), itemId, true);
+            var trackedGame = FindTrackedGame(gameId);
+            return DeleteChecklistItem(trackedGame, GetRoutine(gameId, routineId), itemId, true);
         }
 
         internal bool MoveChecklistItem(
             TrackedGameSettings trackedGame,
+            RoutineSettings routine,
             Guid itemId,
             int offset,
             bool persistChanges)
         {
-            if (!ChecklistService.MoveItem(trackedGame, itemId, offset))
+            if (trackedGame == null || routine == null || !trackedGame.Routines.Contains(routine) ||
+                !ChecklistService.MoveItem(routine, itemId, offset))
             {
                 return false;
             }
@@ -374,56 +674,75 @@ namespace GameRoutines
             {
                 PersistAndReconcile(new[] { trackedGame });
             }
+            else
+            {
+                NotifyUiStateChanged(trackedGame.GameId);
+            }
 
             return true;
         }
 
-        internal bool MoveChecklistItem(Guid gameId, Guid itemId, int offset)
+        internal bool MoveChecklistItem(Guid gameId, Guid routineId, Guid itemId, int offset)
         {
-            return MoveChecklistItem(FindTrackedGame(gameId), itemId, offset, true);
+            var trackedGame = FindTrackedGame(gameId);
+            return MoveChecklistItem(trackedGame, GetRoutine(gameId, routineId), itemId, offset, true);
         }
 
         internal void ChecklistItemStateChanged(
             TrackedGameSettings trackedGame,
+            RoutineSettings routine,
             bool persistChanges)
         {
-            CompleteChecklistMutation(trackedGame, persistChanges, "checklist item state changed");
+            CompleteChecklistMutation(trackedGame, routine, persistChanges, "checklist item state changed");
         }
 
         internal void ChecklistAutoCompletionChanged(
             TrackedGameSettings trackedGame,
+            RoutineSettings routine,
             bool persistChanges)
         {
-            CompleteChecklistMutation(trackedGame, persistChanges, "checklist auto-completion setting changed");
+            CompleteChecklistMutation(
+                trackedGame,
+                routine,
+                persistChanges,
+                "checklist auto-completion setting changed");
         }
 
-        internal bool SetChecklistAutoCompletion(Guid gameId, bool enabled)
+        internal bool SetChecklistAutoCompletion(Guid gameId, Guid routineId, bool enabled)
         {
             var trackedGame = FindTrackedGame(gameId);
-            if (trackedGame == null ||
-                trackedGame.AutomaticallyCompleteFromChecklist == enabled)
+            var routine = GetRoutine(gameId, routineId);
+            if (trackedGame == null || routine == null ||
+                routine.AutomaticallyCompleteFromChecklist == enabled)
             {
                 return false;
             }
 
-            trackedGame.AutomaticallyCompleteFromChecklist = enabled;
-            ChecklistAutoCompletionChanged(trackedGame, true);
+            routine.AutomaticallyCompleteFromChecklist = enabled;
+            ChecklistAutoCompletionChanged(trackedGame, routine, true);
             return true;
+        }
+
+        internal bool ResetChecklist(Guid gameId, Guid routineId, bool confirm)
+        {
+            var trackedGame = FindTrackedGame(gameId);
+            return ResetChecklist(trackedGame, GetRoutine(gameId, routineId), confirm, true);
         }
 
         internal bool ResetChecklist(
             TrackedGameSettings trackedGame,
+            RoutineSettings routine,
             bool confirm,
             bool persistChanges)
         {
-            if (trackedGame == null)
+            if (trackedGame == null || routine == null || !trackedGame.Routines.Contains(routine))
             {
                 return false;
             }
 
-            if (confirm && ChecklistService.GetProgress(trackedGame).Completed > 0 &&
+            if (confirm && ChecklistService.GetProgress(routine).Completed > 0 &&
                 PlayniteApi.Dialogs.ShowMessage(
-                    $"Reset the checklist for {GetDisplayName(trackedGame, PlayniteApi.Database.Games.Get(trackedGame.GameId))}?",
+                    $"Reset the checklist for \"{routine.Name}\"?",
                     "Game Routines",
                     MessageBoxButton.YesNo,
                     MessageBoxImage.Question) != MessageBoxResult.Yes)
@@ -431,12 +750,18 @@ namespace GameRoutines
                 return false;
             }
 
-            ChecklistService.Reset(trackedGame);
-            ApplyTaskState(trackedGame, TaskState.INCOMPLETE, false, "checklist reset");
-            ReconcileChecklistDrivenState(trackedGame, "checklist reset reconciliation");
+            ChecklistService.Reset(routine);
+            ApplyRoutineState(trackedGame, routine, TaskState.INCOMPLETE, false, "checklist reset");
+            ReconcileChecklistDrivenState(trackedGame, routine, "checklist reset reconciliation");
             if (persistChanges)
             {
                 PersistAndReconcile(new[] { trackedGame });
+            }
+            else
+            {
+                trackedGame.NotifyOverallStateChanged();
+                ReconcileTasksAvailableTag(trackedGame);
+                NotifyUiStateChanged(trackedGame.GameId);
             }
 
             return true;
@@ -444,7 +769,7 @@ namespace GameRoutines
 
         internal void ReconcileTrackedGameTag(Guid gameId)
         {
-            var trackedGame = settings.TrackedGames.FirstOrDefault(a => a.GameId == gameId);
+            var trackedGame = FindTrackedGame(gameId);
             if (trackedGame != null)
             {
                 ReconcileTasksAvailableTag(trackedGame);
@@ -454,38 +779,41 @@ namespace GameRoutines
         internal void PrepareSettingsForSave(GameRoutinesSettings previous, GameRoutinesSettings current)
         {
             var now = DateTime.Now;
-            var previousById = (previous?.TrackedGames ?? new System.Collections.ObjectModel.ObservableCollection<TrackedGameSettings>())
+            var previousById = (previous?.TrackedGames ?? new ObservableCollection<TrackedGameSettings>())
                 .GroupBy(a => a.GameId)
                 .ToDictionary(a => a.Key, a => a.First());
 
+            current.SchemaVersion = GameRoutinesSettings.CurrentSchemaVersion;
             foreach (var trackedGame in current.TrackedGames)
             {
-                ChecklistService.Normalize(trackedGame);
-                ReconcileChecklistDrivenState(trackedGame, "settings saved");
+                RoutineService.Normalize(trackedGame);
+                previousById.TryGetValue(trackedGame.GameId, out var oldGame);
+                var oldRoutines = (oldGame?.Routines ?? new ObservableCollection<RoutineSettings>())
+                    .Where(a => a != null)
+                    .GroupBy(a => a.Id)
+                    .ToDictionary(a => a.Key, a => a.First());
 
-                if (trackedGame.ResetCadence != ResetCadence.Never &&
-                    ScheduleCalculator.TryParseLocalTime(trackedGame.ResetTime, out var resetTime) &&
-                    (!previousById.TryGetValue(trackedGame.GameId, out var oldGame) ||
-                     HasResetScheduleChanged(oldGame, trackedGame)) &&
-                    ScheduleCalculator.TryGetMostRecentOccurrence(
-                        now,
-                        trackedGame.ResetCadence,
-                        trackedGame.ResetDay,
-                        resetTime,
-                        out var resetOccurrence))
+                foreach (var routine in trackedGame.Routines)
                 {
-                    trackedGame.LastResetProcessedLocal = resetOccurrence;
+                    ReconcileChecklistDrivenState(trackedGame, routine, "settings saved");
+                    if (!oldRoutines.TryGetValue(routine.Id, out var oldRoutine) ||
+                        HasResetScheduleChanged(oldRoutine, routine) ||
+                        (routine.ResetCadence == ResetCadence.BiWeekly &&
+                         !routine.BiWeeklyResetAnchorLocal.HasValue))
+                    {
+                        PrepareResetScheduleAfterChange(routine, now);
+                    }
                 }
 
                 if (trackedGame.CustomReminderEnabled &&
-                    ScheduleCalculator.TryParseLocalTime(
-                        trackedGame.ReminderTime, out var reminderTime) &&
-                    (!previousById.TryGetValue(trackedGame.GameId, out oldGame) ||
-                     HasReminderScheduleChanged(oldGame, trackedGame)))
+                    (oldGame == null || HasReminderScheduleChanged(oldGame, trackedGame) ||
+                     (trackedGame.ReminderCadence == ReminderCadence.BiWeekly &&
+                      !trackedGame.BiWeeklyReminderAnchorLocal.HasValue)))
                 {
-                    trackedGame.LastReminderProcessedLocal = ScheduleCalculator.GetMostRecentOccurrence(
-                        now, trackedGame.ReminderCadence, trackedGame.ReminderDay, reminderTime);
+                    PrepareReminderScheduleAfterChange(trackedGame, now);
                 }
+
+                trackedGame.NotifyOverallStateChanged();
             }
         }
 
@@ -495,17 +823,29 @@ namespace GameRoutines
             {
                 var currentById = current.TrackedGames.ToDictionary(a => a.GameId);
                 foreach (var removedGameId in openChecklistWindows.Keys
-                    .Where(a => !currentById.ContainsKey(a))
-                    .ToList())
+                    .Where(a => !currentById.ContainsKey(a)).ToList())
                 {
                     openChecklistWindows[removedGameId].Close();
                 }
 
-                foreach (var removedGameId in openManageChecklistWindows.Keys
-                    .Where(a => !currentById.ContainsKey(a))
+                foreach (var routineWindowKey in openRoutineChecklistWindows.Keys
+                    .Where(key => !currentById.Keys.Any(gameId =>
+                        key.StartsWith($"{gameId:N}:", StringComparison.OrdinalIgnoreCase)))
                     .ToList())
                 {
+                    openRoutineChecklistWindows[routineWindowKey].Close();
+                }
+
+                foreach (var removedGameId in openManageChecklistWindows.Keys
+                    .Where(a => !currentById.ContainsKey(a)).ToList())
+                {
                     openManageChecklistWindows[removedGameId].Close();
+                }
+
+                foreach (var removedGameId in openCustomReminderWindows.Keys
+                    .Where(a => !currentById.ContainsKey(a)).ToList())
+                {
+                    openCustomReminderWindows[removedGameId].Close();
                 }
 
                 if (previous?.TrackedGames != null)
@@ -545,14 +885,14 @@ namespace GameRoutines
                    firstTime == secondTime;
         }
 
-        private static bool HasResetScheduleChanged(
-            TrackedGameSettings previous,
-            TrackedGameSettings current)
+        private static bool HasResetScheduleChanged(RoutineSettings previous, RoutineSettings current)
         {
             return previous.ResetCadence != current.ResetCadence ||
                    (current.ResetCadence == ResetCadence.Weekly &&
                     previous.ResetDay != current.ResetDay) ||
-                   !TimesEqual(previous.ResetTime, current.ResetTime);
+                   !TimesEqual(previous.ResetTime, current.ResetTime) ||
+                   (current.ResetCadence == ResetCadence.BiWeekly &&
+                    previous.BiWeeklyResetAnchorLocal != current.BiWeeklyResetAnchorLocal);
         }
 
         private static bool HasReminderScheduleChanged(
@@ -563,7 +903,99 @@ namespace GameRoutines
                    previous.ReminderCadence != current.ReminderCadence ||
                    (current.ReminderCadence == ReminderCadence.Weekly &&
                     previous.ReminderDay != current.ReminderDay) ||
-                   !TimesEqual(previous.ReminderTime, current.ReminderTime);
+                   !TimesEqual(previous.ReminderTime, current.ReminderTime) ||
+                   (current.ReminderCadence == ReminderCadence.BiWeekly &&
+                    previous.BiWeeklyReminderAnchorLocal != current.BiWeeklyReminderAnchorLocal);
+        }
+
+        private static void PrepareResetScheduleAfterChange(RoutineSettings routine, DateTime now)
+        {
+            if (routine.ResetCadence == ResetCadence.BiWeekly &&
+                ScheduleCalculator.TryParseLocalTime(routine.ResetTime, out var biWeeklyTime))
+            {
+                routine.BiWeeklyResetAnchorLocal = routine.BiWeeklyResetAnchorLocal.HasValue
+                    ? DateTime.SpecifyKind(
+                        routine.BiWeeklyResetAnchorLocal.Value.Date.Add(biWeeklyTime),
+                        DateTimeKind.Local)
+                    : ScheduleCalculator.GetFirstFutureWeeklyOccurrence(
+                        now,
+                        routine.ResetDay,
+                        biWeeklyTime);
+                if (ScheduleCalculator.TryGetMostRecentOccurrence(
+                    now,
+                    routine.ResetCadence,
+                    routine.ResetDay,
+                    biWeeklyTime,
+                    routine.BiWeeklyResetAnchorLocal,
+                    out var biWeeklyOccurrence))
+                {
+                    routine.LastResetProcessedLocal = biWeeklyOccurrence;
+                }
+                else
+                {
+                    routine.LastResetProcessedLocal = null;
+                }
+                return;
+            }
+
+            if (routine.ResetCadence != ResetCadence.Never &&
+                ScheduleCalculator.TryParseLocalTime(routine.ResetTime, out var resetTime) &&
+                ScheduleCalculator.TryGetMostRecentOccurrence(
+                    now,
+                    routine.ResetCadence,
+                    routine.ResetDay,
+                    resetTime,
+                    null,
+                    out var resetOccurrence))
+            {
+                routine.LastResetProcessedLocal = resetOccurrence;
+            }
+        }
+
+        private static void PrepareReminderScheduleAfterChange(
+            TrackedGameSettings trackedGame,
+            DateTime now)
+        {
+            if (trackedGame.ReminderCadence == ReminderCadence.BiWeekly &&
+                ScheduleCalculator.TryParseLocalTime(trackedGame.ReminderTime, out var biWeeklyTime))
+            {
+                trackedGame.BiWeeklyReminderAnchorLocal = trackedGame.BiWeeklyReminderAnchorLocal.HasValue
+                    ? DateTime.SpecifyKind(
+                        trackedGame.BiWeeklyReminderAnchorLocal.Value.Date.Add(biWeeklyTime),
+                        DateTimeKind.Local)
+                    : ScheduleCalculator.GetFirstFutureWeeklyOccurrence(
+                        now,
+                        trackedGame.ReminderDay,
+                        biWeeklyTime);
+                if (ScheduleCalculator.TryGetMostRecentOccurrence(
+                    now,
+                    trackedGame.ReminderCadence,
+                    trackedGame.ReminderDay,
+                    biWeeklyTime,
+                    trackedGame.BiWeeklyReminderAnchorLocal,
+                    out var biWeeklyOccurrence))
+                {
+                    trackedGame.LastReminderProcessedLocal = biWeeklyOccurrence;
+                }
+                else
+                {
+                    trackedGame.LastReminderProcessedLocal = null;
+                }
+                return;
+            }
+
+            if (trackedGame.CustomReminderEnabled &&
+                ScheduleCalculator.TryParseLocalTime(trackedGame.ReminderTime, out var reminderTime) &&
+                ScheduleCalculator.TryGetMostRecentOccurrence(
+                    now,
+                    trackedGame.ReminderCadence,
+                    trackedGame.ReminderDay,
+                    reminderTime,
+                    null,
+                    out var reminderOccurrence))
+            {
+                trackedGame.LastReminderProcessedLocal = reminderOccurrence;
+            }
         }
 
         private void SchedulerTimer_Tick(object sender, EventArgs args)
@@ -592,7 +1024,7 @@ namespace GameRoutines
             }
         }
 
-        internal void OpenChecklistWindow(Guid gameId)
+        internal void OpenChecklistWindow(Guid gameId, Guid? routineId = null)
         {
             try
             {
@@ -601,44 +1033,59 @@ namespace GameRoutines
                     return;
                 }
 
-                if (openChecklistWindows.TryGetValue(gameId, out var existingWindow))
+                var routine = routineId.HasValue ? GetRoutine(gameId, routineId.Value) : null;
+                if (routineId.HasValue && routine == null)
                 {
-                    if (existingWindow.WindowState == WindowState.Minimized)
-                    {
-                        existingWindow.WindowState = WindowState.Normal;
-                    }
-
-                    existingWindow.Activate();
                     return;
                 }
 
-                var viewModel = new GameChecklistViewModel(this, gameId);
+                var routineWindowKey = routineId.HasValue
+                    ? GetRoutineWindowKey(gameId, routineId.Value)
+                    : null;
+                Window existingWindow;
+                if ((!routineId.HasValue && openChecklistWindows.TryGetValue(gameId, out existingWindow)) ||
+                    (routineId.HasValue && openRoutineChecklistWindows.TryGetValue(routineWindowKey, out existingWindow)))
+                {
+                    ActivateWindow(existingWindow);
+                    return;
+                }
+
+                var viewModel = new GameChecklistViewModel(this, gameId, routineId);
                 var window = PlayniteApi.Dialogs.CreateWindow(new WindowCreationOptions
                 {
                     ShowCloseButton = true,
                     ShowMaximizeButton = true,
                     ShowMinimizeButton = true
                 });
-                window.Title = "Checklist";
-                window.Width = 540;
-                window.Height = 620;
-                window.MinWidth = 420;
+                window.Title = routineId.HasValue
+                    ? $"{GetRoutineDisplayName(routine)} Checklist"
+                    : "Checklists";
+                window.Width = routineId.HasValue ? 560 : 660;
+                window.Height = 650;
+                window.MinWidth = 440;
                 window.MinHeight = 360;
-                window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-                var owner = PlayniteApi.Dialogs.GetCurrentAppWindow();
-                if (owner != null && !ReferenceEquals(owner, window))
-                {
-                    window.Owner = owner;
-                }
+                window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                window.Owner = null;
+                window.ShowInTaskbar = true;
 
                 window.Content = new GameChecklistView
                 {
-                    DataContext = viewModel
+                    DataContext = viewModel,
+                    ShowOpenWindowButton = false,
+                    ShowRoutinePopOutButtons = false
                 };
                 window.Closed += (sender, args) =>
                 {
-                    if (openChecklistWindows.TryGetValue(gameId, out var registeredWindow) &&
-                        ReferenceEquals(registeredWindow, window))
+                    if (routineId.HasValue)
+                    {
+                        if (openRoutineChecklistWindows.TryGetValue(routineWindowKey, out var registeredRoutineWindow) &&
+                            ReferenceEquals(registeredRoutineWindow, window))
+                        {
+                            openRoutineChecklistWindows.Remove(routineWindowKey);
+                        }
+                    }
+                    else if (openChecklistWindows.TryGetValue(gameId, out var registeredWindow) &&
+                             ReferenceEquals(registeredWindow, window))
                     {
                         openChecklistWindows.Remove(gameId);
                     }
@@ -646,7 +1093,14 @@ namespace GameRoutines
                     viewModel.Dispose();
                 };
 
-                openChecklistWindows[gameId] = window;
+                if (routineId.HasValue)
+                {
+                    openRoutineChecklistWindows[routineWindowKey] = window;
+                }
+                else
+                {
+                    openChecklistWindows[gameId] = window;
+                }
                 window.Show();
             }
             catch (Exception exception)
@@ -658,7 +1112,7 @@ namespace GameRoutines
             }
         }
 
-        internal void OpenManageChecklistWindow(Guid gameId)
+        internal void OpenManageChecklistWindow(Guid gameId, Guid? routineId = null)
         {
             try
             {
@@ -669,16 +1123,12 @@ namespace GameRoutines
 
                 if (openManageChecklistWindows.TryGetValue(gameId, out var existingWindow))
                 {
-                    if (existingWindow.WindowState == WindowState.Minimized)
-                    {
-                        existingWindow.WindowState = WindowState.Normal;
-                    }
-
-                    existingWindow.Activate();
+                    SelectRoutineInWindow(existingWindow, routineId);
+                    ActivateWindow(existingWindow);
                     return;
                 }
 
-                var viewModel = new ManageChecklistViewModel(this, gameId);
+                var viewModel = new ManageChecklistViewModel(this, gameId, routineId);
                 var window = PlayniteApi.Dialogs.CreateWindow(new WindowCreationOptions
                 {
                     ShowCloseButton = true,
@@ -687,7 +1137,7 @@ namespace GameRoutines
                 });
                 window.Title = "Manage Checklist";
                 window.Width = 620;
-                window.Height = 560;
+                window.Height = 650;
                 window.MinWidth = 480;
                 window.MinHeight = 340;
                 window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -697,10 +1147,7 @@ namespace GameRoutines
                     window.Owner = owner;
                 }
 
-                window.Content = new ManageChecklistView
-                {
-                    DataContext = viewModel
-                };
+                window.Content = new ManageChecklistView { DataContext = viewModel };
                 window.Closed += (sender, args) =>
                 {
                     if (openManageChecklistWindows.TryGetValue(gameId, out var registeredWindow) &&
@@ -724,21 +1171,73 @@ namespace GameRoutines
             }
         }
 
+        private static void SelectRoutineInWindow(Window window, Guid? routineId)
+        {
+            if (!routineId.HasValue || !(window?.Content is FrameworkElement content))
+            {
+                return;
+            }
+
+            if (content.DataContext is ManageChecklistViewModel manageViewModel)
+            {
+                manageViewModel.SelectRoutine(routineId.Value);
+            }
+        }
+
+        private static void ActivateWindow(Window window)
+        {
+            if (window == null)
+            {
+                return;
+            }
+
+            if (window.WindowState == WindowState.Minimized)
+            {
+                window.WindowState = WindowState.Normal;
+            }
+
+            window.Activate();
+        }
+
+        private static string GetRoutineWindowKey(Guid gameId, Guid routineId)
+        {
+            return $"{gameId:N}:{routineId:N}";
+        }
+
+        private void CloseRoutineChecklistWindow(Guid gameId, Guid routineId)
+        {
+            var key = GetRoutineWindowKey(gameId, routineId);
+            if (openRoutineChecklistWindows.TryGetValue(key, out var window))
+            {
+                window.Close();
+            }
+        }
+
         private void CloseChecklistWindows()
         {
             foreach (var window in openChecklistWindows.Values.ToList())
             {
                 window.Close();
             }
-
             openChecklistWindows.Clear();
+
+            foreach (var window in openRoutineChecklistWindows.Values.ToList())
+            {
+                window.Close();
+            }
+            openRoutineChecklistWindows.Clear();
 
             foreach (var window in openManageChecklistWindows.Values.ToList())
             {
                 window.Close();
             }
-
             openManageChecklistWindows.Clear();
+
+            foreach (var window in openCustomReminderWindows.Values.ToList())
+            {
+                window.Close();
+            }
+            openCustomReminderWindows.Clear();
         }
 
         private void ProcessDueEvents()
@@ -760,9 +1259,7 @@ namespace GameRoutines
                     }
                     catch (Exception exception)
                     {
-                        logger.Error(
-                            exception,
-                            $"Failed to process schedules for tracked game {trackedGame.GameId}.");
+                        logger.Error(exception, $"Failed to process schedules for tracked game {trackedGame.GameId}.");
                     }
                 }
             }
@@ -796,18 +1293,37 @@ namespace GameRoutines
                 settingsChanged = true;
             }
 
-            if (ScheduleCalculator.TryParseLocalTime(trackedGame.ResetTime, out var resetTime) &&
-                ScheduleCalculator.TryGetMostRecentOccurrence(
-                    now,
-                    trackedGame.ResetCadence,
-                    trackedGame.ResetDay,
-                    resetTime,
-                    out var resetOccurrence))
+            foreach (var routine in trackedGame.Routines.Where(a => a != null))
             {
-                if (ScheduleCalculator.IsOccurrenceDue(
-                    trackedGame.LastResetProcessedLocal, resetOccurrence))
+                if (routine.ResetCadence == ResetCadence.BiWeekly &&
+                    !routine.BiWeeklyResetAnchorLocal.HasValue)
                 {
-                    ProcessReset(trackedGame, game, resetOccurrence);
+                    PrepareResetScheduleAfterChange(routine, now);
+                    settingsChanged = true;
+                }
+            }
+
+            if (trackedGame.CustomReminderEnabled &&
+                trackedGame.ReminderCadence == ReminderCadence.BiWeekly &&
+                !trackedGame.BiWeeklyReminderAnchorLocal.HasValue)
+            {
+                PrepareReminderScheduleAfterChange(trackedGame, now);
+                settingsChanged = true;
+            }
+
+            foreach (var routine in trackedGame.Routines.OrderBy(a => a.Order).ToList())
+            {
+                if (ScheduleCalculator.TryParseLocalTime(routine.ResetTime, out var resetTime) &&
+                    ScheduleCalculator.TryGetMostRecentOccurrence(
+                        now,
+                        routine.ResetCadence,
+                        routine.ResetDay,
+                        resetTime,
+                        routine.BiWeeklyResetAnchorLocal,
+                        out var resetOccurrence) &&
+                    ScheduleCalculator.IsOccurrenceDue(routine.LastResetProcessedLocal, resetOccurrence))
+                {
+                    ProcessReset(trackedGame, routine, game, resetOccurrence);
                     settingsChanged = false;
                 }
             }
@@ -815,10 +1331,14 @@ namespace GameRoutines
             if (trackedGame.CustomReminderEnabled &&
                 ScheduleCalculator.TryParseLocalTime(trackedGame.ReminderTime, out var reminderTime))
             {
-                var reminderOccurrence = ScheduleCalculator.GetMostRecentOccurrence(
-                    now, trackedGame.ReminderCadence, trackedGame.ReminderDay, reminderTime);
-                if (ScheduleCalculator.IsOccurrenceDue(
-                    trackedGame.LastReminderProcessedLocal, reminderOccurrence))
+                if (ScheduleCalculator.TryGetMostRecentOccurrence(
+                        now,
+                        trackedGame.ReminderCadence,
+                        trackedGame.ReminderDay,
+                        reminderTime,
+                        trackedGame.BiWeeklyReminderAnchorLocal,
+                        out var reminderOccurrence) &&
+                    ScheduleCalculator.IsOccurrenceDue(trackedGame.LastReminderProcessedLocal, reminderOccurrence))
                 {
                     ProcessCustomReminder(trackedGame, game, reminderOccurrence);
                     settingsChanged = false;
@@ -842,7 +1362,6 @@ namespace GameRoutines
                         $"Tracked game is missing from the Playnite database: " +
                         $"{trackedGame.CachedGameName ?? "Unknown"} ({trackedGame.GameId}).");
                 }
-
                 return null;
             }
 
@@ -850,32 +1369,37 @@ namespace GameRoutines
             return game;
         }
 
-        private void ProcessReset(TrackedGameSettings trackedGame, Game game, DateTime occurrence)
+        private void ProcessReset(
+            TrackedGameSettings trackedGame,
+            RoutineSettings routine,
+            Game game,
+            DateTime occurrence)
         {
-            var cadenceName = trackedGame.ResetCadence == ResetCadence.Daily
-                ? "DAILY"
-                : "WEEKLY";
-            var reason = $"{cadenceName.ToLowerInvariant()} reset";
-            ChecklistService.Reset(trackedGame);
-            ApplyTaskState(trackedGame, TaskState.INCOMPLETE, false, reason);
-            ReconcileChecklistDrivenState(trackedGame, $"{reason} checklist reconciliation");
-            trackedGame.LastResetProcessedLocal = occurrence;
+            var reason = $"{CadenceDisplay.GetName(routine.ResetCadence).ToLowerInvariant()} reset";
+            ChecklistService.Reset(routine);
+            ApplyRoutineState(trackedGame, routine, TaskState.INCOMPLETE, false, reason);
+            ReconcileChecklistDrivenState(trackedGame, routine, $"{reason} checklist reconciliation");
+            routine.LastResetProcessedLocal = occurrence;
 
-            // Persist the occurrence before publishing its notification. If Playnite exits
-            // immediately afterward, this reset still cannot be notified a second time.
             PersistAndReconcile(new[] { trackedGame });
 
-            var name = GetDisplayName(trackedGame, game);
-            var notificationId =
-                $"GameRoutines_Reset_{trackedGame.ResetCadence}_{game.Id:N}_{occurrence.Ticks}";
-            PlayniteApi.Notifications.Add(new NotificationMessage(
+            var gameName = GetDisplayName(trackedGame, game);
+            var routineName = GetRoutineDisplayName(routine);
+            var notificationId = $"GameRoutines_Reset_{game.Id:N}_{routine.Id:N}_{occurrence.Ticks}";
+            persistentNotifications.Post(
                 notificationId,
-                $"{name.ToUpperInvariant()}: {cadenceName} TASKS RESET\r\nTasks are available.",
-                NotificationType.Info));
+                game.Id,
+                routine.Id,
+                "RoutineReset",
+                occurrence,
+                $"{gameName.ToUpperInvariant()}: {routineName.ToUpperInvariant()} RESET",
+                "Tasks are available.",
+                NotificationType.Info);
 
             logger.Info(
-                $"Processed {cadenceName.ToLowerInvariant()} reset for {name} ({game.Id}) " +
-                $"at {occurrence:O}; task state is {GetUserFacingStateName(trackedGame.CurrentState)}.");
+                $"Processed {CadenceDisplay.GetName(routine.ResetCadence).ToLowerInvariant()} reset for " +
+                $"{gameName} / {routineName} ({game.Id}, {routine.Id}) at {occurrence:O}; " +
+                $"routine state is {GetUserFacingStateName(routine.CurrentState)}.");
         }
 
         private void ProcessCustomReminder(
@@ -889,15 +1413,19 @@ namespace GameRoutines
             var notificationId =
                 $"GameRoutines_Reminder_{trackedGame.ReminderCadence}_{game.Id:N}_{occurrence.Ticks}";
             var name = GetDisplayName(trackedGame, game).ToUpperInvariant();
-            PlayniteApi.Notifications.Add(new NotificationMessage(
+            persistentNotifications.Post(
                 notificationId,
-                $"{name}: {trackedGame.CustomReminderTitle}\r\n" +
+                game.Id,
+                null,
+                "CustomReminder",
+                occurrence,
+                $"{name}: {trackedGame.CustomReminderTitle}",
                 trackedGame.CustomReminderMessage,
-                NotificationType.Info));
+                NotificationType.Info);
 
             logger.Info(
                 $"Processed custom reminder for {GetDisplayName(trackedGame, game)} " +
-                $"({game.Id}) at {occurrence:O}; task state and checklist were not changed.");
+                $"({game.Id}) at {occurrence:O}; routine states and checklists were not changed.");
         }
 
         private void TrackSelectedGames(IEnumerable<Game> selectedGames)
@@ -931,7 +1459,7 @@ namespace GameRoutines
         private void SetSelectedGamesState(IEnumerable<Game> selectedGames, TaskState newState)
         {
             SetTrackedGamesState(
-                (selectedGames ?? Enumerable.Empty<Game>()).Select(a => a.Id),
+                (selectedGames ?? Enumerable.Empty<Game>()).Where(a => a != null).Select(a => a.Id),
                 newState);
         }
 
@@ -940,20 +1468,22 @@ namespace GameRoutines
             try
             {
                 var trackedGames = (selectedGames ?? Enumerable.Empty<Game>())
+                    .Where(a => a != null)
                     .Select(a => FindTrackedGame(a.Id))
                     .Where(a => a != null)
                     .Distinct()
                     .ToList();
-                if (trackedGames.Count == 0)
+                var routines = trackedGames.SelectMany(a => a.Routines.Select(r => new { Game = a, Routine = r })).ToList();
+                if (routines.Count == 0)
                 {
                     return;
                 }
 
-                if (trackedGames.Any(a => ChecklistService.GetProgress(a).Completed > 0) &&
+                if (routines.Any(a => ChecklistService.GetProgress(a.Routine).Completed > 0) &&
                     PlayniteApi.Dialogs.ShowMessage(
-                        trackedGames.Count == 1
-                            ? $"Reset the checklist for {GetDisplayName(trackedGames[0], PlayniteApi.Database.Games.Get(trackedGames[0].GameId))}?"
-                            : $"Reset the checklists for {trackedGames.Count} tracked games?",
+                        routines.Count == 1
+                            ? $"Reset the checklist for \"{routines[0].Routine.Name}\"?"
+                            : $"Reset all {routines.Count} routine checklists for the selected games?",
                         "Game Routines",
                         MessageBoxButton.YesNo,
                         MessageBoxImage.Question) != MessageBoxResult.Yes)
@@ -961,11 +1491,11 @@ namespace GameRoutines
                     return;
                 }
 
-                foreach (var trackedGame in trackedGames)
+                foreach (var entry in routines)
                 {
-                    ChecklistService.Reset(trackedGame);
-                    ApplyTaskState(trackedGame, TaskState.INCOMPLETE, false, "checklist reset");
-                    ReconcileChecklistDrivenState(trackedGame, "checklist reset reconciliation");
+                    ChecklistService.Reset(entry.Routine);
+                    ApplyRoutineState(entry.Game, entry.Routine, TaskState.INCOMPLETE, false, "checklist reset");
+                    ReconcileChecklistDrivenState(entry.Game, entry.Routine, "checklist reset reconciliation");
                 }
 
                 PersistAndReconcile(trackedGames);
@@ -974,7 +1504,7 @@ namespace GameRoutines
             {
                 logger.Error(exception, "Failed to reset selected game checklist(s).");
                 PlayniteApi.Dialogs.ShowErrorMessage(
-                    "Game Routines could not reset the selected checklist(s). See the Playnite log for details.",
+                    "Game Routines could not reset the selected checklists. See the Playnite log for details.",
                     "Game Routines");
             }
         }
@@ -984,42 +1514,50 @@ namespace GameRoutines
             try
             {
                 var trackedById = settings.TrackedGames.ToDictionary(a => a.GameId);
-                var changedGames = new List<TrackedGameSettings>();
-                var wasBlocked = false;
-                foreach (var gameId in (gameIds ?? Enumerable.Empty<Guid>()).Distinct())
+                var targets = (gameIds ?? Enumerable.Empty<Guid>())
+                    .Distinct()
+                    .Where(trackedById.ContainsKey)
+                    .Select(a => trackedById[a])
+                    .SelectMany(game => RoutineService.GetParticipatingRoutines(game)
+                        .Select(routine => new RoutineTarget(game, routine)))
+                    .ToList();
+                if (targets.Count == 0)
                 {
-                    if (!trackedById.TryGetValue(gameId, out var trackedGame))
-                    {
-                        continue;
-                    }
-
-                    if (trackedGame.AutomaticallyCompleteFromChecklist)
-                    {
-                        wasBlocked = true;
-                        continue;
-                    }
-
-                    ApplyTaskState(trackedGame, newState, false, "manual task-state change");
-                    changedGames.Add(trackedGame);
+                    return false;
                 }
 
-                if (wasBlocked)
+                var blockers = targets
+                    .Where(a => a.Routine.AutomaticallyCompleteFromChecklist)
+                    .Select(a => new AutomaticCompletionBlocker(
+                        a.Game,
+                        a.Routine,
+                        GetChecklistDerivedState(a.Routine)))
+                    .Where(a => a.ChecklistState != newState)
+                    .ToList();
+                if (blockers.Count > 0)
                 {
-                    ShowAutomaticCompletionWarning();
+                    ShowAutomaticCompletionWarning(blockers, newState);
+                    return false;
                 }
 
-                if (changedGames.Count > 0)
+                var affectedGames = new HashSet<TrackedGameSettings>();
+                foreach (var target in targets)
                 {
-                    PersistAndReconcile(changedGames);
+                    ApplyRoutineState(
+                        target.Game,
+                        target.Routine,
+                        newState,
+                        target.Routine.AutomaticallyCompleteFromChecklist && newState == TaskState.COMPLETE,
+                        "manual overall task-state change");
+                    affectedGames.Add(target.Game);
                 }
 
-                return changedGames.Count > 0;
+                PersistAndReconcile(affectedGames);
+                return true;
             }
             catch (Exception exception)
             {
-                logger.Error(
-                    exception,
-                    $"Failed to mark selected game(s) {GetUserFacingStateName(newState)}.");
+                logger.Error(exception, $"Failed to mark selected game(s) {GetUserFacingStateName(newState)}.");
                 PlayniteApi.Dialogs.ShowErrorMessage(
                     "Game Routines could not update the selected game tasks. See the Playnite log for details.",
                     "Game Routines");
@@ -1027,16 +1565,43 @@ namespace GameRoutines
             }
         }
 
-        private void ShowAutomaticCompletionWarning()
+        private void ShowAutomaticCompletionWarning(
+            IReadOnlyList<AutomaticCompletionBlocker> blockers,
+            TaskState requestedState,
+            bool aggregateChange = true)
         {
-            if (!settings.Settings.ShowBlockedManualStateWarning)
+            if (!settings.Settings.ShowBlockedManualStateWarning || blockers == null || blockers.Count == 0)
             {
                 return;
             }
 
             try
             {
-                var warningView = new BlockedManualStateWarningView();
+                var includeGameName = blockers.Select(a => a.Game.GameId).Distinct().Count() > 1;
+                var warningEntries = blockers.Select(blocker =>
+                {
+                    var routineLabel = $"\"{GetRoutineDisplayName(blocker.Routine)}\"";
+                    if (includeGameName)
+                    {
+                        routineLabel = $"{GetDisplayName(blocker.Game, PlayniteApi.Database.Games.Get(blocker.Game.GameId))} — {routineLabel}";
+                    }
+
+                    var resolution = requestedState == TaskState.COMPLETE
+                        ? "Complete its checklist"
+                        : "Uncheck an item";
+                    var actionLabel = aggregateChange
+                        ? "all counted routines"
+                        : "this routine";
+                    return new BlockedManualStateWarningEntry
+                    {
+                        RoutineLabel = routineLabel,
+                        CurrentState = GetUserFacingStateName(blocker.ChecklistState),
+                        Resolution = resolution,
+                        ActionLabel = actionLabel,
+                        RequestedState = GetUserFacingStateName(requestedState)
+                    };
+                }).ToList();
+                var warningView = new BlockedManualStateWarningView(warningEntries);
                 var window = PlayniteApi.Dialogs.CreateWindow(new WindowCreationOptions
                 {
                     ShowCloseButton = true,
@@ -1044,7 +1609,7 @@ namespace GameRoutines
                     ShowMinimizeButton = false
                 });
                 window.Title = AutomaticCompletionWarningTitle;
-                window.Width = 500;
+                window.Width = 520;
                 window.SizeToContent = SizeToContent.Height;
                 window.ResizeMode = ResizeMode.NoResize;
                 window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -1056,7 +1621,6 @@ namespace GameRoutines
 
                 window.Content = warningView;
                 window.ShowDialog();
-
                 if (warningView.DontShowAgain)
                 {
                     settings.Settings.ShowBlockedManualStateWarning = false;
@@ -1074,40 +1638,74 @@ namespace GameRoutines
             return settings.TrackedGames.FirstOrDefault(a => a.GameId == gameId);
         }
 
-        private void CompleteChecklistMutation(
-            TrackedGameSettings trackedGame,
-            bool persistChanges,
-            string reason)
+        private void CompleteRoutineMutation(TrackedGameSettings trackedGame, bool persistChanges)
         {
             if (trackedGame == null)
             {
                 return;
             }
 
-            ReconcileChecklistDrivenState(trackedGame, reason);
+            trackedGame.NotifyOverallStateChanged();
             if (persistChanges)
             {
                 PersistAndReconcile(new[] { trackedGame });
             }
+            else
+            {
+                ReconcileTasksAvailableTag(trackedGame);
+                NotifyUiStateChanged(trackedGame.GameId);
+            }
         }
 
-        private void ReconcileChecklistDrivenState(TrackedGameSettings trackedGame, string reason)
+        private void CompleteChecklistMutation(
+            TrackedGameSettings trackedGame,
+            RoutineSettings routine,
+            bool persistChanges,
+            string reason)
         {
-            if (!trackedGame.AutomaticallyCompleteFromChecklist)
+            if (trackedGame == null || routine == null)
             {
-                trackedGame.CompletedAutomaticallyByChecklist = false;
                 return;
             }
 
-            var progress = ChecklistService.GetProgress(trackedGame);
-            if (progress.IsComplete)
+            ReconcileChecklistDrivenState(trackedGame, routine, reason);
+            if (persistChanges)
             {
-                ApplyTaskState(trackedGame, TaskState.COMPLETE, true, reason);
+                PersistAndReconcile(new[] { trackedGame });
             }
             else
             {
-                ApplyTaskState(trackedGame, TaskState.INCOMPLETE, false, reason);
+                trackedGame.NotifyOverallStateChanged();
+                ReconcileTasksAvailableTag(trackedGame);
+                NotifyUiStateChanged(trackedGame.GameId);
             }
+        }
+
+        private void ReconcileChecklistDrivenState(
+            TrackedGameSettings trackedGame,
+            RoutineSettings routine,
+            string reason)
+        {
+            if (!routine.AutomaticallyCompleteFromChecklist)
+            {
+                routine.CompletedAutomaticallyByChecklist = false;
+                return;
+            }
+
+            var checklistState = GetChecklistDerivedState(routine);
+            ApplyRoutineState(
+                trackedGame,
+                routine,
+                checklistState,
+                checklistState == TaskState.COMPLETE,
+                reason);
+        }
+
+        private static TaskState GetChecklistDerivedState(RoutineSettings routine)
+        {
+            return ChecklistService.GetProgress(routine).IsComplete
+                ? TaskState.COMPLETE
+                : TaskState.INCOMPLETE;
         }
 
         private void ReconcileAllChecklistStates()
@@ -1115,11 +1713,15 @@ namespace GameRoutines
             var changed = false;
             foreach (var trackedGame in settings.TrackedGames)
             {
-                var oldState = trackedGame.CurrentState;
-                var oldOwnership = trackedGame.CompletedAutomaticallyByChecklist;
-                ReconcileChecklistDrivenState(trackedGame, "startup checklist reconciliation");
-                changed |= oldState != trackedGame.CurrentState ||
-                           oldOwnership != trackedGame.CompletedAutomaticallyByChecklist;
+                foreach (var routine in trackedGame.Routines)
+                {
+                    var oldState = routine.CurrentState;
+                    var oldOwnership = routine.CompletedAutomaticallyByChecklist;
+                    ReconcileChecklistDrivenState(trackedGame, routine, "startup checklist reconciliation");
+                    changed |= oldState != routine.CurrentState ||
+                               oldOwnership != routine.CompletedAutomaticallyByChecklist;
+                }
+                trackedGame.NotifyOverallStateChanged();
             }
 
             if (changed)
@@ -1128,24 +1730,26 @@ namespace GameRoutines
             }
         }
 
-        private void ApplyTaskState(
+        private void ApplyRoutineState(
             TrackedGameSettings trackedGame,
+            RoutineSettings routine,
             TaskState newState,
             bool completedAutomatically,
             string reason)
         {
-            var stateChanged = trackedGame.CurrentState != newState;
-            var ownershipChanged =
-                trackedGame.CompletedAutomaticallyByChecklist != completedAutomatically;
-            trackedGame.CurrentState = newState;
-            trackedGame.CompletedAutomaticallyByChecklist = completedAutomatically;
+            var stateChanged = routine.CurrentState != newState;
+            var ownershipChanged = routine.CompletedAutomaticallyByChecklist != completedAutomatically;
+            routine.CurrentState = newState;
+            routine.CompletedAutomaticallyByChecklist = completedAutomatically;
+            trackedGame.NotifyOverallStateChanged();
 
             if (stateChanged || ownershipChanged)
             {
                 var game = PlayniteApi.Database.Games.Get(trackedGame.GameId);
                 logger.Info(
-                    $"Task state for {GetDisplayName(trackedGame, game)} ({trackedGame.GameId}) " +
-                    $"is {GetUserFacingStateName(newState)} after {reason}.");
+                    $"Routine state for {GetDisplayName(trackedGame, game)} / " +
+                    $"{GetRoutineDisplayName(routine)} ({trackedGame.GameId}, {routine.Id}) is " +
+                    $"{GetUserFacingStateName(newState)} after {reason}.");
             }
         }
 
@@ -1160,8 +1764,11 @@ namespace GameRoutines
                 return;
             }
 
-            // Persist state and checklist changes before synchronizing Playnite metadata so
-            // startup reconciliation can never observe an older value after an interruption.
+            foreach (var trackedGame in affectedGames)
+            {
+                trackedGame.NotifyOverallStateChanged();
+            }
+
             SavePluginSettings(settings.Settings);
             foreach (var trackedGame in affectedGames)
             {
@@ -1193,52 +1800,41 @@ namespace GameRoutines
                 }
                 catch (Exception exception)
                 {
-                    logger.Error(
-                        exception,
-                        $"Failed to reconcile Game Routines tags for game {trackedGame.GameId}.");
+                    logger.Error(exception, $"Failed to reconcile Game Routines tags for game {trackedGame.GameId}.");
                 }
             }
         }
 
         private void UpdateTasksAvailableTag(Guid gameId, bool shouldHaveTag)
         {
-            // Context-menu game objects can be older than the database object after an
-            // earlier metadata update. Always re-fetch by authoritative Game.Id before
-            // inspecting TagIds or a stale object can incorrectly skip tag removal.
             var game = PlayniteApi.Database.Games.Get(gameId);
             if (game == null)
             {
                 return;
             }
+
             var tasksAvailableTag = FindTag(TasksAvailableTagName);
             var legacyWeekliesTag = FindTag(LegacyWeekliesTagName);
             var legacyReadyTag = FindTag(LegacyReadyTagName);
-
             if (tasksAvailableTag == null && shouldHaveTag)
             {
                 tasksAvailableTag = PlayniteApi.Database.Tags.Add(
                     TasksAvailableTagName,
-                    (existing, requestedName) => string.Equals(
-                        existing.Name, requestedName, StringComparison.Ordinal));
+                    (existing, requestedName) => string.Equals(existing.Name, requestedName, StringComparison.Ordinal));
             }
 
-            var tagIds = game.TagIds ?? new List<Guid>();
-            var updatedTagIds = new List<Guid>(tagIds);
+            var updatedTagIds = new List<Guid>(game.TagIds ?? new List<Guid>());
             var changed = false;
-
             if (legacyWeekliesTag != null)
             {
                 changed |= updatedTagIds.RemoveAll(a => a == legacyWeekliesTag.Id) > 0;
             }
-
             if (legacyReadyTag != null)
             {
                 changed |= updatedTagIds.RemoveAll(a => a == legacyReadyTag.Id) > 0;
             }
 
-            if (tasksAvailableTag != null &&
-                shouldHaveTag &&
-                !updatedTagIds.Contains(tasksAvailableTag.Id))
+            if (tasksAvailableTag != null && shouldHaveTag && !updatedTagIds.Contains(tasksAvailableTag.Id))
             {
                 updatedTagIds.Add(tasksAvailableTag.Id);
                 changed = true;
@@ -1270,15 +1866,46 @@ namespace GameRoutines
             {
                 return game.Name;
             }
+            return string.IsNullOrWhiteSpace(trackedGame.CachedGameName) ? "Game" : trackedGame.CachedGameName;
+        }
 
-            return string.IsNullOrWhiteSpace(trackedGame.CachedGameName)
-                ? "Game"
-                : trackedGame.CachedGameName;
+        private static string GetRoutineDisplayName(RoutineSettings routine)
+        {
+            return string.IsNullOrWhiteSpace(routine?.Name) ? "Routine" : routine.Name;
         }
 
         private static string GetUserFacingStateName(TaskState state)
         {
             return state == TaskState.COMPLETE ? "COMPLETE" : "INCOMPLETE";
+        }
+
+        private sealed class RoutineTarget
+        {
+            public RoutineTarget(TrackedGameSettings game, RoutineSettings routine)
+            {
+                Game = game;
+                Routine = routine;
+            }
+
+            public TrackedGameSettings Game { get; }
+            public RoutineSettings Routine { get; }
+        }
+
+        private sealed class AutomaticCompletionBlocker
+        {
+            public AutomaticCompletionBlocker(
+                TrackedGameSettings game,
+                RoutineSettings routine,
+                TaskState checklistState)
+            {
+                Game = game;
+                Routine = routine;
+                ChecklistState = checklistState;
+            }
+
+            public TrackedGameSettings Game { get; }
+            public RoutineSettings Routine { get; }
+            public TaskState ChecklistState { get; }
         }
     }
 }

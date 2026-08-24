@@ -1,0 +1,153 @@
+<UserControl x:Class="GameRoutines.CustomReminderEditor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:GameRoutines"
+             Foreground="{DynamicResource TextBrush}">
+    <UserControl.Resources>
+        <local:CadenceDisplayConverter x:Key="CadenceDisplayConverter" />
+    </UserControl.Resources>
+    <StackPanel MaxWidth="720" HorizontalAlignment="Left">
+        <CheckBox Margin="0,4,0,0"
+                  IsChecked="{Binding CustomReminderEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                  Content="Enabled">
+            <CheckBox.RenderTransform>
+                <TranslateTransform Y="{Binding EnabledVerticalOffset, RelativeSource={RelativeSource AncestorType={x:Type local:CustomReminderEditor}}}" />
+            </CheckBox.RenderTransform>
+        </CheckBox>
+        <Grid Margin="{Binding FormMargin, RelativeSource={RelativeSource AncestorType={x:Type local:CustomReminderEditor}}}">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="IsEnabled" Value="False" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding CustomReminderEnabled}" Value="True">
+                            <Setter Property="IsEnabled" Value="True" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="190" />
+                <ColumnDefinition Width="160" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="160" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBlock Margin="{Binding LabelRowMargin, RelativeSource={RelativeSource AncestorType={x:Type local:CustomReminderEditor}}}" VerticalAlignment="Center" Text="Reminder frequency" />
+            <ComboBox Grid.Column="1"
+                      Width="150"
+                      Margin="{Binding FieldRowMargin, RelativeSource={RelativeSource AncestorType={x:Type local:CustomReminderEditor}}}"
+                      HorizontalAlignment="Left"
+                      ItemsSource="{Binding ReminderCadences, RelativeSource={RelativeSource AncestorType={x:Type local:CustomReminderEditor}}}"
+                      SelectedItem="{Binding ReminderCadence, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Converter={StaticResource CadenceDisplayConverter}}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <TextBlock Grid.Column="2"
+                       Margin="16,5,14,5"
+                       VerticalAlignment="Center"
+                       Text="Start date">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ReminderCadence}" Value="{x:Static local:ReminderCadence.BiWeekly}">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+            <DatePicker Grid.Column="3"
+                        Width="150"
+                        Margin="0,5,0,5"
+                        HorizontalAlignment="Left"
+                        SelectedDate="{Binding BiWeeklyReminderStartingDate, Mode=TwoWay}">
+                <DatePicker.Style>
+                    <Style TargetType="DatePicker" BasedOn="{StaticResource {x:Type DatePicker}}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ReminderCadence}" Value="{x:Static local:ReminderCadence.BiWeekly}">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </DatePicker.Style>
+            </DatePicker>
+            <TextBlock Grid.Row="1" Margin="{Binding LabelRowMargin, RelativeSource={RelativeSource AncestorType={x:Type local:CustomReminderEditor}}}" VerticalAlignment="Center" Text="Reminder day">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ReminderCadence}" Value="{x:Static local:ReminderCadence.Weekly}">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+            <ComboBox Grid.Row="1"
+                      Grid.Column="1"
+                      Width="150"
+                      Margin="{Binding FieldRowMargin, RelativeSource={RelativeSource AncestorType={x:Type local:CustomReminderEditor}}}"
+                      HorizontalAlignment="Left"
+                      ItemsSource="{Binding DaysOfWeek, RelativeSource={RelativeSource AncestorType={x:Type local:CustomReminderEditor}}}"
+                      SelectedItem="{Binding ReminderDay, Mode=TwoWay}">
+                <ComboBox.Style>
+                    <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ReminderCadence}" Value="{x:Static local:ReminderCadence.Weekly}">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ComboBox.Style>
+            </ComboBox>
+            <TextBlock Grid.Row="2" Margin="{Binding LabelRowMargin, RelativeSource={RelativeSource AncestorType={x:Type local:CustomReminderEditor}}}" VerticalAlignment="Center" Text="Reminder time" />
+            <StackPanel Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Margin="{Binding FieldRowMargin, RelativeSource={RelativeSource AncestorType={x:Type local:CustomReminderEditor}}}" Orientation="Horizontal">
+                <TextBox Width="72"
+                         MaxLength="5"
+                         Padding="5,3"
+                         TextAlignment="Center"
+                         Text="{Binding ReminderTime, Mode=TwoWay, UpdateSourceTrigger=Explicit}"
+                         PreviewTextInput="TimeTextBox_PreviewTextInput"
+                         PreviewKeyDown="TimeTextBox_PreviewKeyDown"
+                         PreviewLostKeyboardFocus="TimeTextBox_PreviewLostKeyboardFocus"
+                         TextChanged="TimeTextBox_TextChanged"
+                         DataObject.Pasting="TimeTextBox_Pasting" />
+                <TextBlock Margin="8,2,0,0" Opacity="0.7" Text="24-hour HH:mm, local time" />
+            </StackPanel>
+            <TextBlock Grid.Row="3" Margin="{Binding LabelRowMargin, RelativeSource={RelativeSource AncestorType={x:Type local:CustomReminderEditor}}}" VerticalAlignment="Center" Text="Custom reminder title" />
+            <TextBox Grid.Row="3"
+                     Grid.Column="1"
+                     Grid.ColumnSpan="3"
+                     Width="360"
+                     Margin="{Binding FieldRowMargin, RelativeSource={RelativeSource AncestorType={x:Type local:CustomReminderEditor}}}"
+                     MaxLength="40"
+                     HorizontalAlignment="Left"
+                     Text="{Binding CustomReminderTitle, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBlock Grid.Row="4" Margin="{Binding LabelRowMargin, RelativeSource={RelativeSource AncestorType={x:Type local:CustomReminderEditor}}}" VerticalAlignment="Top" Text="Custom reminder message" />
+            <TextBox Grid.Row="4"
+                     Grid.Column="1"
+                     Grid.ColumnSpan="3"
+                     Width="360"
+                     Height="70"
+                     Margin="{Binding FieldRowMargin, RelativeSource={RelativeSource AncestorType={x:Type local:CustomReminderEditor}}}"
+                     MaxLength="160"
+                     HorizontalAlignment="Left"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     VerticalScrollBarVisibility="Auto"
+                     Text="{Binding CustomReminderMessage, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        </Grid>
+    </StackPanel>
+</UserControl>

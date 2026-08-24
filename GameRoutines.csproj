@@ -50,13 +50,39 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ChecklistService.cs" />
+    <Compile Include="CadenceDisplayConverter.cs" />
+    <Compile Include="CustomReminderService.cs" />
+    <Compile Include="CustomReminderViewModel.cs" />
     <Compile Include="GameRoutines.cs" />
     <Compile Include="GameRoutinesUiStateChangedEventArgs.cs" />
     <Compile Include="GameTaskStateViewModel.cs" />
+    <Compile Include="PersistentNotificationService.cs" />
+    <Compile Include="RoutineService.cs" />
+    <Compile Include="RoutineScheduleEditor.xaml.cs">
+      <DependentUpon>RoutineScheduleEditor.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ScheduleCalculator.cs" />
     <Compile Include="GameChecklistViewModel.cs" />
     <Compile Include="GameChecklistView.xaml.cs">
       <DependentUpon>GameChecklistView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="MultiRoutineChecklistView.xaml.cs">
+      <DependentUpon>MultiRoutineChecklistView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="RoutineChecklistCard.xaml.cs">
+      <DependentUpon>RoutineChecklistCard.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="RoutineStateSwitch.xaml.cs">
+      <DependentUpon>RoutineStateSwitch.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="RoutineAutoCompletionToggle.xaml.cs">
+      <DependentUpon>RoutineAutoCompletionToggle.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="CustomReminderEditor.xaml.cs">
+      <DependentUpon>CustomReminderEditor.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="CustomReminderWindowView.xaml.cs">
+      <DependentUpon>CustomReminderWindowView.xaml</DependentUpon>
     </Compile>
     <Compile Include="GameRoutinesChecklistControl.xaml.cs">
       <DependentUpon>GameRoutinesChecklistControl.xaml</DependentUpon>
@@ -101,6 +127,34 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="GameChecklistView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="MultiRoutineChecklistView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="RoutineChecklistCard.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="RoutineScheduleEditor.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="RoutineStateSwitch.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="RoutineAutoCompletionToggle.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="CustomReminderEditor.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="CustomReminderWindowView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

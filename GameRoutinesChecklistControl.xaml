@@ -14,5 +14,8 @@
         </Style>
     </playnite:PluginUserControl.Style>
 
-    <local:GameChecklistView ShowOpenWindowButton="True" />
+    <local:GameChecklistView ShowOpenWindowButton="True"
+                             ShowNewChecklistButton="True"
+                             ShowDeleteChecklistButtons="True"
+                             ShowRoutinePopOutButtons="True" />
 </playnite:PluginUserControl>

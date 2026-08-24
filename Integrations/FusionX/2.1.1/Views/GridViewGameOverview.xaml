@@ -807,7 +807,7 @@
                                                                     <!--Tab Notes Ends-->
 
                                                                     <!--Game Routines Checklist-->
-                                                                    <TabItem Header="Checklist" FontSize="16"
+                                                                    <TabItem Header="Checklists" FontSize="16"
                                                                             Visibility="{Binding ElementName=GameRoutines_Checklist, Path=Content.Visibility, FallbackValue=Collapsed, TargetNullValue=Collapsed}">
                                                                         <ContentControl x:Name="GameRoutines_Checklist"
                                                                                 Margin="0,4,0,0"
