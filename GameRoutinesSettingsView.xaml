@@ -7,6 +7,61 @@
              mc:Ignorable="d"
              d:DesignHeight="620" d:DesignWidth="900"
              Foreground="{DynamicResource TextBrush}">
+    <UserControl.Resources>
+        <local:CadenceDisplayConverter x:Key="CadenceDisplayConverter" />
+        <Style x:Key="CompactIconButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="Padding" Value="2" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="ButtonBorder"
+                                Padding="{TemplateBinding Padding}"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="2">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="ButtonBorder"
+                                        Property="Background"
+                                        Value="{DynamicResource ControlHoverBackgroundBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Opacity" Value="0.65" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.35" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SubtleIconButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource CompactIconButtonStyle}">
+            <Setter Property="Width" Value="20" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="Padding" Value="2" />
+        </Style>
+        <Style x:Key="RoutineChecklistTextBoxStyle"
+               TargetType="TextBox"
+               BasedOn="{StaticResource {x:Type TextBox}}">
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="MaxLength" Value="120" />
+            <Setter Property="Padding" Value="5,3" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+    </UserControl.Resources>
+
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -16,10 +71,16 @@
 
         <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="260" />
+                <ColumnDefinition Width="12" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Grid Grid.Column="0" MinWidth="280">
+            <StackPanel Grid.Column="2"
+                        MaxWidth="860"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal">
+            <Grid Width="400" MinWidth="220">
                 <TextBox x:Name="GameSearchTextBox"
                          Padding="7,5"
                          VerticalContentAlignment="Center"
@@ -40,11 +101,10 @@
                             MaxHeight="240"
                             Background="{DynamicResource PopupBackgroundBrush}"
                             BorderBrush="{DynamicResource PopupBorderBrush}"
-                            BorderThickness="1"
-                            SnapsToDevicePixels="True">
+                            BorderThickness="1">
                         <ListBox x:Name="GameSearchResultsList"
                                  MaxHeight="236"
-                                 Padding="2"
+                                  Padding="0"
                                  Background="{DynamicResource PopupBackgroundBrush}"
                                  ItemsSource="{Binding GameSearchResults}"
                                  SelectedItem="{Binding SelectedSearchResult, Mode=TwoWay}"
@@ -53,20 +113,53 @@
                                  VirtualizingStackPanel.VirtualizationMode="Recycling"
                                  PreviewKeyDown="GameSearchResultsList_PreviewKeyDown"
                                  PreviewMouseLeftButtonUp="GameSearchResultsList_PreviewMouseLeftButtonUp">
-                            <ListBox.ItemContainerStyle>
-                                <Style TargetType="ListBoxItem"
-                                       BasedOn="{StaticResource {x:Type ListBoxItem}}">
-                                    <Setter Property="MinHeight" Value="34" />
-                                    <Setter Property="Padding" Value="0" />
-                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                    <Setter Property="VerticalContentAlignment" Value="Center" />
-                                </Style>
-                            </ListBox.ItemContainerStyle>
+                             <ListBox.ItemContainerStyle>
+                                 <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                     <Setter Property="MinHeight" Value="34" />
+                                     <Setter Property="Padding" Value="0" />
+                                     <Setter Property="Margin" Value="0" />
+                                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                     <Setter Property="Template">
+                                         <Setter.Value>
+                                             <ControlTemplate TargetType="ListBoxItem">
+                                                 <Grid MinHeight="{TemplateBinding MinHeight}">
+                                                     <Border x:Name="HoverBackground"
+                                                             Background="{DynamicResource ControlHoverBackgroundBrush}"
+                                                             CornerRadius="0"
+                                                             Visibility="Collapsed" />
+                                                     <Border x:Name="SelectedBackground"
+                                                             Background="{DynamicResource ControlSelectedBackgroundBrush}"
+                                                             CornerRadius="0"
+                                                             Visibility="Collapsed" />
+                                                     <ContentPresenter Margin="0"
+                                                                       HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                                       VerticalAlignment="Center" />
+                                                 </Grid>
+                                                 <ControlTemplate.Triggers>
+                                                     <Trigger Property="IsFocused" Value="True">
+                                                         <Setter TargetName="SelectedBackground" Property="Visibility" Value="Visible" />
+                                                     </Trigger>
+                                                     <Trigger Property="IsSelected" Value="True">
+                                                         <Setter TargetName="SelectedBackground" Property="Visibility" Value="Visible" />
+                                                         <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+                                                     </Trigger>
+                                                     <MultiTrigger>
+                                                         <MultiTrigger.Conditions>
+                                                             <Condition Property="IsMouseOver" Value="True" />
+                                                             <Condition Property="IsSelected" Value="False" />
+                                                         </MultiTrigger.Conditions>
+                                                         <Setter TargetName="HoverBackground" Property="Visibility" Value="Visible" />
+                                                         <Setter Property="Foreground" Value="{DynamicResource HoverBrush}" />
+                                                     </MultiTrigger>
+                                                 </ControlTemplate.Triggers>
+                                             </ControlTemplate>
+                                         </Setter.Value>
+                                     </Setter>
+                                 </Style>
+                             </ListBox.ItemContainerStyle>
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <TextBlock Padding="10,7"
-                                               VerticalAlignment="Center"
-                                               Foreground="{DynamicResource TextBrush}"
                                                Text="{Binding DisplayName}"
                                                TextTrimming="CharacterEllipsis" />
                                 </DataTemplate>
@@ -75,7 +168,7 @@
                     </Border>
                 </Popup>
             </Grid>
-            <Button Grid.Column="1"
+            <Button
                     Margin="8,0,0,0"
                     Padding="16,5"
                     MinWidth="90"
@@ -83,13 +176,17 @@
                     IsEnabled="{Binding CanAddSelectedGame}"
                     Command="{Binding AddGameCommand}"
                     Content="Add game" />
+            </StackPanel>
         </Grid>
 
         <Grid Grid.Row="2">
-            <Border HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch">
-                <Border.Style>
-                    <Style TargetType="Border">
+            <TextBlock HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Text="No games are being tracked yet. Search for a game above to add it."
+                       TextAlignment="Center"
+                       TextWrapping="Wrap">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
                         <Setter Property="Visibility" Value="Collapsed" />
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding TrackedGames.Count}" Value="0">
@@ -97,14 +194,8 @@
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
-                </Border.Style>
-                <TextBlock HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           Foreground="{DynamicResource TextBrush}"
-                           Text="No games are being tracked yet. Search for a game above to add it."
-                           TextAlignment="Center"
-                           TextWrapping="Wrap" />
-            </Border>
+                </TextBlock.Style>
+            </TextBlock>
 
             <Grid>
                 <Grid.Style>
@@ -123,504 +214,533 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-            <Grid x:Name="TrackedGamesPane" Grid.Column="0">
-                <StackPanel x:Name="TrackedGamesStack" VerticalAlignment="Top">
-                <TextBlock x:Name="TrackedGamesHeader"
-                           Margin="0,0,0,6"
-                           FontWeight="SemiBold"
-                           Text="Tracked games" />
-                <ListBox x:Name="TrackedGamesList"
-                          ItemsSource="{Binding TrackedGames}"
-                          SelectedItem="{Binding SelectedTrackedGame}"
-                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                          ScrollViewer.VerticalScrollBarVisibility="Auto">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Margin="2,4">
-                                <TextBlock FontWeight="SemiBold"
-                                           Text="{Binding CachedGameName}"
-                                           TextTrimming="CharacterEllipsis" />
-                                <TextBlock FontSize="11" Opacity="0.75">
-                                    <Run Text="Task status: " />
-                                    <Run Text="{Binding DisplayState, Mode=OneWay}" />
-                                </TextBlock>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-                <Button x:Name="RemoveSelectedButton"
-                        Margin="0,8,0,0"
-                        Padding="12,5"
-                        HorizontalAlignment="Center"
-                        Command="{Binding RemoveGameCommand}"
-                        Content="Remove selected" />
-                </StackPanel>
-            </Grid>
+                <Grid x:Name="TrackedGamesPane" Grid.Column="0">
+                    <StackPanel x:Name="TrackedGamesStack" VerticalAlignment="Top">
+                        <TextBlock x:Name="TrackedGamesHeader"
+                                   Margin="0,0,0,6"
+                                   FontWeight="SemiBold"
+                                   Text="Tracked games" />
+                        <ListBox x:Name="TrackedGamesList"
+                                 ItemsSource="{Binding TrackedGames}"
+                                 SelectedItem="{Binding SelectedTrackedGame}"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="2,4">
+                                        <TextBlock FontWeight="SemiBold"
+                                                   Text="{Binding CachedGameName}"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <TextBlock FontSize="11" Opacity="0.75">
+                                            <Run Text="Tasks status: " />
+                                            <Run Text="{Binding DisplayState, Mode=OneWay}" />
+                                        </TextBlock>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <Button x:Name="RemoveSelectedButton"
+                                Margin="0,8,0,0"
+                                Padding="12,5"
+                                HorizontalAlignment="Center"
+                                Command="{Binding RemoveGameCommand}"
+                                Content="Remove selected" />
+                    </StackPanel>
+                </Grid>
 
                 <Border Grid.Column="2"
-                    Padding="14"
-                    BorderBrush="{DynamicResource ControlBorderBrush}"
-                    BorderThickness="1"
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch">
-                <ScrollViewer HorizontalAlignment="Stretch"
-                              VerticalAlignment="Stretch"
-                              VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                <Grid DataContext="{Binding SelectedTrackedGame}"
-                      MinHeight="160"
-                      HorizontalAlignment="Stretch">
-                    <Border HorizontalAlignment="Stretch"
-                            VerticalAlignment="Stretch"
-                            Panel.ZIndex="1">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Setter Property="Visibility" Value="Collapsed" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding}" Value="{x:Null}">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                        <TextBlock HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   Foreground="{DynamicResource TextBrush}"
-                                   Text="Select a tracked game to edit its routine."
-                                   TextAlignment="Center"
-                                   TextWrapping="Wrap" />
-                    </Border>
-
-                        <Grid>
-                            <Grid.Style>
-                                <Style TargetType="Grid">
-                                    <Setter Property="Visibility" Value="Visible" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding}" Value="{x:Null}">
-                                            <Setter Property="Visibility" Value="Collapsed" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Grid.Style>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="180" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <TextBlock Grid.Row="0" Grid.ColumnSpan="2"
-                                       FontSize="16"
-                                       FontWeight="SemiBold"
-                                       Text="{Binding CachedGameName}" />
-
-                            <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,12,10,0"
-                                       VerticalAlignment="Center" Text="Tracking" />
-                            <CheckBox Grid.Row="1" Grid.Column="1" Margin="0,12,0,0"
-                                      VerticalAlignment="Center"
-                                      IsChecked="{Binding Enabled}"
-                                      Content="Enabled" />
-
-                            <Grid Grid.Row="2" Grid.ColumnSpan="2" Margin="0,10,0,0">
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="180" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,0,10,0"
-                                           VerticalAlignment="Center" Text="Task status" />
-                                <TextBlock Grid.Row="0" Grid.Column="1"
-                                           VerticalAlignment="Center" FontWeight="SemiBold"
-                                           Text="{Binding DisplayState, Mode=OneWay}" />
-                                <CheckBox Grid.Row="1" Grid.Column="1" Margin="0,8,0,0"
-                                          IsChecked="{Binding ShowIncompleteCoverIndicator, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                          Content="Show incomplete cover indicator for this game" />
-                            </Grid>
-
-                            <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,10,10,0"
-                                       VerticalAlignment="Center" Text="Reset schedule" />
-                            <ComboBox Grid.Row="3" Grid.Column="1" Margin="0,10,0,0"
-                                      ItemsSource="{Binding DataContext.ResetCadences, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                      SelectedItem="{Binding ResetCadence}" />
-
-                            <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,10,10,0"
-                                       VerticalAlignment="Center" Text="Reset day">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding ResetCadence}"
-                                                         Value="{x:Static local:ResetCadence.Weekly}">
-                                                <Setter Property="Visibility" Value="Visible" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <ComboBox Grid.Row="4" Grid.Column="1" Margin="0,10,0,0"
-                                      ItemsSource="{Binding DataContext.DaysOfWeek, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                      SelectedItem="{Binding ResetDay}">
-                                <ComboBox.Style>
-                                    <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding ResetCadence}"
-                                                         Value="{x:Static local:ResetCadence.Weekly}">
-                                                <Setter Property="Visibility" Value="Visible" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </ComboBox.Style>
-                            </ComboBox>
-
-                            <TextBlock Grid.Row="5" Grid.Column="0" Margin="0,10,10,0"
-                                       VerticalAlignment="Center" Text="Reset time">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding ResetCadence}"
-                                                         Value="{x:Static local:ResetCadence.Never}">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <StackPanel Grid.Row="5" Grid.Column="1" Margin="0,10,0,0"
-                                        Orientation="Horizontal">
-                                <StackPanel.Style>
-                                    <Style TargetType="StackPanel">
-                                        <Setter Property="Visibility" Value="Visible" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding ResetCadence}"
-                                                         Value="{x:Static local:ResetCadence.Never}">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </StackPanel.Style>
-                                <TextBox Width="72"
-                                         MaxLength="5"
-                                         Padding="5,3"
-                                         VerticalContentAlignment="Center"
-                                         TextAlignment="Center"
-                                         ToolTip="Enter a 24-hour local time in HH:mm format."
-                                         Text="{Binding ResetTime, Mode=TwoWay, UpdateSourceTrigger=Explicit}"
-                                         PreviewTextInput="TimeTextBox_PreviewTextInput"
-                                         PreviewKeyDown="TimeTextBox_PreviewKeyDown"
-                                         PreviewLostKeyboardFocus="TimeTextBox_PreviewLostKeyboardFocus"
-                                         TextChanged="TimeTextBox_TextChanged"
-                                         DataObject.Pasting="TimeTextBox_Pasting" />
-                                <TextBlock Margin="8,2,0,0"
-                                           Foreground="{DynamicResource TextBrush}"
-                                           Opacity="0.7"
-                                           Text="24-hour HH:mm, local time" />
-                            </StackPanel>
-
-                            <Separator Grid.Row="6" Grid.ColumnSpan="2" Margin="0,10,0,6" />
-
-                            <TextBlock Grid.Row="7" Grid.Column="0" Margin="0,0,10,0"
-                                       VerticalAlignment="Center" Text="Custom reminder" />
-                            <CheckBox Grid.Row="7" Grid.Column="1"
-                                      VerticalAlignment="Center"
-                                      IsChecked="{Binding CustomReminderEnabled}"
-                                      Content="Enabled" />
-
-                            <Grid Grid.Row="8" Grid.ColumnSpan="2">
-                                <Grid.Style>
-                                    <Style TargetType="Grid">
-                                        <Setter Property="Visibility" Value="Collapsed" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding CustomReminderEnabled}" Value="True">
-                                                <Setter Property="Visibility" Value="Visible" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Grid.Style>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                </Grid.RowDefinitions>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="180" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-
-                                <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,10,10,0"
-                                           VerticalAlignment="Center" Text="Reminder frequency" />
-                                <ComboBox Grid.Row="0" Grid.Column="1" Margin="0,10,0,0"
-                                          ItemsSource="{Binding DataContext.ReminderCadences, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                          SelectedItem="{Binding ReminderCadence}" />
-
-                                <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,10,10,0"
-                                           VerticalAlignment="Center" Text="Reminder day">
+                        Padding="14"
+                        BorderBrush="{DynamicResource ControlBorderBrush}"
+                        BorderThickness="1">
+                    <ScrollViewer Padding="0,0,18,0"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Auto">
+                        <StackPanel MaxWidth="860" HorizontalAlignment="Center">
+                            <Grid DataContext="{Binding SelectedTrackedGame}" MinHeight="160">
+                                <TextBlock HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           Text="Select a tracked game to edit its routines."
+                                           TextAlignment="Center"
+                                           TextWrapping="Wrap">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
                                             <Setter Property="Visibility" Value="Collapsed" />
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding ReminderCadence}"
-                                                             Value="{x:Static local:ReminderCadence.Weekly}">
+                                                <DataTrigger Binding="{Binding}" Value="{x:Null}">
                                                     <Setter Property="Visibility" Value="Visible" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </TextBlock.Style>
                                 </TextBlock>
-                                <ComboBox Grid.Row="1" Grid.Column="1" Margin="0,10,0,0"
-                                          ItemsSource="{Binding DataContext.DaysOfWeek, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                          SelectedItem="{Binding ReminderDay}">
-                                    <ComboBox.Style>
-                                        <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
-                                            <Setter Property="Visibility" Value="Collapsed" />
+
+                                <StackPanel>
+                                    <StackPanel.Style>
+                                        <Style TargetType="StackPanel">
+                                            <Setter Property="Visibility" Value="Visible" />
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding ReminderCadence}"
-                                                             Value="{x:Static local:ReminderCadence.Weekly}">
-                                                    <Setter Property="Visibility" Value="Visible" />
+                                                <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
-                                    </ComboBox.Style>
-                                </ComboBox>
+                                    </StackPanel.Style>
 
-                                <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,10,10,0"
-                                           VerticalAlignment="Center" Text="Reminder time" />
-                                <StackPanel Grid.Row="2" Grid.Column="1" Margin="0,10,0,0"
-                                            Orientation="Horizontal">
-                                    <TextBox Width="72"
-                                             MaxLength="5"
-                                             Padding="5,3"
-                                             VerticalContentAlignment="Center"
-                                             TextAlignment="Center"
-                                             ToolTip="Enter a 24-hour local time in HH:mm format."
-                                             Text="{Binding ReminderTime, Mode=TwoWay, UpdateSourceTrigger=Explicit}"
-                                             PreviewTextInput="TimeTextBox_PreviewTextInput"
-                                             PreviewKeyDown="TimeTextBox_PreviewKeyDown"
-                                             PreviewLostKeyboardFocus="TimeTextBox_PreviewLostKeyboardFocus"
-                                             TextChanged="TimeTextBox_TextChanged"
-                                             DataObject.Pasting="TimeTextBox_Pasting" />
-                                    <TextBlock Margin="8,2,0,0"
-                                               Foreground="{DynamicResource TextBrush}"
+                                    <TextBlock FontSize="18"
+                                               FontWeight="SemiBold"
+                                               Text="{Binding CachedGameName}" />
+
+                                    <TextBlock Margin="0,14,0,6"
+                                               FontSize="15"
+                                               FontWeight="SemiBold"
+                                               Text="Game-level" />
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="190" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Margin="0,0,10,0" VerticalAlignment="Center" Text="Tracking" />
+                                        <CheckBox Grid.Row="0" Grid.Column="1" IsChecked="{Binding Enabled}" Content="Enabled" />
+                                        <TextBlock Grid.Row="1" Margin="0,8,10,0" VerticalAlignment="Center" Text="Overall task status" />
+                                        <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" Orientation="Horizontal">
+                                            <TextBlock FontWeight="SemiBold" Text="{Binding DisplayState, Mode=OneWay}" />
+                                            <TextBlock Margin="8,0,0,0" Opacity="0.7">
+                                                <Run Text="("/><Run Text="{Binding ParticipatingRoutineCount, Mode=OneWay}"/><Run Text=" counted)"/>
+                                            </TextBlock>
+                                        </StackPanel>
+                                        <CheckBox Grid.Row="2" Grid.Column="1" Margin="0,8,0,0"
+                                                  IsChecked="{Binding ShowIncompleteCoverIndicator, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  Content="Show incomplete cover indicator for this game" />
+                                    </Grid>
+
+                                    <Separator Margin="0,16,0,10" />
+
+                                    <TextBlock FontSize="15" FontWeight="SemiBold" Text="Routines" />
+                                    <Grid Margin="0,8,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <ListBox x:Name="RoutinesList"
+                                                  MaxHeight="260"
+                                                  Padding="0"
+                                                  BorderThickness="0"
+                                                 ItemsSource="{Binding Routines}"
+                                                 SelectedItem="{Binding DataContext.SelectedRoutine, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}"
+                                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                                 SelectionChanged="RoutinesList_SelectionChanged">
+                                            <ListBox.ItemContainerStyle>
+                                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                                    <Setter Property="Height" Value="42" />
+                                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                                    <Setter Property="Padding" Value="6,0" />
+                                                </Style>
+                                            </ListBox.ItemContainerStyle>
+                                            <ListBox.ItemTemplate>
+                                                 <DataTemplate>
+                                                     <Grid>
+                                                         <Grid.ColumnDefinitions>
+                                                             <ColumnDefinition Width="*" />
+                                                             <ColumnDefinition Width="36" />
+                                                             <ColumnDefinition Width="64" />
+                                                         </Grid.ColumnDefinitions>
+                                                         <Grid>
+                                                             <Grid.ColumnDefinitions>
+                                                                 <ColumnDefinition Width="Auto" />
+                                                                 <ColumnDefinition Width="Auto" />
+                                                                 <ColumnDefinition Width="*" />
+                                                             </Grid.ColumnDefinitions>
+                                                             <TextBlock MaxWidth="220"
+                                                                        VerticalAlignment="Center"
+                                                                        FontSize="14"
+                                                                        FontWeight="SemiBold"
+                                                                        Text="{Binding Name}"
+                                                                        TextAlignment="Left"
+                                                                        TextTrimming="CharacterEllipsis" />
+                                                             <TextBlock Grid.Column="1"
+                                                                        Margin="12,0,0,0"
+                                                                        VerticalAlignment="Center"
+                                                                        FontSize="11"
+                                                                        Opacity="0.75"
+                                                                        Text="{Binding ResetCadence, Mode=OneWay, Converter={StaticResource CadenceDisplayConverter}}" />
+                                                         </Grid>
+                                                          <Grid Grid.Column="1"
+                                                                Width="18"
+                                                                Height="18"
+                                                                HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"
+                                                                Focusable="False"
+                                                                Opacity="0.82">
+                                                             <Grid.Style>
+                                                                 <Style TargetType="Grid">
+                                                                     <Setter Property="ToolTip" Value="INCOMPLETE" />
+                                                                     <Style.Triggers>
+                                                                         <DataTrigger Binding="{Binding IsComplete, Mode=OneWay}" Value="True">
+                                                                             <Setter Property="ToolTip" Value="COMPLETE" />
+                                                                         </DataTrigger>
+                                                                     </Style.Triggers>
+                                                                 </Style>
+                                                             </Grid.Style>
+                                                             <Viewbox Width="18" Height="18" Stretch="Uniform">
+                                                                 <Canvas Width="18" Height="18">
+                                                                     <Path Data="M 4.7,9.2 L 7.5,12 L 13.2,5.9"
+                                                                           Fill="Transparent"
+                                                                           Stroke="{DynamicResource TextBrush}"
+                                                                           StrokeEndLineCap="Round"
+                                                                           StrokeLineJoin="Round"
+                                                                           StrokeStartLineCap="Round"
+                                                                           StrokeThickness="1.4">
+                                                                         <Path.Style>
+                                                                             <Style TargetType="Path">
+                                                                                 <Setter Property="Visibility" Value="Collapsed" />
+                                                                                 <Style.Triggers>
+                                                                                     <DataTrigger Binding="{Binding IsComplete, Mode=OneWay}" Value="True">
+                                                                                         <Setter Property="Visibility" Value="Visible" />
+                                                                                     </DataTrigger>
+                                                                                 </Style.Triggers>
+                                                                             </Style>
+                                                                         </Path.Style>
+                                                                     </Path>
+                                                                     <Path Data="M 5.6,5.6 L 12.4,12.4 M 12.4,5.6 L 5.6,12.4"
+                                                                           Fill="Transparent"
+                                                                           Stroke="{DynamicResource TextBrush}"
+                                                                           StrokeEndLineCap="Round"
+                                                                           StrokeLineJoin="Round"
+                                                                           StrokeStartLineCap="Round"
+                                                                           StrokeThickness="1.4">
+                                                                         <Path.Style>
+                                                                             <Style TargetType="Path">
+                                                                                 <Setter Property="Visibility" Value="Collapsed" />
+                                                                                 <Style.Triggers>
+                                                                                     <DataTrigger Binding="{Binding IsComplete, Mode=OneWay}" Value="False">
+                                                                                         <Setter Property="Visibility" Value="Visible" />
+                                                                                     </DataTrigger>
+                                                                                 </Style.Triggers>
+                                                                             </Style>
+                                                                         </Path.Style>
+                                                                     </Path>
+                                                                 </Canvas>
+                                                             </Viewbox>
+                                                         </Grid>
+                                                         <StackPanel Grid.Column="2" HorizontalAlignment="Center" VerticalAlignment="Center" Orientation="Horizontal">
+                                                            <StackPanel.Style>
+                                                                <Style TargetType="StackPanel">
+                                                                    <Setter Property="Visibility" Value="Hidden" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </StackPanel.Style>
+                                                             <Button Style="{StaticResource CompactIconButtonStyle}"
+                                                                     ToolTip="Move Routine Up"
+                                                                     Command="{Binding DataContext.MoveRoutineUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                     CommandParameter="{Binding}"
+                                                                     Click="RoutineMoveButton_Click">
+                                                                 <TextBlock Text="&#xE70E;" Style="{DynamicResource IconFontStyle}" />
+                                                             </Button>
+                                                             <Button Margin="4,0,0,0"
+                                                                     Style="{StaticResource CompactIconButtonStyle}"
+                                                                     ToolTip="Move Routine Down"
+                                                                     Command="{Binding DataContext.MoveRoutineDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                     CommandParameter="{Binding}"
+                                                                     Click="RoutineMoveButton_Click">
+                                                                 <TextBlock Text="&#xE70D;" Style="{DynamicResource IconFontStyle}" />
+                                                             </Button>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                        <StackPanel Grid.Column="1"
+                                                    Margin="10,0,0,0"
+                                                    VerticalAlignment="Center">
+                                             <Button Style="{StaticResource CompactIconButtonStyle}"
+                                                     ToolTip="Add Routine"
+                                                     Command="{Binding DataContext.AddRoutineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                                 <TextBlock Text="&#xE710;" Style="{DynamicResource IconFontStyle}" />
+                                             </Button>
+                                             <Button Margin="0,5,0,0"
+                                                     Style="{StaticResource CompactIconButtonStyle}"
+                                                     ToolTip="Delete Routine"
+                                                     Command="{Binding DataContext.DeleteRoutineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                                 <TextBlock Text="&#xE738;" Style="{DynamicResource IconFontStyle}" />
+                                             </Button>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <TextBlock Margin="0,12,0,0"
+                                               HorizontalAlignment="Center"
                                                Opacity="0.7"
-                                               Text="24-hour HH:mm, local time" />
-                                </StackPanel>
-
-                                <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,10,10,0"
-                                           VerticalAlignment="Center" Text="Custom reminder title" />
-                                <TextBox Grid.Row="3" Grid.Column="1" Margin="0,10,0,0"
-                                         MaxLength="40"
-                                         Text="{Binding CustomReminderTitle, UpdateSourceTrigger=PropertyChanged}" />
-
-                                <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,10,10,0"
-                                           VerticalAlignment="Top" Text="Custom reminder message" />
-                                <TextBox Grid.Row="4" Grid.Column="1" Margin="0,10,0,0"
-                                         MinHeight="70"
-                                         MaxLength="160"
-                                         AcceptsReturn="True"
-                                         TextWrapping="Wrap"
-                                         VerticalScrollBarVisibility="Auto"
-                                         Text="{Binding CustomReminderMessage, UpdateSourceTrigger=PropertyChanged}" />
-                            </Grid>
-
-                            <Separator Grid.Row="9" Grid.ColumnSpan="2" Margin="0,16,0,10" />
-
-                            <StackPanel Grid.Row="10" Grid.ColumnSpan="2">
-                                <TextBlock FontSize="15"
-                                           FontWeight="SemiBold"
-                                           Text="Checklist" />
-                                <CheckBox Margin="0,8,0,0"
-                                          IsChecked="{Binding AutomaticallyCompleteFromChecklist, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                          Click="ChecklistAutoCompletionCheckBox_Click"
-                                          Content="Automatically mark the game tasks as COMPLETE when checklist is finished" />
-                                <TextBlock Margin="22,3,0,8"
-                                           Opacity="0.7"
-                                           Text="With automatic completion enabled, an empty checklist counts as complete."
-                                           TextWrapping="Wrap" />
-
-                                <Grid MinHeight="58" MaxHeight="280">
-                                    <ListBox ItemsSource="{Binding Checklist}"
-                                             ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                             VirtualizingStackPanel.IsVirtualizing="True"
-                                             VirtualizingStackPanel.VirtualizationMode="Recycling">
-                                        <ListBox.ItemContainerStyle>
-                                            <Style TargetType="ListBoxItem"
-                                                   BasedOn="{StaticResource {x:Type ListBoxItem}}">
-                                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                                <Setter Property="Padding" Value="3" />
-                                            </Style>
-                                        </ListBox.ItemContainerStyle>
-                                        <ListBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <Grid Margin="0,2">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto" />
-                                                        <ColumnDefinition Width="*" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                        <ColumnDefinition Width="Auto" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <CheckBox Grid.Column="0"
-                                                              Margin="0,0,7,0"
-                                                              VerticalAlignment="Center"
-                                                              IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                              Click="ChecklistItemCheckBox_Click" />
-                                                    <TextBox Grid.Column="1"
-                                                             MaxLength="120"
-                                                             Padding="5,3"
-                                                             VerticalContentAlignment="Center"
-                                                             Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=Explicit}"
-                                                             PreviewKeyDown="ChecklistItemTextBox_PreviewKeyDown"
-                                                             PreviewLostKeyboardFocus="ChecklistItemTextBox_PreviewLostKeyboardFocus" />
-                                                    <Button Grid.Column="2"
-                                                            Margin="6,0,0,0"
-                                                            MinWidth="42"
-                                                            Padding="6,3"
-                                                            Content="Up"
-                                                            Command="{Binding DataContext.MoveChecklistItemUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                            CommandParameter="{Binding}" />
-                                                    <Button Grid.Column="3"
-                                                            Margin="4,0,0,0"
-                                                            MinWidth="48"
-                                                            Padding="6,3"
-                                                            Content="Down"
-                                                            Command="{Binding DataContext.MoveChecklistItemDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                            CommandParameter="{Binding}" />
-                                                    <Button Grid.Column="4"
-                                                            Margin="4,0,0,0"
-                                                            MinWidth="54"
-                                                            Padding="6,3"
-                                                            Content="Delete"
-                                                            Command="{Binding DataContext.DeleteChecklistItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                            CommandParameter="{Binding}" />
-                                                </Grid>
-                                            </DataTemplate>
-                                        </ListBox.ItemTemplate>
-                                    </ListBox>
-                                    <Border Padding="12"
-                                            IsHitTestVisible="False">
-                                        <Border.Style>
-                                            <Style TargetType="Border">
+                                               Text="No routines configured. Add a routine to create a checklist."
+                                               TextAlignment="Center">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
                                                 <Setter Property="Visibility" Value="Collapsed" />
                                                 <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Checklist.Count}" Value="0">
+                                                    <DataTrigger Binding="{Binding Routines.Count}" Value="0">
                                                         <Setter Property="Visibility" Value="Visible" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </Border.Style>
-                                        <TextBlock HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"
-                                                   Opacity="0.7"
-                                                   Text="No checklist items yet."
-                                                   TextAlignment="Center" />
-                                    </Border>
-                                </Grid>
+                                        </TextBlock.Style>
+                                    </TextBlock>
 
-                                <Grid Margin="0,8,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBox Grid.Column="0"
-                                             MaxLength="120"
-                                             Padding="6,4"
-                                             ToolTip="Checklist items can contain up to 120 characters."
-                                             Text="{Binding DataContext.NewChecklistItemText, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" />
-                                    <Button Grid.Column="1"
-                                            Margin="6,0,0,0"
-                                            MinWidth="76"
-                                            Padding="10,4"
-                                            Content="Add item"
-                                            Command="{Binding DataContext.AddChecklistItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
-                                </Grid>
+                                    <Grid Margin="0,14,0,0"
+                                          DataContext="{Binding DataContext.SelectedRoutine, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                        <Grid.Style>
+                                            <Style TargetType="Grid">
+                                                <Setter Property="Visibility" Value="Visible" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Grid.Style>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="190" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
 
-                                <Button Margin="0,8,0,0"
-                                        Padding="10,4"
-                                        HorizontalAlignment="Left"
-                                        Content="Reset checklist"
-                                        Command="{Binding DataContext.ResetChecklistCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" />
-                                <TextBlock Margin="0,12,0,0"
-                                           Foreground="{DynamicResource TextBrush}"
-                                           Opacity="0.75"
-                                           TextWrapping="Wrap"
-                                           Text="Use the Game Routines controls in supported themes or the game context menu to mark the game tasks COMPLETE or INCOMPLETE. Reset and Custom reminder times use the local timezone." />
+                                        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,7" FontSize="15" FontWeight="SemiBold" Text="Selected routine" />
+                                        <TextBlock Grid.Row="1" Margin="0,0,10,0" VerticalAlignment="Center" Text="Routine name" />
+                                         <TextBox Grid.Row="1" Grid.Column="1"
+                                                 Width="360"
+                                                 MaxWidth="360"
+                                                 HorizontalAlignment="Left"
+                                                 MaxLength="40"
+                                                 Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=Explicit}"
+                                                 ToolTip="Routine names are required, unique within this game, and limited to 40 characters."
+                                                 PreviewKeyDown="RoutineNameTextBox_PreviewKeyDown"
+                                                 PreviewLostKeyboardFocus="RoutineNameTextBox_PreviewLostKeyboardFocus" />
+
+                                        <TextBlock Grid.Row="2" Margin="0,9,10,0" VerticalAlignment="Center" Text="Routine status" />
+                                        <Grid Grid.Row="2" Grid.Column="1" Margin="0,9,0,0" HorizontalAlignment="Left">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="84" />
+                                                <ColumnDefinition Width="6" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock VerticalAlignment="Center"
+                                                       Margin="-2,0,0,0"
+                                                       Padding="0,0,2,0"
+                                                       FontWeight="SemiBold"
+                                                       TextAlignment="Right"
+                                                       Text="{Binding DisplayState, Mode=OneWay}" />
+                                            <local:RoutineStateSwitch Grid.Column="2"
+                                                                      IsChecked="{Binding IsComplete, Mode=OneWay}"
+                                                                      Command="{Binding DataContext.ToggleSelectedRoutineStateCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                      ToolTipText="Toggle this routine between COMPLETE and INCOMPLETE." />
+                                        </Grid>
+
+                                        <CheckBox Grid.Row="3" Grid.Column="1" Margin="0,9,0,0"
+                                                  IsChecked="{Binding CountTowardOverallTaskStatus, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  Click="RoutineCountTowardOverallCheckBox_Click"
+                                                  Content="Count this routine toward overall task status" />
+
+                                        <local:RoutineScheduleEditor Grid.Row="4"
+                                                                     Grid.ColumnSpan="2"
+                                                                     LabelColumnWidth="190" />
+
+                                        <CheckBox Grid.Row="7" Grid.Column="1" Margin="0,9,0,0"
+                                                  MaxWidth="520"
+                                                  HorizontalAlignment="Left"
+                                                  HorizontalContentAlignment="Stretch"
+                                                  IsChecked="{Binding AutomaticallyCompleteFromChecklist, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  Click="ChecklistAutoCompletionCheckBox_Click">
+                                            <TextBlock Text="Automatically mark this routine as COMPLETE when its checklist is finished"
+                                                       TextWrapping="Wrap" />
+                                        </CheckBox>
+
+                                        <StackPanel Grid.Row="8" Grid.ColumnSpan="2" Margin="0,12,0,0">
+                                            <StackPanel Margin="0,0,0,6"
+                                                        VerticalAlignment="Center"
+                                                        Orientation="Horizontal">
+                                                <TextBlock VerticalAlignment="Center" FontWeight="SemiBold" Text="Routine checklist" />
+                                                <Button Margin="6,0,0,0"
+                                                        Command="{Binding DataContext.ResetChecklistCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        ToolTip="Reset Checklist">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource SubtleIconButtonStyle}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Checklist.Count, Mode=OneWay}" Value="0">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                    <TextBlock FontSize="14" Text="&#xE72C;" Style="{DynamicResource IconFontStyle}" />
+                                                </Button>
+                                            </StackPanel>
+                                            <Grid MinHeight="58" MaxHeight="280">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="62" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="34" />
+                                                    <ColumnDefinition Width="34" />
+                                                    <ColumnDefinition Width="34" />
+                                                </Grid.ColumnDefinitions>
+                                                <ListBox Grid.ColumnSpan="5"
+                                                         ItemsSource="{Binding Checklist}"
+                                                         Padding="0"
+                                                         BorderThickness="0"
+                                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                                         VirtualizingStackPanel.IsVirtualizing="True"
+                                                         VirtualizingStackPanel.VirtualizationMode="Recycling">
+                                                    <ListBox.ItemContainerStyle>
+                                                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                                            <Setter Property="Padding" Value="0" />
+                                                        </Style>
+                                                    </ListBox.ItemContainerStyle>
+                                                    <ListBox.ItemTemplate>
+                                                        <DataTemplate>
+                                                            <Grid Margin="0,2">
+                                                                <Grid.ColumnDefinitions>
+                                                                    <ColumnDefinition Width="62" />
+                                                                    <ColumnDefinition Width="*" />
+                                                                    <ColumnDefinition Width="34" />
+                                                                    <ColumnDefinition Width="34" />
+                                                                    <ColumnDefinition Width="34" />
+                                                                </Grid.ColumnDefinitions>
+                                                                <CheckBox HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                          IsChecked="{Binding IsChecked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                                          Click="ChecklistItemCheckBox_Click" />
+                                                                <TextBox Grid.Column="1"
+                                                                         Style="{StaticResource RoutineChecklistTextBoxStyle}"
+                                                                         Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=Explicit}"
+                                                                         PreviewKeyDown="ChecklistItemTextBox_PreviewKeyDown"
+                                                                         PreviewLostKeyboardFocus="ChecklistItemTextBox_PreviewLostKeyboardFocus" />
+                                                                <Button Grid.Column="2"
+                                                                        Style="{StaticResource CompactIconButtonStyle}"
+                                                                        ToolTip="Move Item Up"
+                                                                        Command="{Binding DataContext.MoveChecklistItemUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <TextBlock Text="&#xE70E;" Style="{DynamicResource IconFontStyle}" />
+                                                                </Button>
+                                                                <Button Grid.Column="3"
+                                                                        Style="{StaticResource CompactIconButtonStyle}"
+                                                                        ToolTip="Move Item Down"
+                                                                        Command="{Binding DataContext.MoveChecklistItemDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <TextBlock Text="&#xE70D;" Style="{DynamicResource IconFontStyle}" />
+                                                                </Button>
+                                                                <Button Grid.Column="4"
+                                                                        Style="{StaticResource CompactIconButtonStyle}"
+                                                                        ToolTip="Delete Item"
+                                                                        Command="{Binding DataContext.DeleteChecklistItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                                        CommandParameter="{Binding}">
+                                                                    <TextBlock Text="&#xE711;" Style="{DynamicResource IconFontStyle}" />
+                                                                </Button>
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </ListBox.ItemTemplate>
+                                                </ListBox>
+                                                <TextBlock Grid.Column="1"
+                                                           HorizontalAlignment="Center"
+                                                           VerticalAlignment="Center"
+                                                           Opacity="0.7"
+                                                           Text="No checklist items yet">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Checklist.Count}" Value="0">
+                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Grid>
+                                            <Grid Margin="12,7,12,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="62" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="34" />
+                                                    <ColumnDefinition Width="34" />
+                                                    <ColumnDefinition Width="34" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock VerticalAlignment="Center"
+                                                           FontSize="11"
+                                                           Opacity="0.7"
+                                                           Text="New item" />
+                                                <TextBox Grid.Column="1"
+                                                         Style="{StaticResource RoutineChecklistTextBoxStyle}"
+                                                         Text="{Binding DataContext.NewChecklistItemText, RelativeSource={RelativeSource AncestorType=UserControl}, UpdateSourceTrigger=PropertyChanged}" />
+                                                <Button Grid.Column="2"
+                                                        Style="{StaticResource CompactIconButtonStyle}"
+                                                        ToolTip="Add Item"
+                                                        Command="{Binding DataContext.AddChecklistItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                                                    <TextBlock Text="&#xE710;" Style="{DynamicResource IconFontStyle}" />
+                                                </Button>
+                                            </Grid>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Separator Margin="0,18,0,10" />
+
+                                    <TextBlock FontSize="15" FontWeight="SemiBold" Text="Game-level Custom reminder" />
+                                    <local:CustomReminderEditor Margin="0,4,0,0"
+                                                                EnabledVerticalOffset="2"
+                                                                FormMargin="0,6,0,0"
+                                                                LabelRowMargin="0,6,10,6"
+                                                                FieldRowMargin="0,6,0,6"
+                                                                DataContext="{Binding}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <StackPanel Margin="0,20,0,0">
+                                <TextBlock Margin="0,0,0,7" FontWeight="SemiBold" Text="General options" />
+                                <CheckBox VerticalContentAlignment="Top" IsChecked="{Binding Settings.UseTasksAvailableTag}">
+                                    <StackPanel>
+                                        <TextBlock Text="Show incomplete overall state using Playnite tag" TextWrapping="Wrap" />
+                                        <TextBlock Margin="0,3,0,0" FontSize="{DynamicResource FontSizeSmall}" Opacity="0.75"
+                                                   Text="Adds the 'Tasks Available!' tag only while at least one counted routine is INCOMPLETE."
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </CheckBox>
+                                <CheckBox Margin="0,10,0,0" VerticalContentAlignment="Top"
+                                          IsChecked="{Binding Settings.ShowIncompleteCoverIndicator, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                    <StackPanel>
+                                        <TextBlock Text="Show incomplete cover indicator in supported themes" TextWrapping="Wrap" />
+                                        <TextBlock Margin="0,3,0,0" FontSize="{DynamicResource FontSizeSmall}" Opacity="0.75"
+                                                   Text="Shows the approved red indicator only when the derived overall task status is INCOMPLETE."
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </CheckBox>
+                                <CheckBox Margin="0,10,0,0" VerticalContentAlignment="Top"
+                                          IsChecked="{Binding Settings.ShowBlockedManualStateWarning}">
+                                    <StackPanel>
+                                        <TextBlock Text="Show warning when manual status changes are blocked" TextWrapping="Wrap" />
+                                        <TextBlock Margin="0,3,0,0" FontSize="{DynamicResource FontSizeSmall}" Opacity="0.75"
+                                                   Text="Shows the routines whose authoritative automatic checklist state conflicts with a requested manual change."
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </CheckBox>
                             </StackPanel>
-                        </Grid>
-                </Grid>
-
-                <StackPanel Margin="0,20,0,0">
-                    <TextBlock Margin="0,0,0,7"
-                               FontWeight="SemiBold"
-                               Text="General options" />
-                    <CheckBox VerticalContentAlignment="Top"
-                              IsChecked="{Binding Settings.UseTasksAvailableTag}">
-                        <StackPanel>
-                            <TextBlock Text="Show incomplete state using Playnite tag"
-                                       TextWrapping="Wrap" />
-                            <TextBlock Margin="0,3,0,0"
-                                       FontSize="{DynamicResource FontSizeSmall}"
-                                       Foreground="{DynamicResource TextBrush}"
-                                       LineHeight="18"
-                                       LineStackingStrategy="BlockLineHeight"
-                                       Opacity="0.75"
-                                       Text="Adds the 'Tasks Available!' tag to tracked games while their tasks are incomplete."
-                                       TextWrapping="Wrap" />
                         </StackPanel>
-                    </CheckBox>
-                    <CheckBox Margin="0,10,0,0"
-                              VerticalContentAlignment="Top"
-                              IsChecked="{Binding Settings.ShowIncompleteCoverIndicator, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
-                        <StackPanel>
-                            <TextBlock Text="Show incomplete cover indicator in supported themes"
-                                       TextWrapping="Wrap" />
-                            <TextBlock Margin="0,3,0,0"
-                                       FontSize="{DynamicResource FontSizeSmall}"
-                                       Foreground="{DynamicResource TextBrush}"
-                                       LineHeight="18"
-                                       LineStackingStrategy="BlockLineHeight"
-                                       Opacity="0.75"
-                                       Text="Shows a red indicator on the cover for tracked games whose tasks are INCOMPLETE. If disabled, indicators are hidden for all games regardless of each game's individual setting."
-                                       TextWrapping="Wrap" />
-                        </StackPanel>
-                    </CheckBox>
-                    <CheckBox Margin="0,10,0,0"
-                              VerticalContentAlignment="Top"
-                              IsChecked="{Binding Settings.ShowBlockedManualStateWarning}">
-                        <StackPanel>
-                            <TextBlock Text="Show warning when manual status changes are blocked"
-                                       TextWrapping="Wrap" />
-                            <TextBlock Margin="0,3,0,0"
-                                       FontSize="{DynamicResource FontSizeSmall}"
-                                       Foreground="{DynamicResource TextBrush}"
-                                       LineHeight="18"
-                                       LineStackingStrategy="BlockLineHeight"
-                                       Opacity="0.75"
-                                       Text="Shows an explanation when automatic checklist completion blocks a manual status change."
-                                       TextWrapping="Wrap" />
-                        </StackPanel>
-                    </CheckBox>
-                </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
+                    </ScrollViewer>
                 </Border>
             </Grid>
         </Grid>

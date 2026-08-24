@@ -336,6 +336,28 @@ namespace GameRoutines
             GetViewModel()?.CloseGameSearch();
         }
 
+        private void RoutinesList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            QueueSelectedRoutineVisibilityUpdate();
+        }
+
+        private void RoutineMoveButton_Click(object sender, RoutedEventArgs e)
+        {
+            QueueSelectedRoutineVisibilityUpdate();
+        }
+
+        private void QueueSelectedRoutineVisibilityUpdate()
+        {
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                var selectedRoutine = GetViewModel()?.SelectedRoutine;
+                if (selectedRoutine != null)
+                {
+                    RoutinesList.ScrollIntoView(selectedRoutine);
+                }
+            }), DispatcherPriority.Loaded);
+        }
+
         private void TimeTextBox_PreviewTextInput(object sender, TextCompositionEventArgs e)
         {
             if (!(sender is TextBox textBox) || e.Text.Length != 1)
@@ -442,6 +464,55 @@ namespace GameRoutines
                 checkBox.DataContext is ChecklistItemSettings item)
             {
                 GetViewModel()?.ChecklistItemChecked(item, checkBox.IsChecked == true);
+            }
+        }
+
+        private void RoutineNameTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter && sender is TextBox textBox)
+            {
+                CommitRoutineNameTextBox(textBox);
+                e.Handled = true;
+            }
+        }
+
+        private void RoutineNameTextBox_PreviewLostKeyboardFocus(
+            object sender,
+            KeyboardFocusChangedEventArgs e)
+        {
+            if (sender is TextBox textBox)
+            {
+                CommitRoutineNameTextBox(textBox);
+            }
+        }
+
+        private void CommitRoutineNameTextBox(TextBox textBox)
+        {
+            if (!(textBox.DataContext is RoutineSettings routine))
+            {
+                return;
+            }
+
+            GetViewModel()?.CommitRoutineName(routine, textBox.Text);
+            textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateTarget();
+            textBox.CaretIndex = textBox.Text.Length;
+        }
+
+        private void RoutineStateToggle_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is System.Windows.Controls.Primitives.ToggleButton toggleButton)
+            {
+                GetViewModel()?.SetSelectedRoutineState(toggleButton.IsChecked == true);
+                toggleButton.GetBindingExpression(
+                    System.Windows.Controls.Primitives.ToggleButton.IsCheckedProperty)?.UpdateTarget();
+            }
+        }
+
+        private void RoutineCountTowardOverallCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is CheckBox checkBox)
+            {
+                GetViewModel()?.RoutineCountTowardOverallChanged(checkBox.IsChecked == true);
             }
         }
 

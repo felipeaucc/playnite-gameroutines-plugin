@@ -85,6 +85,7 @@ namespace GameRoutines
             ResetCadence cadence,
             DayOfWeek day,
             TimeSpan time,
+            DateTime? biWeeklyAnchorLocal,
             out DateTime occurrence)
         {
             if (cadence == ResetCadence.Never)
@@ -93,21 +94,55 @@ namespace GameRoutines
                 return false;
             }
 
+            if (cadence == ResetCadence.BiWeekly)
+            {
+                return TryGetMostRecentBiWeeklyOccurrence(
+                    localNow,
+                    biWeeklyAnchorLocal,
+                    out occurrence);
+            }
+
             occurrence = cadence == ResetCadence.Daily
                 ? GetMostRecentDailyOccurrence(localNow, time)
                 : GetMostRecentWeeklyOccurrence(localNow, day, time);
             return true;
         }
 
-        public static DateTime GetMostRecentOccurrence(
+        public static bool TryGetMostRecentOccurrence(
             DateTime localNow,
             ReminderCadence cadence,
             DayOfWeek day,
-            TimeSpan time)
+            TimeSpan time,
+            DateTime? biWeeklyAnchorLocal,
+            out DateTime occurrence)
         {
-            return cadence == ReminderCadence.Daily
+            if (cadence == ReminderCadence.BiWeekly)
+            {
+                return TryGetMostRecentBiWeeklyOccurrence(
+                    localNow,
+                    biWeeklyAnchorLocal,
+                    out occurrence);
+            }
+
+            occurrence = cadence == ReminderCadence.Daily
                 ? GetMostRecentDailyOccurrence(localNow, time)
                 : GetMostRecentWeeklyOccurrence(localNow, day, time);
+            return true;
+        }
+
+        public static DateTime GetFirstFutureWeeklyOccurrence(
+            DateTime localNow,
+            DayOfWeek day,
+            TimeSpan time)
+        {
+            var daysUntilScheduledDay = ((int)day - (int)localNow.DayOfWeek + 7) % 7;
+            var occurrence = localNow.Date.AddDays(daysUntilScheduledDay).Add(time);
+            if (occurrence <= localNow)
+            {
+                occurrence = occurrence.AddDays(7);
+            }
+
+            return DateTime.SpecifyKind(occurrence, DateTimeKind.Local);
         }
 
         private static DateTime GetMostRecentDailyOccurrence(DateTime localNow, TimeSpan time)
@@ -134,6 +169,32 @@ namespace GameRoutines
             }
 
             return DateTime.SpecifyKind(occurrence, DateTimeKind.Local);
+        }
+
+        private static bool TryGetMostRecentBiWeeklyOccurrence(
+            DateTime localNow,
+            DateTime? anchorLocal,
+            out DateTime occurrence)
+        {
+            if (!anchorLocal.HasValue)
+            {
+                occurrence = default(DateTime);
+                return false;
+            }
+
+            var anchor = DateTime.SpecifyKind(anchorLocal.Value, DateTimeKind.Local);
+            if (localNow < anchor)
+            {
+                occurrence = default(DateTime);
+                return false;
+            }
+
+            var intervalTicks = TimeSpan.FromDays(14).Ticks;
+            var intervals = (localNow.Ticks - anchor.Ticks) / intervalTicks;
+            occurrence = DateTime.SpecifyKind(
+                anchor.AddTicks(intervals * intervalTicks),
+                DateTimeKind.Local);
+            return true;
         }
 
         public static bool IsOccurrenceDue(DateTime? lastProcessedLocal, DateTime occurrenceLocal)

@@ -26,7 +26,6 @@ namespace GameRoutines
         {
             if (viewModel != null && game != null && viewModel.TrackedGame?.GameId == game.Id)
             {
-                viewModel.RefreshStatus();
                 return;
             }
 

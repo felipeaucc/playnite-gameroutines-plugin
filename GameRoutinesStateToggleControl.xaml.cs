@@ -40,5 +40,6 @@ namespace GameRoutines
             viewModel?.Dispose();
             viewModel = null;
         }
+
     }
 }

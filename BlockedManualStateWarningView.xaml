@@ -8,10 +8,10 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock MaxWidth="440"
+        <TextBlock x:Name="MessageTextBlock"
+                   MaxWidth="460"
                    VerticalAlignment="Center"
                    FontSize="14"
-                   Text="Automatic checklist completion is enabled for this game. Its task status is controlled by the checklist. Turn off automatic completion in Game Routines settings to change the task status manually."
                    TextWrapping="Wrap" />
 
         <Grid Grid.Row="1" Margin="0,16,0,0">

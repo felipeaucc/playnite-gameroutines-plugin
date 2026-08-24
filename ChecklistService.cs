@@ -22,14 +22,14 @@ namespace GameRoutines
 
     public static class ChecklistService
     {
-        public static void Normalize(TrackedGameSettings trackedGame)
+        public static void Normalize(RoutineSettings routine)
         {
-            if (trackedGame == null)
+            if (routine == null)
             {
                 return;
             }
 
-            var source = trackedGame.Checklist ?? new ObservableCollection<ChecklistItemSettings>();
+            var source = routine.Checklist ?? new ObservableCollection<ChecklistItemSettings>();
             var usedIds = new HashSet<Guid>();
             var normalized = source
                 .Where(a => a != null)
@@ -55,13 +55,13 @@ namespace GameRoutines
 
             if (!source.SequenceEqual(normalized))
             {
-                trackedGame.Checklist = new ObservableCollection<ChecklistItemSettings>(normalized);
+                routine.Checklist = new ObservableCollection<ChecklistItemSettings>(normalized);
             }
         }
 
-        public static ChecklistItemSettings AddItem(TrackedGameSettings trackedGame, string text)
+        public static ChecklistItemSettings AddItem(RoutineSettings routine, string text)
         {
-            if (trackedGame == null)
+            if (routine == null)
             {
                 return null;
             }
@@ -72,21 +72,21 @@ namespace GameRoutines
                 return null;
             }
 
-            Normalize(trackedGame);
+            Normalize(routine);
             var item = new ChecklistItemSettings
             {
                 Id = Guid.NewGuid(),
                 Text = normalizedText,
                 IsChecked = false,
-                Order = trackedGame.Checklist.Count
+                Order = routine.Checklist.Count
             };
-            trackedGame.Checklist.Add(item);
+            routine.Checklist.Add(item);
             return item;
         }
 
-        public static bool EditItem(TrackedGameSettings trackedGame, Guid itemId, string text)
+        public static bool EditItem(RoutineSettings routine, Guid itemId, string text)
         {
-            var item = FindItem(trackedGame, itemId);
+            var item = FindItem(routine, itemId);
             var normalizedText = ChecklistItemSettings.NormalizeText(text);
             if (item == null || string.IsNullOrWhiteSpace(normalizedText))
             {
@@ -97,42 +97,42 @@ namespace GameRoutines
             return true;
         }
 
-        public static bool DeleteItem(TrackedGameSettings trackedGame, Guid itemId)
+        public static bool DeleteItem(RoutineSettings routine, Guid itemId)
         {
-            var item = FindItem(trackedGame, itemId);
+            var item = FindItem(routine, itemId);
             if (item == null)
             {
                 return false;
             }
 
-            trackedGame.Checklist.Remove(item);
-            UpdateOrder(trackedGame);
+            routine.Checklist.Remove(item);
+            UpdateOrder(routine);
             return true;
         }
 
-        public static bool MoveItem(TrackedGameSettings trackedGame, Guid itemId, int offset)
+        public static bool MoveItem(RoutineSettings routine, Guid itemId, int offset)
         {
-            var item = FindItem(trackedGame, itemId);
+            var item = FindItem(routine, itemId);
             if (item == null || offset == 0)
             {
                 return false;
             }
 
-            var oldIndex = trackedGame.Checklist.IndexOf(item);
-            var newIndex = Math.Max(0, Math.Min(trackedGame.Checklist.Count - 1, oldIndex + offset));
+            var oldIndex = routine.Checklist.IndexOf(item);
+            var newIndex = Math.Max(0, Math.Min(routine.Checklist.Count - 1, oldIndex + offset));
             if (newIndex == oldIndex)
             {
                 return false;
             }
 
-            trackedGame.Checklist.Move(oldIndex, newIndex);
-            UpdateOrder(trackedGame);
+            routine.Checklist.Move(oldIndex, newIndex);
+            UpdateOrder(routine);
             return true;
         }
 
-        public static bool SetItemChecked(TrackedGameSettings trackedGame, Guid itemId, bool isChecked)
+        public static bool SetItemChecked(RoutineSettings routine, Guid itemId, bool isChecked)
         {
-            var item = FindItem(trackedGame, itemId);
+            var item = FindItem(routine, itemId);
             if (item == null)
             {
                 return false;
@@ -142,15 +142,15 @@ namespace GameRoutines
             return true;
         }
 
-        public static bool Reset(TrackedGameSettings trackedGame)
+        public static bool Reset(RoutineSettings routine)
         {
-            if (trackedGame == null)
+            if (routine == null)
             {
                 return false;
             }
 
             var changed = false;
-            foreach (var item in trackedGame.Checklist)
+            foreach (var item in routine.Checklist)
             {
                 if (item != null && item.IsChecked)
                 {
@@ -162,23 +162,23 @@ namespace GameRoutines
             return changed;
         }
 
-        public static ChecklistProgress GetProgress(TrackedGameSettings trackedGame)
+        public static ChecklistProgress GetProgress(RoutineSettings routine)
         {
-            var items = trackedGame?.Checklist?.Where(a => a != null).ToList() ??
+            var items = routine?.Checklist?.Where(a => a != null).ToList() ??
                 new List<ChecklistItemSettings>();
             return new ChecklistProgress(items.Count(a => a.IsChecked), items.Count);
         }
 
-        private static ChecklistItemSettings FindItem(TrackedGameSettings trackedGame, Guid itemId)
+        private static ChecklistItemSettings FindItem(RoutineSettings routine, Guid itemId)
         {
-            return trackedGame?.Checklist?.FirstOrDefault(a => a != null && a.Id == itemId);
+            return routine?.Checklist?.FirstOrDefault(a => a != null && a.Id == itemId);
         }
 
-        private static void UpdateOrder(TrackedGameSettings trackedGame)
+        private static void UpdateOrder(RoutineSettings routine)
         {
-            for (var index = 0; index < trackedGame.Checklist.Count; index++)
+            for (var index = 0; index < routine.Checklist.Count; index++)
             {
-                trackedGame.Checklist[index].Order = index;
+                routine.Checklist[index].Order = index;
             }
         }
     }

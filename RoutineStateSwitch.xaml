@@ -1,0 +1,15 @@
+<UserControl x:Class="GameRoutines.RoutineStateSwitch"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:GameRoutines"
+             Focusable="False">
+    <ToggleButton x:Name="Switch"
+                  MinWidth="42"
+                  HorizontalAlignment="Left"
+                  Focusable="False"
+                  IsChecked="{Binding IsChecked, RelativeSource={RelativeSource AncestorType={x:Type local:RoutineStateSwitch}}, Mode=OneWay}"
+                  Command="{Binding Command, RelativeSource={RelativeSource AncestorType={x:Type local:RoutineStateSwitch}}}"
+                  Style="{DynamicResource SwitcherToggleButton}"
+                  ToolTip="{Binding ToolTipText, RelativeSource={RelativeSource AncestorType={x:Type local:RoutineStateSwitch}}}"
+                  Click="Switch_Click" />
+</UserControl>

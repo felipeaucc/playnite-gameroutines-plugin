@@ -25,6 +25,14 @@ namespace GameRoutines
             args.Handled = true;
         }
 
+        private void RoutineScheduleEditor_ScheduleChanged(object sender, System.EventArgs args)
+        {
+            if (DataContext is ManageChecklistViewModel viewModel)
+            {
+                viewModel.CommitScheduleChanges();
+            }
+        }
+
         private void ItemTextBox_PreviewKeyDown(object sender, KeyEventArgs args)
         {
             if (args.Key == Key.Enter && sender is TextBox textBox)
