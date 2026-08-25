@@ -1,6 +1,6 @@
 # Game Routines
 
-![Game Routines icon](icon.png)
+![Game Routines icon](source/icon.png)
 
 Game Routines is a Playnite extension for managing recurring and long-term game activities with configurable routines, checklists, reset schedules and reminders.
 
