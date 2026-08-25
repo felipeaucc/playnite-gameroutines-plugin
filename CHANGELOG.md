@@ -18,10 +18,12 @@ First public beta.
 - Modeless checklist pop-out windows and game context-menu actions.
 - Optional `Tasks Available!` tag synchronization.
 - Custom UI elements for enhanced theme integration.
-- Optional, version-specific FusionX 2.1.1 enhanced integration.
+- Version-specific FusionX 2.1.1 enhanced integration.
 
 ### Notes
 
 - This is the first public beta and may change in response to testing and feedback.
-- Core Game Routines functionality does not require FusionX.
-- FusionX 2.1.1 integration is optional, version-specific and not yet included in the official FusionX project.
+- FusionX 2.1.1 with the repository's version-specific integration is the supported and tested Desktop-theme target for this beta.
+- Other Playnite Desktop themes are not currently supported and may have visual or integration issues.
+- Broader Desktop-theme compatibility may be considered in a future release.
+- The Game Routines integration is not yet included in the official FusionX project.

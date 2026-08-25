@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("GameRoutines")]
 [assembly: AssemblyDescription("Manage recurring and persistent per-game tasks in Playnite.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Felipe Aucc")]
+[assembly: AssemblyCompany("felipeaucc")]
 [assembly: AssemblyProduct("Game Routines")]
-[assembly: AssemblyCopyright("Copyright © 2026 Felipe Aucc")]
+[assembly: AssemblyCopyright("Copyright © 2026 felipeaucc")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

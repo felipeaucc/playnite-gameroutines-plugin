@@ -1,6 +1,6 @@
 # Theme integration
 
-Game Routines exposes custom UI controls through Playnite's supported extension integration API. These controls are intended and currently tested for Playnite Desktop game detail or overview views.
+Game Routines exposes custom UI controls through Playnite's supported extension integration API for theme developers to host in game detail or overview views. FusionX 2.1.1 is the current supported and tested implementation. Other Desktop themes require their own integration, styling and runtime validation before they can be considered supported.
 
 For Playnite's host naming convention and installation checks, see the official [Integrating extension elements](https://api.playnite.link/docs/tutorials/themes/extensionIntegration.html) documentation.
 
@@ -21,6 +21,8 @@ The host name is formed from `<SourceName>_<ElementName>`, for example:
 <ContentControl x:Name="GameRoutines_Checklist" />
 ```
 
+The availability of these elements does not by itself make a theme compatible with Game Routines. Theme authors must provide suitable hosts, resources and layout, then validate the resulting integration.
+
 ## Behavior expectations
 
 - Each control receives the current game through Playnite's `PluginUserControl.GameContext`; themes should not provide game IDs or game-specific configuration.
@@ -40,4 +42,4 @@ The host name is formed from `<SourceName>_<ElementName>`, for example:
 - `StateToggle` is hosted beside FusionX's other compact game actions.
 - `IncompleteIndicator` is layered over the cover without replacing FusionX's stock cover structure.
 
-That example targets FusionX 2.1.1 only. Reuse the Game Routines hosts and behavior, not unrelated version-specific theme markup, when integrating another theme or FusionX version.
+That example targets FusionX 2.1.1 only and is the implementation currently supported and tested with Game Routines 0.9.0. Reuse the Game Routines hosts and behavior, not unrelated version-specific theme markup, when developing integration for another theme or FusionX version; that work remains unsupported until it is styled and tested for its target theme.

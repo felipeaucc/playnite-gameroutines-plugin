@@ -1,6 +1,6 @@
 # Enhanced integration for FusionX 2.1.1
 
-Game Routines works without FusionX. This folder provides optional, enhanced integration for the desktop theme by adding Game Routines hosts to two FusionX 2.1.1 views. It does not imply that FusionX officially supports Game Routines today.
+FusionX 2.1.1 is the supported and tested Desktop-theme target for Game Routines 0.9.0. This folder provides the version-specific integration by adding Game Routines hosts to two FusionX 2.1.1 views. It does not imply that FusionX officially supports Game Routines today.
 
 The integration modifies only:
 
