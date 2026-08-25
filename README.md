@@ -10,6 +10,28 @@ With FusionX, Game Routines provides embedded integration including the **Checkl
 
 Version 0.9.0 is the first public beta.
 
+## Screenshots
+
+### Game and routine configuration
+
+![Game and routine configuration](assets/screenshots/01-settings.png)
+
+### FusionX Checklists integration
+
+![FusionX Checklists integration](assets/screenshots/03-fusionx-checklists.png)
+
+### Checklist management pop-out
+
+![Checklist management pop-out](assets/screenshots/02-manage-checklist.png)
+
+### TASKS control and incomplete cover indicator
+
+![TASKS control and incomplete cover indicator](assets/screenshots/04-fusionx-tasks-indicator.png)
+
+### Game context-menu integration
+
+![Game context-menu integration](assets/screenshots/05-context-menu.png)
+
 ## Features
 
 - Track games from Playnite's game context menu or the extension settings.
