@@ -1,0 +1,13 @@
+AddonId: GameRoutines_cb076ecb-ea40-4036-8094-f1c554566b49
+Packages:
+  - Version: 0.9.0
+    RequiredApiVersion: 6.6.0
+    ReleaseDate: 2026-08-25
+    PackageUrl: https://github.com/felipeaucc/playnite-gameroutines-plugin/releases/download/v0.9.0/GameRoutines_cb076ecb-ea40-4036-8094-f1c554566b49_0_9_0.pext
+    Changelog:
+      - Initial public beta.
+      - Added multiple named and ordered routines with per-routine checklists, completion state, and Never, Daily, Weekly, or Biweekly reset schedules.
+      - Added aggregate task-status participation and optional checklist-driven completion.
+      - Added independent game-level reminders, persistent Playnite notifications, modeless checklist windows, and context-menu actions.
+      - Added optional Tasks Available! tag synchronization and enhanced theme UI elements.
+      - Added version-specific FusionX 2.1.1 integration; other Playnite Desktop themes are not currently supported.

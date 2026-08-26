@@ -24,7 +24,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
@@ -33,7 +34,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Playnite.SDK, Version=6.16.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\PlayniteSDK.6.16.0\lib\net462\Playnite.SDK.dll</HintPath>
+      <HintPath>..\packages\PlayniteSDK.6.16.0\lib\net462\Playnite.SDK.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -49,59 +50,59 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ChecklistService.cs" />
-    <Compile Include="CadenceDisplayConverter.cs" />
-    <Compile Include="CustomReminderService.cs" />
-    <Compile Include="CustomReminderViewModel.cs" />
+    <Compile Include="Services\ChecklistService.cs" />
+    <Compile Include="Converters\CadenceDisplayConverter.cs" />
+    <Compile Include="Services\CustomReminderService.cs" />
+    <Compile Include="ViewModels\CustomReminderViewModel.cs" />
     <Compile Include="GameRoutines.cs" />
     <Compile Include="GameRoutinesUiStateChangedEventArgs.cs" />
-    <Compile Include="GameTaskStateViewModel.cs" />
-    <Compile Include="PersistentNotificationService.cs" />
-    <Compile Include="RoutineService.cs" />
-    <Compile Include="RoutineScheduleEditor.xaml.cs">
+    <Compile Include="ViewModels\GameTaskStateViewModel.cs" />
+    <Compile Include="Services\PersistentNotificationService.cs" />
+    <Compile Include="Services\RoutineService.cs" />
+    <Compile Include="Views\RoutineScheduleEditor.xaml.cs">
       <DependentUpon>RoutineScheduleEditor.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ScheduleCalculator.cs" />
-    <Compile Include="GameChecklistViewModel.cs" />
-    <Compile Include="GameChecklistView.xaml.cs">
+    <Compile Include="Services\ScheduleCalculator.cs" />
+    <Compile Include="ViewModels\GameChecklistViewModel.cs" />
+    <Compile Include="Views\GameChecklistView.xaml.cs">
       <DependentUpon>GameChecklistView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="MultiRoutineChecklistView.xaml.cs">
+    <Compile Include="Views\MultiRoutineChecklistView.xaml.cs">
       <DependentUpon>MultiRoutineChecklistView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="RoutineChecklistCard.xaml.cs">
+    <Compile Include="Controls\RoutineChecklistCard.xaml.cs">
       <DependentUpon>RoutineChecklistCard.xaml</DependentUpon>
     </Compile>
-    <Compile Include="RoutineStateSwitch.xaml.cs">
+    <Compile Include="Controls\RoutineStateSwitch.xaml.cs">
       <DependentUpon>RoutineStateSwitch.xaml</DependentUpon>
     </Compile>
-    <Compile Include="RoutineAutoCompletionToggle.xaml.cs">
+    <Compile Include="Controls\RoutineAutoCompletionToggle.xaml.cs">
       <DependentUpon>RoutineAutoCompletionToggle.xaml</DependentUpon>
     </Compile>
-    <Compile Include="CustomReminderEditor.xaml.cs">
+    <Compile Include="Views\CustomReminderEditor.xaml.cs">
       <DependentUpon>CustomReminderEditor.xaml</DependentUpon>
     </Compile>
-    <Compile Include="CustomReminderWindowView.xaml.cs">
+    <Compile Include="Views\CustomReminderWindowView.xaml.cs">
       <DependentUpon>CustomReminderWindowView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="GameRoutinesChecklistControl.xaml.cs">
+    <Compile Include="Controls\GameRoutinesChecklistControl.xaml.cs">
       <DependentUpon>GameRoutinesChecklistControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="GameRoutinesStateToggleControl.xaml.cs">
+    <Compile Include="Controls\GameRoutinesStateToggleControl.xaml.cs">
       <DependentUpon>GameRoutinesStateToggleControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="GameRoutinesIncompleteIndicatorControl.xaml.cs">
+    <Compile Include="Controls\GameRoutinesIncompleteIndicatorControl.xaml.cs">
       <DependentUpon>GameRoutinesIncompleteIndicatorControl.xaml</DependentUpon>
     </Compile>
-    <Compile Include="BlockedManualStateWarningView.xaml.cs">
+    <Compile Include="Views\BlockedManualStateWarningView.xaml.cs">
       <DependentUpon>BlockedManualStateWarningView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ManageChecklistViewModel.cs" />
-    <Compile Include="ManageChecklistView.xaml.cs">
+    <Compile Include="ViewModels\ManageChecklistViewModel.cs" />
+    <Compile Include="Views\ManageChecklistView.xaml.cs">
       <DependentUpon>ManageChecklistView.xaml</DependentUpon>
     </Compile>
-    <Compile Include="GameRoutinesSettings.cs" />
-    <Compile Include="GameRoutinesSettingsView.xaml.cs">
+    <Compile Include="Settings\GameRoutinesSettings.cs" />
+    <Compile Include="Settings\GameRoutinesSettingsView.xaml.cs">
       <DependentUpon>GameRoutinesSettingsView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -122,59 +123,59 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="GameRoutinesSettingsView.xaml">
+    <Page Include="Settings\GameRoutinesSettingsView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="GameChecklistView.xaml">
+    <Page Include="Views\GameChecklistView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="MultiRoutineChecklistView.xaml">
+    <Page Include="Views\MultiRoutineChecklistView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="RoutineChecklistCard.xaml">
+    <Page Include="Controls\RoutineChecklistCard.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="RoutineScheduleEditor.xaml">
+    <Page Include="Views\RoutineScheduleEditor.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="RoutineStateSwitch.xaml">
+    <Page Include="Controls\RoutineStateSwitch.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="RoutineAutoCompletionToggle.xaml">
+    <Page Include="Controls\RoutineAutoCompletionToggle.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="CustomReminderEditor.xaml">
+    <Page Include="Views\CustomReminderEditor.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="CustomReminderWindowView.xaml">
+    <Page Include="Views\CustomReminderWindowView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="GameRoutinesChecklistControl.xaml">
+    <Page Include="Controls\GameRoutinesChecklistControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="GameRoutinesStateToggleControl.xaml">
+    <Page Include="Controls\GameRoutinesStateToggleControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="GameRoutinesIncompleteIndicatorControl.xaml">
+    <Page Include="Controls\GameRoutinesIncompleteIndicatorControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="BlockedManualStateWarningView.xaml">
+    <Page Include="Views\BlockedManualStateWarningView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="ManageChecklistView.xaml">
+    <Page Include="Views\ManageChecklistView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -184,12 +185,12 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <Import Project="packages\Microsoft.NETFramework.ReferenceAssemblies.net462.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net462.targets" Condition="Exists('packages\Microsoft.NETFramework.ReferenceAssemblies.net462.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net462.targets')" />
+  <Import Project="..\packages\Microsoft.NETFramework.ReferenceAssemblies.net462.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net462.targets" Condition="Exists('..\packages\Microsoft.NETFramework.ReferenceAssemblies.net462.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net462.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing. Restore NuGet packages to continue. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('packages\Microsoft.NETFramework.ReferenceAssemblies.net462.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net462.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\Microsoft.NETFramework.ReferenceAssemblies.net462.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net462.targets'))" />
+    <Error Condition="!Exists('..\packages\Microsoft.NETFramework.ReferenceAssemblies.net462.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net462.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Microsoft.NETFramework.ReferenceAssemblies.net462.1.0.3\build\Microsoft.NETFramework.ReferenceAssemblies.net462.targets'))" />
   </Target>
 </Project>
