@@ -1,6 +1,6 @@
 # Theme integration
 
-Game Routines exposes custom UI controls through Playnite's supported extension integration API for theme developers to host in game detail or overview views. FusionX 2.1.1 is the current supported and tested implementation. Other Desktop themes require their own integration, styling and runtime validation before they can be considered supported.
+Game Routines' core routine, checklist, scheduling, reminder and notification logic operates independently of any Playnite Desktop theme. Embedded controls still require a theme to provide suitable hosts, resources and layout. Version 0.9.0 is designed and tested for [FusionX](https://github.com/sakasakiking/FusionX). This repository supplies the current supported integration files for [FusionX](https://github.com/sakasakiking/FusionX) 2.1.1. Other Desktop themes are not yet officially supported and require their own integration, styling and runtime validation before official support can be claimed.
 
 For Playnite's host naming convention and installation checks, see the official [Integrating extension elements](https://api.playnite.link/docs/tutorials/themes/extensionIntegration.html) documentation.
 
@@ -21,7 +21,7 @@ The host name is formed from `<SourceName>_<ElementName>`, for example:
 <ContentControl x:Name="GameRoutines_Checklist" />
 ```
 
-The availability of these elements does not by itself make a theme compatible with Game Routines. Theme authors must provide suitable hosts, resources and layout, then validate the resulting integration.
+The availability of these elements does not by itself make a theme officially compatible with Game Routines. Theme authors must provide suitable hosts, resources and layout, then validate the resulting integration.
 
 ## Behavior expectations
 
@@ -34,12 +34,12 @@ The availability of these elements does not by itself make a theme compatible wi
 - Themes should continue to work when Game Routines is not installed. Use Playnite's documented plugin-status facilities where conditional surrounding layout is needed.
 - These controls are currently documented for Desktop themes; no Fullscreen-theme compatibility is claimed.
 
-## FusionX example
+## [FusionX](https://github.com/sakasakiking/FusionX) example
 
 [`Integrations/FusionX/2.1.1/`](Integrations/FusionX/2.1.1/) demonstrates all three controls in real game overview views:
 
 - `Checklist` is hosted in a **Checklists** details tab.
-- `StateToggle` is hosted beside FusionX's other compact game actions.
-- `IncompleteIndicator` is layered over the cover without replacing FusionX's stock cover structure.
+- `StateToggle` is hosted beside [FusionX](https://github.com/sakasakiking/FusionX)'s other compact game actions.
+- `IncompleteIndicator` is layered over the cover without replacing [FusionX](https://github.com/sakasakiking/FusionX)'s stock cover structure.
 
-That example targets FusionX 2.1.1 only and is the implementation currently supported and tested with Game Routines 0.9.0. Reuse the Game Routines hosts and behavior, not unrelated version-specific theme markup, when developing integration for another theme or FusionX version; that work remains unsupported until it is styled and tested for its target theme.
+This supplied example targets [FusionX](https://github.com/sakasakiking/FusionX) 2.1.1 only and is the implementation currently supported and tested with Game Routines 0.9.0. Reuse the Game Routines hosts and behavior, not unrelated version-specific theme markup, when developing integration for another theme or [FusionX](https://github.com/sakasakiking/FusionX) version. Official support is not claimed until an integration is styled and tested for its target theme.
