@@ -64,6 +64,7 @@
                     SelectedDateChanged="StartingDatePicker_SelectedDateChanged">
             <DatePicker.Style>
                 <Style TargetType="DatePicker" BasedOn="{StaticResource {x:Type DatePicker}}">
+                    <Setter Property="Padding" Value="8,0,8,0" />
                     <Setter Property="Visibility" Value="Collapsed" />
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding ResetCadence}" Value="{x:Static local:ResetCadence.BiWeekly}">
