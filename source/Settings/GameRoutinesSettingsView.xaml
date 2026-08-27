@@ -50,12 +50,19 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        <Style x:Key="GameRoutinesSettingsActionSymbolStyle" TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="Segoe UI Symbol" />
-            <Setter Property="FontSize" Value="{DynamicResource FontSizeLarge}" />
+        <Geometry x:Key="GameRoutinesSettingsChevronUpGeometry">M7.41,15.41 L12,10.83 16.59,15.41 18,14 12,8 6,14Z</Geometry>
+        <Geometry x:Key="GameRoutinesSettingsChevronDownGeometry">M7.41,8.59 L12,13.17 16.59,8.59 18,10 12,16 6,10Z</Geometry>
+        <Geometry x:Key="GameRoutinesSettingsPlusGeometry">M19,13 H13 V19 H11 V13 H5 V11 H11 V5 H13 V11 H19Z</Geometry>
+        <Geometry x:Key="GameRoutinesSettingsMinusGeometry">M19,13 H5 V11 H19Z</Geometry>
+        <Geometry x:Key="GameRoutinesSettingsResetGeometry">M17.65,6.35 C16.2,4.9 14.21,4 12,4 C7.58,4 4.01,7.58 4.01,12 S7.58,20 12,20 C15.73,20 18.84,17.45 19.73,14 H17.65 C16.83,16.33 14.61,18 12,18 C8.69,18 6,15.31 6,12 S8.69,6 12,6 C13.66,6 15.14,6.69 16.22,7.78 L13,11 H20 V4Z</Geometry>
+        <Style x:Key="GameRoutinesSettingsActionIconStyle" TargetType="Path">
+            <Setter Property="Width" Value="14" />
+            <Setter Property="Height" Value="14" />
+            <Setter Property="Fill" Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="TextAlignment" Value="Center" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
         </Style>
         <Style x:Key="SubtleIconButtonStyle"
                TargetType="Button"
@@ -481,7 +488,10 @@
                                                                      Command="{Binding DataContext.MoveRoutineUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                      CommandParameter="{Binding}"
                                                                      Click="RoutineMoveButton_Click">
-                                                                 <TextBlock Text="↑" Style="{StaticResource GameRoutinesSettingsActionSymbolStyle}" />
+                                                                 <Path Width="12"
+                                                                       Height="12"
+                                                                       Data="{StaticResource GameRoutinesSettingsChevronUpGeometry}"
+                                                                       Style="{StaticResource GameRoutinesSettingsActionIconStyle}" />
                                                              </Button>
                                                              <Button Margin="4,0,0,0"
                                                                      Style="{StaticResource CompactIconButtonStyle}"
@@ -489,7 +499,10 @@
                                                                      Command="{Binding DataContext.MoveRoutineDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                      CommandParameter="{Binding}"
                                                                      Click="RoutineMoveButton_Click">
-                                                                 <TextBlock Text="↓" Style="{StaticResource GameRoutinesSettingsActionSymbolStyle}" />
+                                                                 <Path Width="12"
+                                                                       Height="12"
+                                                                       Data="{StaticResource GameRoutinesSettingsChevronDownGeometry}"
+                                                                       Style="{StaticResource GameRoutinesSettingsActionIconStyle}" />
                                                              </Button>
                                                         </StackPanel>
                                                     </Grid>
@@ -502,13 +515,15 @@
                                              <Button Style="{StaticResource CompactIconButtonStyle}"
                                                      ToolTip="Add Routine"
                                                      Command="{Binding DataContext.AddRoutineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
-                                                 <TextBlock Text="+" Style="{StaticResource GameRoutinesSettingsActionSymbolStyle}" />
+                                                 <Path Data="{StaticResource GameRoutinesSettingsPlusGeometry}"
+                                                       Style="{StaticResource GameRoutinesSettingsActionIconStyle}" />
                                              </Button>
                                              <Button Margin="0,5,0,0"
                                                      Style="{StaticResource CompactIconButtonStyle}"
                                                      ToolTip="Delete Routine"
                                                      Command="{Binding DataContext.DeleteRoutineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
-                                                 <TextBlock Text="×" Style="{StaticResource GameRoutinesSettingsActionSymbolStyle}" />
+                                                 <Path Data="{StaticResource GameRoutinesSettingsMinusGeometry}"
+                                                       Style="{StaticResource GameRoutinesSettingsActionIconStyle}" />
                                              </Button>
                                         </StackPanel>
                                     </Grid>
@@ -625,7 +640,8 @@
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Button.Style>
-                                                    <TextBlock FontSize="14" Text="↺" Style="{StaticResource GameRoutinesSettingsActionSymbolStyle}" />
+                                                    <Path Data="{StaticResource GameRoutinesSettingsResetGeometry}"
+                                                          Style="{StaticResource GameRoutinesSettingsActionIconStyle}" />
                                                 </Button>
                                             </StackPanel>
                                             <Grid MinHeight="58" MaxHeight="280">
@@ -673,21 +689,28 @@
                                                                         ToolTip="Move Item Up"
                                                                         Command="{Binding DataContext.MoveChecklistItemUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                         CommandParameter="{Binding}">
-                                                                    <TextBlock Text="↑" Style="{StaticResource GameRoutinesSettingsActionSymbolStyle}" />
+                                                                    <Path Width="12"
+                                                                          Height="12"
+                                                                          Data="{StaticResource GameRoutinesSettingsChevronUpGeometry}"
+                                                                          Style="{StaticResource GameRoutinesSettingsActionIconStyle}" />
                                                                 </Button>
                                                                 <Button Grid.Column="3"
                                                                         Style="{StaticResource CompactIconButtonStyle}"
                                                                         ToolTip="Move Item Down"
                                                                         Command="{Binding DataContext.MoveChecklistItemDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                         CommandParameter="{Binding}">
-                                                                    <TextBlock Text="↓" Style="{StaticResource GameRoutinesSettingsActionSymbolStyle}" />
+                                                                    <Path Width="12"
+                                                                          Height="12"
+                                                                          Data="{StaticResource GameRoutinesSettingsChevronDownGeometry}"
+                                                                          Style="{StaticResource GameRoutinesSettingsActionIconStyle}" />
                                                                 </Button>
                                                                 <Button Grid.Column="4"
                                                                         Style="{StaticResource CompactIconButtonStyle}"
                                                                         ToolTip="Delete Item"
                                                                         Command="{Binding DataContext.DeleteChecklistItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                         CommandParameter="{Binding}">
-                                                                    <TextBlock Text="×" Style="{StaticResource GameRoutinesSettingsActionSymbolStyle}" />
+                                                                    <Path Data="{StaticResource GameRoutinesSettingsMinusGeometry}"
+                                                                          Style="{StaticResource GameRoutinesSettingsActionIconStyle}" />
                                                                 </Button>
                                                             </Grid>
                                                         </DataTemplate>
@@ -729,7 +752,8 @@
                                                         Style="{StaticResource CompactIconButtonStyle}"
                                                         ToolTip="Add Item"
                                                         Command="{Binding DataContext.AddChecklistItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
-                                                    <TextBlock Text="+" Style="{StaticResource GameRoutinesSettingsActionSymbolStyle}" />
+                                                    <Path Data="{StaticResource GameRoutinesSettingsPlusGeometry}"
+                                                          Style="{StaticResource GameRoutinesSettingsActionIconStyle}" />
                                                 </Button>
                                             </Grid>
                                         </StackPanel>
