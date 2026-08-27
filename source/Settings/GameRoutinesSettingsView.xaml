@@ -515,14 +515,18 @@
                                              <Button Style="{StaticResource CompactIconButtonStyle}"
                                                      ToolTip="Add Routine"
                                                      Command="{Binding DataContext.AddRoutineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
-                                                 <Path Data="{StaticResource GameRoutinesSettingsPlusGeometry}"
+                                                 <Path Width="12"
+                                                       Height="12"
+                                                       Data="{StaticResource GameRoutinesSettingsPlusGeometry}"
                                                        Style="{StaticResource GameRoutinesSettingsActionIconStyle}" />
                                              </Button>
                                              <Button Margin="0,5,0,0"
                                                      Style="{StaticResource CompactIconButtonStyle}"
                                                      ToolTip="Delete Routine"
                                                      Command="{Binding DataContext.DeleteRoutineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
-                                                 <Path Data="{StaticResource GameRoutinesSettingsMinusGeometry}"
+                                                 <Path Width="12"
+                                                       Height="12"
+                                                       Data="{StaticResource GameRoutinesSettingsMinusGeometry}"
                                                        Style="{StaticResource GameRoutinesSettingsActionIconStyle}" />
                                              </Button>
                                         </StackPanel>
@@ -709,7 +713,9 @@
                                                                         ToolTip="Delete Item"
                                                                         Command="{Binding DataContext.DeleteChecklistItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                         CommandParameter="{Binding}">
-                                                                    <Path Data="{StaticResource GameRoutinesSettingsMinusGeometry}"
+                                                                    <Path Width="12"
+                                                                          Height="12"
+                                                                          Data="{StaticResource GameRoutinesSettingsMinusGeometry}"
                                                                           Style="{StaticResource GameRoutinesSettingsActionIconStyle}" />
                                                                 </Button>
                                                             </Grid>
@@ -752,7 +758,9 @@
                                                         Style="{StaticResource CompactIconButtonStyle}"
                                                         ToolTip="Add Item"
                                                         Command="{Binding DataContext.AddChecklistItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
-                                                    <Path Data="{StaticResource GameRoutinesSettingsPlusGeometry}"
+                                                    <Path Width="12"
+                                                          Height="12"
+                                                          Data="{StaticResource GameRoutinesSettingsPlusGeometry}"
                                                           Style="{StaticResource GameRoutinesSettingsActionIconStyle}" />
                                                 </Button>
                                             </Grid>
