@@ -2,7 +2,7 @@
 
 Game Routines is a Playnite extension for managing recurring and long-term game activities with configurable routines, checklists, reset schedules and reminders.
 
-Game Routines' core routine, checklist, scheduling, reminder and notification logic operates independently of [FusionX](https://github.com/sakasakiking/FusionX). Version 0.9.0 is designed and tested for [FusionX](https://github.com/sakasakiking/FusionX), which provides the current embedded theme integration. Other Playnite Desktop themes are not yet officially supported and may have missing or incorrectly rendered Game Routines UI elements.
+Game Routines' core routine, checklist, scheduling, reminder, and notification logic operates independently of the active Playnite theme. Version 0.9.0 was designed and tested around [FusionX](https://github.com/sakasakiking/FusionX), which provides the current embedded theme integration. Other Playnite Desktop themes are not yet officially supported and may have missing or incorrectly rendered Game Routines UI elements.
 
 > All screenshots below were captured using the [FusionX](https://github.com/sakasakiking/FusionX) theme.
 
@@ -11,19 +11,20 @@ Game Routines' core routine, checklist, scheduling, reminder and notification lo
 - Track games from Playnite's game context menu or the extension settings.
 - Create and order multiple named routines for each game.
 - Maintain an ordered checklist and **COMPLETE** / **INCOMPLETE** state for each routine.
-- Reset routines on **Never**, **Daily**, **Weekly** or **Biweekly** schedules.
+- Reset routines on a set schedule: **Never**, **Daily**, **Weekly** or **Biweekly**.
 - Automatically derive a routine's state from its checklist.
 - Choose which routines count toward the game's overall task status.
 - Configure an independent game-level **Custom Reminder**.
 - Receive persistent notifications through Playnite's internal notification system.
-- Open modeless checklist windows while continuing to use Playnite.
+- Open checklists in separate pop-out windows while continuing to use Playnite.
 - Use context-menu actions to open, complete, reset and configure tracked tasks.
-- Optionally maintain a `Tasks Available!` tag while a game's overall status is incomplete.
+- Optionally manage a `Tasks Available!` tag automatically based on a game's overall task status.
 - Show an optional incomplete-state cover indicator ([FusionX](https://github.com/sakasakiking/FusionX) only, for now).
+- Access embedded checklist controls and a tasks completion toggle directly from the game view (FusionX only, for now).
 
 ## How it works
 
-Each tracked game can have multiple routines: Daily tasks, Weekly tasks and a long-term checklist can coexist without sharing a schedule. Every routine has its own name, order, checklist, status and reset configuration.
+Each tracked game can have multiple routines: Daily tasks, Weekly tasks, Biweekly tasks, and a never-resetting checklist can all coexist with their own schedules. Every routine has its own name, order, checklist, status, and reset configuration.
 
 A routine can either count toward the game's overall task status or be excluded from it:
 
@@ -34,6 +35,8 @@ A routine can either count toward the game's overall task status or be excluded 
 This participation setting keeps optional or long-term routines from affecting the game's main task status unless you want them to.
 
 ![Game and routine configuration in Game Routines settings](assets/screenshots/01-settings.png)
+
+If automatic `Tasks Available!` tag management is enabled, the tag gets added whenever a game's overall status is incomplete and removed once everything is complete. You can then use the tag to filter your library and quickly see which games still have tasks left to do.
 
 ## Routine schedules
 
@@ -46,7 +49,7 @@ When Playnite was not running at a scheduled time, Game Routines processes the l
 
 ## Checklists and task status
 
-Checklist items can be added, edited, ordered, checked, unchecked and reset independently for every routine. With the current [FusionX](https://github.com/sakasakiking/FusionX) integration, checklists can remain embedded in the main game view through a dedicated **Checklists** tab.
+Checklist items can be added, edited, ordered, checked, unchecked and reset independently for every routine. When using [FusionX](https://github.com/sakasakiking/FusionX), checklists can remain embedded in the main game view through a dedicated **Checklists** tab.
 
 ![Embedded Game Routines Checklists tab in FusionX](assets/screenshots/03-fusionx-checklists.png)
 
@@ -58,7 +61,7 @@ When automatic completion from checklist is enabled for a routine:
 
 The checklist controls that routine's state while automatic completion is enabled.
 
-Checklist management is also available in modeless pop-out windows, which can remain open while you continue using Playnite.
+Checklist management is also available in pop-out windows, which can remain open while you continue using Playnite.
 
 ![Modeless Game Routines checklist management window](assets/screenshots/02-manage-checklist.png)
 
@@ -76,22 +79,22 @@ Game Routines uses Playnite's internal notification system, not external Windows
 
 ### Supported and tested
 
-Version 0.9.0 is designed and tested for [FusionX](https://github.com/sakasakiking/FusionX). Its embedded Game Routines integration is the currently supported Playnite Desktop-theme experience.
+Version 0.9.0 is designed and tested around [FusionX](https://github.com/sakasakiking/FusionX). Its embedded Game Routines integration is the currently supported Playnite Desktop-theme experience.
 
-Game Routines' core routine, checklist, scheduling, reminder and notification logic is implemented independently of [FusionX](https://github.com/sakasakiking/FusionX). That implementation detail does not constitute official support for other themes.
+Game Routines' core routine, checklist, scheduling, reminder and notification logic is implemented independently of the active Playnite theme.
 
 ### Other Desktop themes
 
-Other Playnite Desktop themes are not yet officially supported. They may lack embedded Game Routines controls or render extension icons and layouts incorrectly. Users can [open a GitHub issue](https://github.com/felipeaucc/playnite-gameroutines-plugin/issues/new) to request official support for a specific theme.
+Other Playnite Desktop themes are not yet officially supported. They may lack embedded Game Routines controls or render extension icons and layouts incorrectly. If you'd like support for a specific Playnite theme, [open a GitHub issue](https://github.com/felipeaucc/playnite-gameroutines-plugin/issues/new) to request it. Theme support requests will be considered as my time allows. **(:**
 
 ### FusionX enhanced integration
 
-The current [FusionX](https://github.com/sakasakiking/FusionX) integration provides:
+When using [FusionX](https://github.com/sakasakiking/FusionX), the extension provides:
 
 - an embedded **Checklists** tab;
 - a tasks completion toggle;
 - convenient shortcuts associated with the toggle for **Game Routines Settings** and **Custom Reminder** actions; and
-- an incomplete-state cover indicator.
+- an incomplete-state indicator in the game cover.
 
 Settings and Custom Reminders are core Game Routines features and remain accessible independently of these [FusionX](https://github.com/sakasakiking/FusionX) shortcuts.
 
@@ -124,7 +127,7 @@ Once Game Routines is accepted into the Playnite Add-on Database, normal add-on 
 ## Getting started
 
 1. Install Game Routines and restart Playnite if requested.
-2. Select a game and choose **Game Routines > Start Tracking This Game** from its context menu, or use **Add game** in the Game Routines settings.
+2. Select a game and choose **Game Routines > Start Tracking This Game** from its context menu, or use **Add game** in the Game Routines settings page.
 3. Configure one or more routines and arrange their order.
 4. Add checklist items if desired.
 5. Choose the reset schedule, whether the routine counts toward overall task status, and whether its checklist controls automatic completion.
