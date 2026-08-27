@@ -107,7 +107,7 @@ The official [FusionX](https://github.com/sakasakiking/FusionX) project does not
 
 ### Playnite Add-on Browser
 
-Add-on Browser installation is planned for the first stable release and is pending acceptance into the Playnite Add-on Database.
+Add-on Browser installation is pending acceptance into the Playnite Add-on Database.
 
 ### Manual installation
 
