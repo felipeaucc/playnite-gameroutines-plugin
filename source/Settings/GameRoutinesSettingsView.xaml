@@ -65,6 +65,23 @@
             <Setter Property="Padding" Value="5,3" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
+        <Style x:Key="GameRoutinesCoverIndicatorHelpTextStyle" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,3,0,0" />
+            <Setter Property="FontSize" Value="{DynamicResource FontSizeSmall}" />
+            <Setter Property="Opacity" Value="0.75" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style x:Key="GameRoutinesCoverIndicatorSupportedTextStyle"
+               TargetType="TextBlock"
+               BasedOn="{StaticResource GameRoutinesCoverIndicatorHelpTextStyle}">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding DataContext.IsIncompleteIndicatorSupportedByCurrentTheme, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                             Value="True">
+                    <Setter Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
     <Grid Margin="10">
@@ -319,8 +336,16 @@
                                             </TextBlock>
                                         </StackPanel>
                                         <CheckBox Grid.Row="2" Grid.Column="1" Margin="0,8,0,0"
-                                                  IsChecked="{Binding ShowIncompleteCoverIndicator, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                  Content="Show incomplete cover indicator for this game" />
+                                                  VerticalContentAlignment="Top"
+                                                  IsChecked="{Binding ShowIncompleteCoverIndicator, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                            <StackPanel>
+                                                <TextBlock Text="Show incomplete cover indicator for this game" TextWrapping="Wrap" />
+                                                <TextBlock Style="{StaticResource GameRoutinesCoverIndicatorHelpTextStyle}"
+                                                           Text="Only affects themes that support the Game Routines cover indicator." />
+                                                <TextBlock Style="{StaticResource GameRoutinesCoverIndicatorSupportedTextStyle}"
+                                                           Text="Supported by the current theme." />
+                                            </StackPanel>
+                                        </CheckBox>
                                     </Grid>
 
                                     <Separator Margin="0,16,0,10" />
@@ -728,10 +753,11 @@
                                 <CheckBox Margin="0,10,0,0" VerticalContentAlignment="Top"
                                           IsChecked="{Binding Settings.ShowIncompleteCoverIndicator, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                                     <StackPanel>
-                                        <TextBlock Text="Show incomplete cover indicator in supported themes" TextWrapping="Wrap" />
-                                        <TextBlock Margin="0,3,0,0" FontSize="{DynamicResource FontSizeSmall}" Opacity="0.75"
-                                                   Text="Shows the approved red indicator only when the derived overall task status is INCOMPLETE."
-                                                   TextWrapping="Wrap" />
+                                        <TextBlock Text="Show incomplete cover indicator" TextWrapping="Wrap" />
+                                        <TextBlock Style="{StaticResource GameRoutinesCoverIndicatorHelpTextStyle}"
+                                                   Text="Only affects themes that support the Game Routines cover indicator." />
+                                        <TextBlock Style="{StaticResource GameRoutinesCoverIndicatorSupportedTextStyle}"
+                                                   Text="Supported by the current theme." />
                                     </StackPanel>
                                 </CheckBox>
                                 <CheckBox Margin="0,10,0,0" VerticalContentAlignment="Top"
