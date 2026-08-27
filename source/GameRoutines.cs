@@ -27,6 +27,8 @@ namespace GameRoutines
 
         private readonly GameRoutinesSettingsViewModel settings;
         private readonly HashSet<Guid> loggedMissingGameIds = new HashSet<Guid>();
+        private readonly HashSet<string> incompleteIndicatorSupportedDesktopThemeIds =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<Guid, Window> openChecklistWindows = new Dictionary<Guid, Window>();
         private readonly Dictionary<string, Window> openRoutineChecklistWindows = new Dictionary<string, Window>();
         private readonly Dictionary<Guid, Window> openManageChecklistWindows = new Dictionary<Guid, Window>();
@@ -85,6 +87,11 @@ namespace GameRoutines
                 case StateToggleElementName:
                     return new GameRoutinesStateToggleControl(this);
                 case IncompleteIndicatorElementName:
+                    if (args.Mode == ApplicationMode.Desktop)
+                    {
+                        RecordIncompleteIndicatorThemeSupport();
+                    }
+
                     return new GameRoutinesIncompleteIndicatorControl(this);
                 default:
                     return null;
@@ -350,6 +357,26 @@ namespace GameRoutines
                    trackedGame.CurrentState == TaskState.INCOMPLETE &&
                    settings.Settings.ShowIncompleteCoverIndicator &&
                    trackedGame.ShowIncompleteCoverIndicator;
+        }
+
+        internal bool IsIncompleteIndicatorSupportedByCurrentTheme
+        {
+            get
+            {
+                var themeId = PlayniteApi.ApplicationSettings.DesktopTheme;
+                return !string.IsNullOrEmpty(themeId) &&
+                    incompleteIndicatorSupportedDesktopThemeIds.Contains(themeId);
+            }
+        }
+
+        private void RecordIncompleteIndicatorThemeSupport()
+        {
+            var themeId = PlayniteApi.ApplicationSettings.DesktopTheme;
+            if (!string.IsNullOrEmpty(themeId) &&
+                incompleteIndicatorSupportedDesktopThemeIds.Add(themeId))
+            {
+                settings.NotifyIncompleteIndicatorThemeSupportChanged();
+            }
         }
 
         internal bool MarkTrackedGameComplete(Guid gameId)
@@ -1583,7 +1610,7 @@ namespace GameRoutines
                     var routineLabel = $"\"{GetRoutineDisplayName(blocker.Routine)}\"";
                     if (includeGameName)
                     {
-                        routineLabel = $"{GetDisplayName(blocker.Game, PlayniteApi.Database.Games.Get(blocker.Game.GameId))} — {routineLabel}";
+                        routineLabel = $"{GetDisplayName(blocker.Game, PlayniteApi.Database.Games.Get(blocker.Game.GameId))} - {routineLabel}";
                     }
 
                     var resolution = requestedState == TaskState.COMPLETE

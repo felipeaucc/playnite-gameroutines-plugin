@@ -18,6 +18,7 @@ namespace GameRoutines
         public GameRoutinesSettingsView()
         {
             InitializeComponent();
+            InitializeThemeResourceAliases();
             Loaded += UserControl_Loaded;
             Unloaded += UserControl_Unloaded;
             TrackedGamesPane.SizeChanged += (sender, args) =>
@@ -25,6 +26,23 @@ namespace GameRoutines
                 UpdateTrackedGamesListMaximumHeight();
                 QueueRemoveSelectedPlacementUpdate();
             };
+        }
+
+        private void InitializeThemeResourceAliases()
+        {
+            Resources["GameRoutinesSettingsControlHoverBackgroundBrush"] =
+                FindThemeBrush("ControlHoverBackgroundBrush", "HoverBrush");
+            Resources["GameRoutinesSettingsControlSelectedBackgroundBrush"] =
+                FindThemeBrush("ControlSelectedBackgroundBrush", "NormalBrush");
+            Resources["GameRoutinesSettingsControlBorderBrush"] =
+                FindThemeBrush("ControlBorderBrush", "NormalBorderBrush");
+        }
+
+        private Brush FindThemeBrush(string preferredResourceKey, string fallbackResourceKey)
+        {
+            return TryFindResource(preferredResourceKey) as Brush ??
+                TryFindResource(fallbackResourceKey) as Brush ??
+                Brushes.Transparent;
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)

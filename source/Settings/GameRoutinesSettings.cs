@@ -732,6 +732,9 @@ namespace GameRoutines
         public IReadOnlyList<ReminderCadence> ReminderCadences { get; } =
             Enum.GetValues(typeof(ReminderCadence)).Cast<ReminderCadence>().ToList();
 
+        public bool IsIncompleteIndicatorSupportedByCurrentTheme =>
+            plugin.IsIncompleteIndicatorSupportedByCurrentTheme;
+
         public LibraryGameOption SelectedLibraryGame
         {
             get => selectedLibraryGame;
@@ -1189,6 +1192,11 @@ namespace GameRoutines
                     isComplete ? TaskState.COMPLETE : TaskState.INCOMPLETE,
                     false);
             }
+        }
+
+        internal void NotifyIncompleteIndicatorThemeSupportChanged()
+        {
+            OnPropertyChanged(nameof(IsIncompleteIndicatorSupportedByCurrentTheme));
         }
 
         private void AddSelectedGame()

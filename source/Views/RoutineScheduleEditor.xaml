@@ -62,6 +62,12 @@
                     HorizontalAlignment="Left"
                     SelectedDate="{Binding BiWeeklyResetStartingDate, Mode=TwoWay}"
                     SelectedDateChanged="StartingDatePicker_SelectedDateChanged">
+            <DatePicker.Resources>
+                <Style TargetType="{x:Type DatePickerTextBox}"
+                       BasedOn="{StaticResource {x:Type DatePickerTextBox}}">
+                    <Setter Property="VerticalContentAlignment" Value="Center" />
+                </Style>
+            </DatePicker.Resources>
             <DatePicker.Style>
                 <Style TargetType="DatePicker" BasedOn="{StaticResource {x:Type DatePicker}}">
                     <Setter Property="Visibility" Value="Collapsed" />

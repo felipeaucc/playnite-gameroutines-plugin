@@ -46,6 +46,30 @@ namespace GameRoutines
         public RoutineStateSwitch()
         {
             InitializeComponent();
+            InitializeThemeStyle();
+        }
+
+        private void InitializeThemeStyle()
+        {
+            var switchStyle = FindCompatibleStyle("SwitcherToggleButton") ??
+                FindCompatibleStyle("GameRoutinesRoutineStateSwitchFallbackStyle");
+            if (switchStyle != null)
+            {
+                Resources["GameRoutinesRoutineStateSwitchStyle"] = switchStyle;
+            }
+        }
+
+        private Style FindCompatibleStyle(string resourceKey)
+        {
+            var style = TryFindResource(resourceKey) as Style;
+            if (style == null ||
+                (style.TargetType != null &&
+                 !style.TargetType.IsAssignableFrom(typeof(System.Windows.Controls.Primitives.ToggleButton))))
+            {
+                return null;
+            }
+
+            return style;
         }
 
         private void Switch_Click(object sender, RoutedEventArgs args)
