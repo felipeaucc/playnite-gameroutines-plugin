@@ -32,7 +32,12 @@
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="ButtonBorder"
                                         Property="Background"
-                                        Value="{DynamicResource ControlHoverBackgroundBrush}" />
+                                        Value="{DynamicResource GameRoutinesSettingsControlHoverBackgroundBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="ButtonBorder"
+                                        Property="Background"
+                                        Value="{DynamicResource GameRoutinesSettingsControlHoverBackgroundBrush}" />
                             </Trigger>
                             <Trigger Property="IsPressed" Value="True">
                                 <Setter Property="Opacity" Value="0.65" />
@@ -123,13 +128,13 @@
                                          <Setter.Value>
                                              <ControlTemplate TargetType="ListBoxItem">
                                                  <Grid MinHeight="{TemplateBinding MinHeight}">
-                                                     <Border x:Name="HoverBackground"
-                                                             Background="{DynamicResource ControlHoverBackgroundBrush}"
-                                                             CornerRadius="0"
-                                                             Visibility="Collapsed" />
-                                                     <Border x:Name="SelectedBackground"
-                                                             Background="{DynamicResource ControlSelectedBackgroundBrush}"
-                                                             CornerRadius="0"
+                                                      <Border x:Name="HoverBackground"
+                                                              Background="{DynamicResource GameRoutinesSettingsControlHoverBackgroundBrush}"
+                                                              CornerRadius="0"
+                                                              Visibility="Collapsed" />
+                                                      <Border x:Name="SelectedBackground"
+                                                              Background="{DynamicResource GameRoutinesSettingsControlSelectedBackgroundBrush}"
+                                                              CornerRadius="0"
                                                              Visibility="Collapsed" />
                                                      <ContentPresenter Margin="0"
                                                                        HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
@@ -250,7 +255,7 @@
 
                 <Border Grid.Column="2"
                         Padding="14"
-                        BorderBrush="{DynamicResource ControlBorderBrush}"
+                        BorderBrush="{DynamicResource GameRoutinesSettingsControlBorderBrush}"
                         BorderThickness="1">
                     <ScrollViewer Padding="0,0,18,0"
                                   HorizontalScrollBarVisibility="Disabled"
@@ -444,7 +449,7 @@
                                                                      Command="{Binding DataContext.MoveRoutineUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                      CommandParameter="{Binding}"
                                                                      Click="RoutineMoveButton_Click">
-                                                                 <TextBlock Text="&#xE70E;" Style="{DynamicResource IconFontStyle}" />
+                                                                 <TextBlock Text="&#xE70E;" Style="{DynamicResource GameRoutinesSettingsIconTextStyle}" />
                                                              </Button>
                                                              <Button Margin="4,0,0,0"
                                                                      Style="{StaticResource CompactIconButtonStyle}"
@@ -452,7 +457,7 @@
                                                                      Command="{Binding DataContext.MoveRoutineDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                      CommandParameter="{Binding}"
                                                                      Click="RoutineMoveButton_Click">
-                                                                 <TextBlock Text="&#xE70D;" Style="{DynamicResource IconFontStyle}" />
+                                                                 <TextBlock Text="&#xE70D;" Style="{DynamicResource GameRoutinesSettingsIconTextStyle}" />
                                                              </Button>
                                                         </StackPanel>
                                                     </Grid>
@@ -465,13 +470,13 @@
                                              <Button Style="{StaticResource CompactIconButtonStyle}"
                                                      ToolTip="Add Routine"
                                                      Command="{Binding DataContext.AddRoutineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
-                                                 <TextBlock Text="&#xE710;" Style="{DynamicResource IconFontStyle}" />
+                                                 <TextBlock Text="&#xE710;" Style="{DynamicResource GameRoutinesSettingsIconTextStyle}" />
                                              </Button>
                                              <Button Margin="0,5,0,0"
                                                      Style="{StaticResource CompactIconButtonStyle}"
                                                      ToolTip="Delete Routine"
                                                      Command="{Binding DataContext.DeleteRoutineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
-                                                 <TextBlock Text="&#xE738;" Style="{DynamicResource IconFontStyle}" />
+                                                 <TextBlock Text="&#xE738;" Style="{DynamicResource GameRoutinesSettingsIconTextStyle}" />
                                              </Button>
                                         </StackPanel>
                                     </Grid>
@@ -588,7 +593,7 @@
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Button.Style>
-                                                    <TextBlock FontSize="14" Text="&#xE72C;" Style="{DynamicResource IconFontStyle}" />
+                                                    <TextBlock FontSize="14" Text="&#xE72C;" Style="{DynamicResource GameRoutinesSettingsIconTextStyle}" />
                                                 </Button>
                                             </StackPanel>
                                             <Grid MinHeight="58" MaxHeight="280">
@@ -636,21 +641,21 @@
                                                                         ToolTip="Move Item Up"
                                                                         Command="{Binding DataContext.MoveChecklistItemUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                         CommandParameter="{Binding}">
-                                                                    <TextBlock Text="&#xE70E;" Style="{DynamicResource IconFontStyle}" />
+                                                                    <TextBlock Text="&#xE70E;" Style="{DynamicResource GameRoutinesSettingsIconTextStyle}" />
                                                                 </Button>
                                                                 <Button Grid.Column="3"
                                                                         Style="{StaticResource CompactIconButtonStyle}"
                                                                         ToolTip="Move Item Down"
                                                                         Command="{Binding DataContext.MoveChecklistItemDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                         CommandParameter="{Binding}">
-                                                                    <TextBlock Text="&#xE70D;" Style="{DynamicResource IconFontStyle}" />
+                                                                    <TextBlock Text="&#xE70D;" Style="{DynamicResource GameRoutinesSettingsIconTextStyle}" />
                                                                 </Button>
                                                                 <Button Grid.Column="4"
                                                                         Style="{StaticResource CompactIconButtonStyle}"
                                                                         ToolTip="Delete Item"
                                                                         Command="{Binding DataContext.DeleteChecklistItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                         CommandParameter="{Binding}">
-                                                                    <TextBlock Text="&#xE711;" Style="{DynamicResource IconFontStyle}" />
+                                                                    <TextBlock Text="&#xE711;" Style="{DynamicResource GameRoutinesSettingsIconTextStyle}" />
                                                                 </Button>
                                                             </Grid>
                                                         </DataTemplate>
@@ -692,7 +697,7 @@
                                                         Style="{StaticResource CompactIconButtonStyle}"
                                                         ToolTip="Add Item"
                                                         Command="{Binding DataContext.AddChecklistItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
-                                                    <TextBlock Text="&#xE710;" Style="{DynamicResource IconFontStyle}" />
+                                                    <TextBlock Text="&#xE710;" Style="{DynamicResource GameRoutinesSettingsIconTextStyle}" />
                                                 </Button>
                                             </Grid>
                                         </StackPanel>
