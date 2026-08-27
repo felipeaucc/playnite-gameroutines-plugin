@@ -71,9 +71,14 @@
                         Margin="0,5,0,5"
                         HorizontalAlignment="Left"
                         SelectedDate="{Binding BiWeeklyReminderStartingDate, Mode=TwoWay}">
+                <DatePicker.Resources>
+                    <Style TargetType="{x:Type DatePickerTextBox}"
+                           BasedOn="{StaticResource {x:Type DatePickerTextBox}}">
+                        <Setter Property="VerticalContentAlignment" Value="Center" />
+                    </Style>
+                </DatePicker.Resources>
                 <DatePicker.Style>
                     <Style TargetType="DatePicker" BasedOn="{StaticResource {x:Type DatePicker}}">
-                        <Setter Property="Padding" Value="8,0,8,0" />
                         <Setter Property="Visibility" Value="Collapsed" />
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding ReminderCadence}" Value="{x:Static local:ReminderCadence.BiWeekly}">
