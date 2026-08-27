@@ -1,56 +1,29 @@
 # Game Routines
 
-![Game Routines icon](source/icon.png)
-
 Game Routines is a Playnite extension for managing recurring and long-term game activities with configurable routines, checklists, reset schedules and reminders.
 
-Game Routines 0.9.0 is currently designed and tested for FusionX 2.1.1. Other Playnite Desktop themes are not currently supported and may display Game Routines controls incorrectly.
+Game Routines' core routine, checklist, scheduling, reminder, notification, context-menu, and pop-out checklist functionality operates independently of the active Playnite theme. [FusionX](https://github.com/sakasakiking/FusionX) is not required to install or use the extension. Version 0.9.0 was developed and tested primarily around [FusionX](https://github.com/sakasakiking/FusionX), so broader Playnite Desktop-theme UI compatibility has not yet been officially validated and some themes may have missing or incorrectly rendered Game Routines UI elements.
 
-With FusionX, Game Routines provides embedded integration including the **Checklists** tab, **Tasks** completion toggle and incomplete-state indicator.
-
-Version 0.9.0 is the first public beta.
-
-## Screenshots
-
-### Game and routine configuration
-
-![Game and routine configuration](assets/screenshots/01-settings.png)
-
-### FusionX Checklists integration
-
-![FusionX Checklists integration](assets/screenshots/03-fusionx-checklists.png)
-
-### Checklist management pop-out
-
-![Checklist management pop-out](assets/screenshots/02-manage-checklist.png)
-
-### TASKS control and incomplete cover indicator
-
-![TASKS control and incomplete cover indicator](assets/screenshots/04-fusionx-tasks-indicator.png)
-
-### Game context-menu integration
-
-![Game context-menu integration](assets/screenshots/05-context-menu.png)
+> All screenshots below were captured using the version-specific [FusionX](https://github.com/sakasakiking/FusionX) reference implementation in this repository. Stock FusionX does not currently include these embedded Game Routines controls.
 
 ## Features
 
 - Track games from Playnite's game context menu or the extension settings.
 - Create and order multiple named routines for each game.
 - Maintain an ordered checklist and **COMPLETE** / **INCOMPLETE** state for each routine.
-- Reset routines on **Never**, **Daily**, **Weekly** or **Biweekly** schedules.
+- Reset routines on a set schedule: **Never**, **Daily**, **Weekly** or **Biweekly**.
 - Automatically derive a routine's state from its checklist.
 - Choose which routines count toward the game's overall task status.
 - Configure an independent game-level **Custom Reminder**.
 - Receive persistent notifications through Playnite's internal notification system.
-- Open modeless checklist windows while continuing to use Playnite.
+- Open checklists in separate pop-out windows while continuing to use Playnite.
 - Use context-menu actions to open, complete, reset and configure tracked tasks.
-- Optionally maintain a `Tasks Available!` tag while a game's overall status is incomplete.
-- Show an optional incomplete-state cover indicator in the integrated FusionX views.
-- Expose custom UI elements for future theme-developer integration work.
+- Optionally manage a `Tasks Available!` tag automatically based on a game's overall task status.
+- Use optional theme-hosted controls for an embedded **Checklists** tab, tasks completion toggle, related shortcuts, and incomplete-state cover indicator (currently demonstrated by this repository's [FusionX](https://github.com/sakasakiking/FusionX) reference implementation).
 
 ## How it works
 
-Each tracked game can have multiple routines: Daily tasks, Weekly tasks and a long-term checklist can coexist without sharing a schedule. Every routine has its own name, order, checklist, status and reset configuration.
+Each tracked game can have multiple routines: Daily tasks, Weekly tasks, Biweekly tasks, and a never-resetting checklist can all coexist with their own schedules. Every routine has its own name, order, checklist, status, and reset configuration.
 
 A routine can either count toward the game's overall task status or be excluded from it:
 
@@ -59,6 +32,10 @@ A routine can either count toward the game's overall task status or be excluded 
 - If any participating routine is **INCOMPLETE**, the overall state is **INCOMPLETE**.
 
 This participation setting keeps optional or long-term routines from affecting the game's main task status unless you want them to.
+
+![Game and routine configuration in Game Routines settings](assets/screenshots/01-settings.png)
+
+If automatic `Tasks Available!` tag management is enabled, the tag gets added whenever a game's overall status is incomplete and removed once everything is complete. You can then use the tag to filter your library and quickly see which games still have tasks left to do.
 
 ## Routine schedules
 
@@ -71,7 +48,9 @@ When Playnite was not running at a scheduled time, Game Routines processes the l
 
 ## Checklists and task status
 
-Checklist items can be added, edited, ordered, checked, unchecked and reset independently for every routine. Checklists can stay embedded in the integrated FusionX 2.1.1 views or open in modeless pop-out windows.
+Checklist items can be added, edited, ordered, checked, unchecked and reset independently for every routine. Themes can also host Game Routines controls directly in the game view. The screenshot below shows the embedded **Checklists** tab provided by this repository's version-specific [FusionX](https://github.com/sakasakiking/FusionX) reference implementation; it is not currently part of stock FusionX.
+
+![Embedded Game Routines Checklists tab in FusionX](assets/screenshots/03-fusionx-checklists.png)
 
 When automatic completion from checklist is enabled for a routine:
 
@@ -80,6 +59,10 @@ When automatic completion from checklist is enabled for a routine:
 - an empty checklist = **COMPLETE**.
 
 The checklist controls that routine's state while automatic completion is enabled.
+
+Checklist management is also available in pop-out windows, which can remain open while you continue using Playnite.
+
+![Game Routines checklist management pop-out window](assets/screenshots/02-manage-checklist.png)
 
 ## Custom Reminders
 
@@ -95,42 +78,46 @@ Game Routines uses Playnite's internal notification system, not external Windows
 
 ### Supported and tested
 
-Game Routines 0.9.0 is supported and tested with FusionX 2.1.1 using the version-specific integration in this repository. The extension has been developed primarily around FusionX. This integration provides embedded controls and layout for the checklist, task-state toggle, settings and Custom Reminder actions, and incomplete-state indicator.
+Version 0.9.0 was developed and tested primarily around [FusionX](https://github.com/sakasakiking/FusionX), so broader Playnite Desktop-theme UI compatibility has not yet been officially validated. FusionX is not required to use Game Routines.
 
-### Not currently supported
+Game Routines' core features—including routines, checklists, schedules, reminders, notifications, context-menu actions, and pop-out checklist windows—operate independently of the active Playnite theme. Only embedded theme controls require theme-specific hosts.
 
-Other Playnite Desktop themes are not currently supported. Some standard Playnite-facing functionality may still operate, but Game Routines controls, icons and layout can render incorrectly. Users of unsupported themes should expect visual or integration issues. Broader Desktop-theme compatibility may be considered in a future release.
+### Other Desktop themes
 
-### FusionX enhanced integration
+Other Playnite Desktop themes are not yet officially supported. They may lack embedded Game Routines controls or render extension icons and layouts incorrectly. If you'd like support for a specific Playnite theme, [open a GitHub issue](https://github.com/felipeaucc/playnite-gameroutines-plugin/issues/new) to request it. Theme support requests will be considered as my time allows. :)
 
-[FusionX](https://github.com/sakasakiking/FusionX) 2.1.1 is the supported and tested Desktop-theme target for Game Routines 0.9.0. The version-specific integration in this repository provides:
+### FusionX reference implementation
 
-- a **Checklists** tab;
-- a **TASKS** / **Tasks** completion toggle;
-- **Game Routines Settings** and **Custom Reminder** actions; and
-- an incomplete-state cover indicator.
+This repository's version-specific [FusionX](https://github.com/sakasakiking/FusionX) reference files provide:
 
-The official FusionX project does not currently include Game Routines integration. This repository provides an optional integration specifically for FusionX 2.1.1, and the intent is to propose the integration upstream in the future. This does not imply approval or acceptance by the FusionX author.
+- an embedded **Checklists** tab;
+- a tasks completion toggle;
+- convenient shortcuts associated with the toggle for **Game Routines Settings** and **Custom Reminder** actions; and
+- an incomplete-state indicator in the game cover.
 
-FusionX is a third-party Playnite theme by sakasakiking. Game Routines is not affiliated with the FusionX project.
+Settings and Custom Reminders are core Game Routines features and remain accessible independently of these reference shortcuts.
 
-The Game Routines package does not modify FusionX automatically. To use the supported and tested 0.9.0 setup, follow the version-specific [FusionX 2.1.1 integration instructions](Integrations/FusionX/2.1.1/README.md).
+The official [FusionX](https://github.com/sakasakiking/FusionX) project does not currently include these Game Routines hosts. The [reference implementation](Integrations/FusionX/2.1.1/README.md) is used for development and testing, documents the version-specific changes, and may serve as material for a future upstream contribution. Its files are not included in the `.pext` and are not part of the normal Game Routines installation process.
+
+[FusionX](https://github.com/sakasakiking/FusionX) is a third-party Playnite theme by sakasakiking. Game Routines is not affiliated with the project.
+
+![Tasks completion toggle and incomplete-state cover indicator in FusionX](assets/screenshots/04-fusionx-tasks-indicator.png)
 
 ## Installation
 
 ### Playnite Add-on Browser
 
-Add-on Browser installation is planned for the first public release and is pending acceptance into the Playnite Add-on Database.
+Add-on Browser installation is pending acceptance into the Playnite Add-on Database.
 
 ### Manual installation
 
-No `.pext` package has been published yet. Once a GitHub Release is available:
+A `.pext` package is available from the [Game Routines 0.9.0 GitHub pre-release](https://github.com/felipeaucc/playnite-gameroutines-plugin/releases/tag/v0.9.0):
 
-1. Download the `.pext` file from the release.
-2. Open the package with Playnite to start the supported extension installation flow.
+1. Download the `.pext` asset from the release.
+2. Open the package with Playnite to start the extension installation flow.
 3. Restart Playnite if requested.
 
-Installing the package does not modify FusionX automatically; apply the version-specific integration separately for the supported FusionX 2.1.1 setup.
+The `.pext` installs the Game Routines extension. [FusionX](https://github.com/sakasakiking/FusionX) is not required, and the package does not modify theme files. The version-specific [FusionX reference files](Integrations/FusionX/2.1.1/README.md) in this repository are development and testing material, not a normal installation step.
 
 ## Updating
 
@@ -139,33 +126,26 @@ Once Game Routines is accepted into the Playnite Add-on Database, normal add-on 
 ## Getting started
 
 1. Install Game Routines and restart Playnite if requested.
-2. Select a game and choose **Game Routines > Start Tracking This Game** from its context menu, or use **Add game** in the Game Routines settings.
+2. Select a game and choose **Game Routines > Start Tracking This Game** from its context menu, or use **Add game** in the Game Routines settings page.
 3. Configure one or more routines and arrange their order.
 4. Add checklist items if desired.
 5. Choose the reset schedule, whether the routine counts toward overall task status, and whether its checklist controls automatic completion.
 6. Optionally enable and configure the game-level **Custom Reminder**.
 7. Use **Game Routines > Open Checklist** from the game context menu when a separate checklist window is useful.
 
+![Game Routines commands in Playnite's game context menu](assets/screenshots/05-context-menu.png)
+
 ## Theme developer integration
 
 Game Routines exposes three custom UI elements that Playnite Desktop themes can host: the multi-routine checklist, overall-state toggle and incomplete-state indicator. See [Theme integration](THEME_INTEGRATION.md) for the registered source and element names, hosting guidance and behavior expectations.
 
-The files under [`Integrations/FusionX/2.1.1/`](Integrations/FusionX/2.1.1/) are a working, version-specific integration example.
-
-## Compatibility
-
-- Generic Playnite plugin targeting .NET Framework 4.6.2.
-- Built against Playnite SDK/API 6.16.0.
-- Supported and tested Desktop-theme target: FusionX 2.1.1 with the repository's version-specific integration.
-- Other Playnite Desktop themes are not currently supported.
-
-No minimum Playnite application version is claimed beyond the technically known SDK/API requirement.
+The files under [`Integrations/FusionX/2.1.1/`](Integrations/FusionX/2.1.1/) are the current version-specific reference implementation.
 
 ## License
 
 Game Routines is licensed under the [MIT License](LICENSE).
 
-Copied or modified FusionX integration files retain their applicable FusionX attribution and MIT license notice in [`Integrations/FusionX/2.1.1/LICENSE.FusionX.txt`](Integrations/FusionX/2.1.1/LICENSE.FusionX.txt).
+Copied or modified [FusionX](https://github.com/sakasakiking/FusionX) integration files retain their applicable attribution and MIT license notice in [`Integrations/FusionX/2.1.1/LICENSE.FusionX.txt`](Integrations/FusionX/2.1.1/LICENSE.FusionX.txt).
 
 ## Credits
 
@@ -173,8 +153,6 @@ Copied or modified FusionX integration files retain their applicable FusionX att
 - **Playnite:** [JosefNemec/Playnite](https://github.com/JosefNemec/Playnite)
 - **FusionX:** [sakasakiking/FusionX](https://github.com/sakasakiking/FusionX), by sakasakiking
 
-FusionX remains the work of its respective author. Its derived integration files are covered by the attribution and license notice linked above.
-
 ## Development and source
 
-Source code, issue tracking and development history are hosted in this repository. Contributions and bug reports are welcome after the repository's public launch.
+Source code, issue tracking and development history are hosted in this repository. Contributions and bug reports are welcome.
