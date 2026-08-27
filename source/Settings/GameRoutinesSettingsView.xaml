@@ -50,6 +50,13 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style x:Key="GameRoutinesSettingsActionSymbolStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe UI Symbol" />
+            <Setter Property="FontSize" Value="{DynamicResource FontSizeLarge}" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextAlignment" Value="Center" />
+        </Style>
         <Style x:Key="SubtleIconButtonStyle"
                TargetType="Button"
                BasedOn="{StaticResource CompactIconButtonStyle}">
@@ -474,7 +481,7 @@
                                                                      Command="{Binding DataContext.MoveRoutineUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                      CommandParameter="{Binding}"
                                                                      Click="RoutineMoveButton_Click">
-                                                                 <TextBlock Text="&#xE70E;" Style="{DynamicResource GameRoutinesSettingsIconTextStyle}" />
+                                                                 <TextBlock Text="↑" Style="{StaticResource GameRoutinesSettingsActionSymbolStyle}" />
                                                              </Button>
                                                              <Button Margin="4,0,0,0"
                                                                      Style="{StaticResource CompactIconButtonStyle}"
@@ -482,7 +489,7 @@
                                                                      Command="{Binding DataContext.MoveRoutineDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                      CommandParameter="{Binding}"
                                                                      Click="RoutineMoveButton_Click">
-                                                                 <TextBlock Text="&#xE70D;" Style="{DynamicResource GameRoutinesSettingsIconTextStyle}" />
+                                                                 <TextBlock Text="↓" Style="{StaticResource GameRoutinesSettingsActionSymbolStyle}" />
                                                              </Button>
                                                         </StackPanel>
                                                     </Grid>
@@ -495,13 +502,13 @@
                                              <Button Style="{StaticResource CompactIconButtonStyle}"
                                                      ToolTip="Add Routine"
                                                      Command="{Binding DataContext.AddRoutineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
-                                                 <TextBlock Text="&#xE710;" Style="{DynamicResource GameRoutinesSettingsIconTextStyle}" />
+                                                 <TextBlock Text="+" Style="{StaticResource GameRoutinesSettingsActionSymbolStyle}" />
                                              </Button>
                                              <Button Margin="0,5,0,0"
                                                      Style="{StaticResource CompactIconButtonStyle}"
                                                      ToolTip="Delete Routine"
                                                      Command="{Binding DataContext.DeleteRoutineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
-                                                 <TextBlock Text="&#xE738;" Style="{DynamicResource GameRoutinesSettingsIconTextStyle}" />
+                                                 <TextBlock Text="×" Style="{StaticResource GameRoutinesSettingsActionSymbolStyle}" />
                                              </Button>
                                         </StackPanel>
                                     </Grid>
@@ -618,7 +625,7 @@
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Button.Style>
-                                                    <TextBlock FontSize="14" Text="&#xE72C;" Style="{DynamicResource GameRoutinesSettingsIconTextStyle}" />
+                                                    <TextBlock FontSize="14" Text="↺" Style="{StaticResource GameRoutinesSettingsActionSymbolStyle}" />
                                                 </Button>
                                             </StackPanel>
                                             <Grid MinHeight="58" MaxHeight="280">
@@ -666,21 +673,21 @@
                                                                         ToolTip="Move Item Up"
                                                                         Command="{Binding DataContext.MoveChecklistItemUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                         CommandParameter="{Binding}">
-                                                                    <TextBlock Text="&#xE70E;" Style="{DynamicResource GameRoutinesSettingsIconTextStyle}" />
+                                                                    <TextBlock Text="↑" Style="{StaticResource GameRoutinesSettingsActionSymbolStyle}" />
                                                                 </Button>
                                                                 <Button Grid.Column="3"
                                                                         Style="{StaticResource CompactIconButtonStyle}"
                                                                         ToolTip="Move Item Down"
                                                                         Command="{Binding DataContext.MoveChecklistItemDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                         CommandParameter="{Binding}">
-                                                                    <TextBlock Text="&#xE70D;" Style="{DynamicResource GameRoutinesSettingsIconTextStyle}" />
+                                                                    <TextBlock Text="↓" Style="{StaticResource GameRoutinesSettingsActionSymbolStyle}" />
                                                                 </Button>
                                                                 <Button Grid.Column="4"
                                                                         Style="{StaticResource CompactIconButtonStyle}"
                                                                         ToolTip="Delete Item"
                                                                         Command="{Binding DataContext.DeleteChecklistItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                                                         CommandParameter="{Binding}">
-                                                                    <TextBlock Text="&#xE711;" Style="{DynamicResource GameRoutinesSettingsIconTextStyle}" />
+                                                                    <TextBlock Text="×" Style="{StaticResource GameRoutinesSettingsActionSymbolStyle}" />
                                                                 </Button>
                                                             </Grid>
                                                         </DataTemplate>
@@ -722,7 +729,7 @@
                                                         Style="{StaticResource CompactIconButtonStyle}"
                                                         ToolTip="Add Item"
                                                         Command="{Binding DataContext.AddChecklistItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}">
-                                                    <TextBlock Text="&#xE710;" Style="{DynamicResource GameRoutinesSettingsIconTextStyle}" />
+                                                    <TextBlock Text="+" Style="{StaticResource GameRoutinesSettingsActionSymbolStyle}" />
                                                 </Button>
                                             </Grid>
                                         </StackPanel>

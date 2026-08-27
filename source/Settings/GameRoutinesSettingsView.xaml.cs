@@ -30,31 +30,12 @@ namespace GameRoutines
 
         private void InitializeThemeResourceAliases()
         {
-            var iconStyle = FindCompatibleStyle("IconFontStyle", typeof(TextBlock)) ??
-                FindCompatibleStyle("GameRoutinesIconTextFallbackStyle", typeof(TextBlock));
-            if (iconStyle != null)
-            {
-                Resources["GameRoutinesSettingsIconTextStyle"] = iconStyle;
-            }
-
             Resources["GameRoutinesSettingsControlHoverBackgroundBrush"] =
                 FindThemeBrush("ControlHoverBackgroundBrush", "HoverBrush");
             Resources["GameRoutinesSettingsControlSelectedBackgroundBrush"] =
                 FindThemeBrush("ControlSelectedBackgroundBrush", "NormalBrush");
             Resources["GameRoutinesSettingsControlBorderBrush"] =
                 FindThemeBrush("ControlBorderBrush", "NormalBorderBrush");
-        }
-
-        private Style FindCompatibleStyle(string resourceKey, Type targetType)
-        {
-            var style = TryFindResource(resourceKey) as Style;
-            if (style == null ||
-                (style.TargetType != null && !style.TargetType.IsAssignableFrom(targetType)))
-            {
-                return null;
-            }
-
-            return style;
         }
 
         private Brush FindThemeBrush(string preferredResourceKey, string fallbackResourceKey)
