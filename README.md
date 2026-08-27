@@ -80,7 +80,7 @@ Game Routines uses Playnite's internal notification system, not external Windows
 
 Version 0.9.0 was developed and tested primarily around [FusionX](https://github.com/sakasakiking/FusionX), so broader Playnite Desktop-theme UI compatibility has not yet been officially validated. FusionX is not required to use Game Routines.
 
-Game Routines' core features—including routines, checklists, schedules, reminders, notifications, context-menu actions, and pop-out checklist windows—operate independently of the active Playnite theme. Only embedded theme controls require theme-specific hosts.
+Game Routines' core features, including routines, checklists, schedules, reminders, notifications, context-menu actions, and pop-out checklist windows operate independently of the active Playnite theme. Only embedded theme controls require theme-specific hosts.
 
 ### Other Desktop themes
 
