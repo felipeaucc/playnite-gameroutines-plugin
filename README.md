@@ -2,7 +2,7 @@
 
 Game Routines is a Playnite extension for managing recurring and long-term game activities with configurable routines, checklists, reset schedules and reminders.
 
-Game Routines' core routine, checklist, scheduling, reminder, notification, context-menu, and pop-out checklist functionality operates independently of the active Playnite theme. [FusionX](https://github.com/sakasakiking/FusionX) is not required to install or use the extension. Version 0.9.0 was developed and tested primarily around [FusionX](https://github.com/sakasakiking/FusionX), so broader Playnite Desktop-theme UI compatibility has not yet been officially validated and some themes may have missing or incorrectly rendered Game Routines UI elements.
+Game Routines' core routine, checklist, scheduling, reminder, notification, context-menu, and pop-out checklist functionality operates independently of the active Playnite theme. Version 0.9.0 was developed and tested primarily around [FusionX](https://github.com/sakasakiking/FusionX), so broader Playnite Desktop-theme UI compatibility has not yet been officially validated and some themes may have missing or incorrectly rendered Game Routines UI elements.
 
 > All screenshots below were captured using the version-specific [FusionX](https://github.com/sakasakiking/FusionX) reference implementation in this repository. Stock FusionX does not currently include these embedded Game Routines controls.
 
