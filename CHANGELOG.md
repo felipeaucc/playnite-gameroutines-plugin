@@ -2,6 +2,34 @@
 
 Notable public changes to Game Routines are documented in this file.
 
+## 1.0.0 - 2026-08-28
+
+First stable release.
+
+### Added
+
+- Settings indicate whether the active Desktop theme hosts the optional incomplete cover indicator.
+
+### Changed
+
+- Improved settings and checklist controls to use portable, theme-safe visual resources.
+- Clarified that core Game Routines functionality is independent of the active Desktop theme.
+- Reframed FusionX 2.1.1 as an optional enhanced integration and reference implementation.
+
+### Fixed
+
+- Fixed settings action icons, interaction states, routine-state controls, and DatePicker alignment in Playnite's stock Default Desktop theme.
+- Fixed checklist action icons, check marks, checked-state visibility, and automatic-completion icon semantics across themes.
+- Preserved the intended FusionX checklist icon weight without affecting other themes.
+
+### Compatibility
+
+- Officially validated the core Game Routines experience with Playnite's stock Default Desktop theme.
+- Regression-tested the enhanced FusionX 2.1.1 integration.
+- Stock Default does not host the optional embedded Checklists tab, embedded state controls, or incomplete cover indicator.
+- Their absence in stock Default is expected and is not a compatibility defect.
+- Checklist access remains available through Game Routines context-menu actions and pop-out windows.
+
 ## 0.9.0 - 2026-08-25
 
 First public beta.
