@@ -33,10 +33,11 @@
                                  Height="18"
                                  Canvas.Left="0"
                                  Canvas.Top="1">
-                            <Path x:Name="RepeatIcon"
-                                  Data="{StaticResource GameRoutinesRepeatGeometry}"
-                                  Fill="{DynamicResource ControlHoverBorderBrush}"
-                                  Stretch="Uniform" />
+                            <Canvas Width="1" Height="1">
+                                <Path x:Name="RepeatIcon"
+                                      Data="{StaticResource GameRoutinesRepeatGeometry}"
+                                      Fill="{DynamicResource ControlHoverBorderBrush}" />
+                            </Canvas>
                         </Viewbox>
                         <Border Width="12"
                                 Height="12"
@@ -63,11 +64,12 @@
                                          HorizontalAlignment="Center"
                                          VerticalAlignment="Center"
                                          ClipToBounds="False">
-                                    <Path x:Name="AutomaticCompletionOnIcon"
-                                          Data="{StaticResource GameRoutinesCheckGeometry}"
-                                          Fill="{DynamicResource ControlHoverBorderBrush}"
-                                          Stretch="Uniform"
-                                          Visibility="Collapsed" />
+                                    <Canvas Width="1" Height="1">
+                                        <Path x:Name="AutomaticCompletionOnIcon"
+                                              Data="{StaticResource GameRoutinesCheckGeometry}"
+                                              Fill="{DynamicResource ControlHoverBorderBrush}"
+                                              Visibility="Collapsed" />
+                                    </Canvas>
                                 </Viewbox>
                             </Grid>
                         </Border>

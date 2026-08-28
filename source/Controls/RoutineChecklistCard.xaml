@@ -152,10 +152,12 @@
                                     </Style.Triggers>
                                 </Style>
                             </Button.Style>
-                            <Path Width="10"
-                                  Height="10"
-                                  Data="{StaticResource GameRoutinesMinusGeometry}"
-                                  Style="{StaticResource GameRoutinesButtonIconStyle}" />
+                            <Viewbox Width="8" Height="8">
+                                <Canvas Width="1" Height="1">
+                                    <Path Data="{StaticResource GameRoutinesDeleteChecklistGeometry}"
+                                          Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                </Canvas>
+                            </Viewbox>
                         </Button>
                     </StackPanel>
                 </Grid>
