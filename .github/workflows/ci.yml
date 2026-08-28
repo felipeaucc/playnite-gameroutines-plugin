@@ -1,0 +1,166 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      verify_public_urls:
+        description: Verify the unmodified installer manifest and all public package URLs with Playnite Toolbox
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: windows-2022
+
+    steps:
+      - name: Check out repository
+        # actions/checkout v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate repository and release metadata
+        id: repository
+        shell: pwsh
+        env:
+          CI_EVENT_NAME: ${{ github.event_name }}
+          CI_BEFORE_SHA: ${{ github.event.before }}
+          CI_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          CI_REF: ${{ github.ref }}
+        run: |
+          & ./scripts/ci/Test-Repository.ps1 `
+            -RepositoryRoot $env:GITHUB_WORKSPACE `
+            -EventName $env:CI_EVENT_NAME `
+            -BeforeSha $env:CI_BEFORE_SHA `
+            -BaseSha $env:CI_BASE_SHA `
+            -Ref $env:CI_REF `
+            -OutputFile $env:GITHUB_OUTPUT
+
+      - name: Configure MSBuild
+        # microsoft/setup-msbuild v3
+        uses: microsoft/setup-msbuild@30375c66a4eea26614e0d39710365f22f8b0af57
+        with:
+          vs-version: '[17.0,18.0)'
+          msbuild-architecture: x64
+
+      - name: Restore NuGet packages
+        shell: pwsh
+        run: |
+          & msbuild GameRoutines.sln `
+            -t:Restore `
+            -p:RestorePackagesConfig=true `
+            -verbosity:minimal
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
+      - name: Rebuild Release configuration
+        shell: pwsh
+        run: |
+          & msbuild GameRoutines.sln `
+            -t:Rebuild `
+            -p:Configuration=Release `
+            '-p:Platform=Any CPU' `
+            -verbosity:minimal
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
+      - name: Download and verify Playnite Toolbox
+        id: toolbox
+        shell: pwsh
+        env:
+          PLAYNITE_ARCHIVE_URL: https://github.com/JosefNemec/Playnite/releases/download/10.56/10.56.7z
+          PLAYNITE_ARCHIVE_SHA256: 402dc4a4b818b1ebbee4f571f81585bb6bbf8e17f817c1012cded0b3d1cc565f
+        run: |
+          $archivePath = Join-Path $env:RUNNER_TEMP 'Playnite-10.56.7z'
+          $extractPath = Join-Path $env:RUNNER_TEMP 'Playnite-10.56'
+
+          Invoke-WebRequest -Uri $env:PLAYNITE_ARCHIVE_URL -OutFile $archivePath
+          $actualHash = (Get-FileHash -LiteralPath $archivePath -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actualHash -cne $env:PLAYNITE_ARCHIVE_SHA256) {
+            throw "Playnite archive SHA-256 mismatch. Expected $env:PLAYNITE_ARCHIVE_SHA256, got $actualHash."
+          }
+
+          New-Item -ItemType Directory -Path $extractPath | Out-Null
+          & 7z.exe x $archivePath "-o$extractPath" -y
+          if ($LASTEXITCODE -ne 0) {
+            throw "7-Zip extraction failed with exit code $LASTEXITCODE."
+          }
+
+          $toolboxCandidates = @(Get-ChildItem -LiteralPath $extractPath -Recurse -File -Filter 'Toolbox.exe')
+          if ($toolboxCandidates.Count -ne 1) {
+            throw "Expected exactly one Toolbox.exe in the pinned Playnite archive, found $($toolboxCandidates.Count)."
+          }
+
+          "toolbox_path=$($toolboxCandidates[0].FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+
+      - name: Generate validation package
+        id: package
+        shell: pwsh
+        env:
+          TOOLBOX_PATH: ${{ steps.toolbox.outputs.toolbox_path }}
+        run: |
+          & ./scripts/ci/New-ValidationPackage.ps1 `
+            -RepositoryRoot $env:GITHUB_WORKSPACE `
+            -ToolboxPath $env:TOOLBOX_PATH `
+            -WorkRoot $env:RUNNER_TEMP `
+            -OutputFile $env:GITHUB_OUTPUT
+
+      - name: Validate package inventory and binary privacy
+        shell: pwsh
+        env:
+          PACKAGE_PATH: ${{ steps.package.outputs.package_path }}
+        run: |
+          & ./scripts/ci/Test-ValidationPackage.ps1 `
+            -RepositoryRoot $env:GITHUB_WORKSPACE `
+            -PackagePath $env:PACKAGE_PATH
+
+      - name: Verify published installer URLs
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.verify_public_urls }}
+        shell: pwsh
+        env:
+          TOOLBOX_PATH: ${{ steps.toolbox.outputs.toolbox_path }}
+        run: |
+          $installerPath = (Resolve-Path -LiteralPath './installer.yaml').Path
+          & $env:TOOLBOX_PATH verify installer $installerPath
+          if ($LASTEXITCODE -ne 0) {
+            throw "Toolbox public installer verification failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Confirm tracked files remain unchanged
+        shell: pwsh
+        run: |
+          $status = & git status --porcelain --untracked-files=no
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Unable to inspect repository status.'
+          }
+          if ($status) {
+            throw "CI modified tracked files:`n$($status -join "`n")"
+          }
+
+      - name: Upload validation package
+        # actions/upload-artifact v7.0.1
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: GameRoutines-validation-${{ steps.repository.outputs.version }}-${{ steps.repository.outputs.short_sha }}
+          path: ${{ steps.package.outputs.package_path }}
+          if-no-files-found: error
+          retention-days: 7
