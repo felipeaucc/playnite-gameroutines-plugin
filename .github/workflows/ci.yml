@@ -83,6 +83,29 @@ jobs:
             exit $LASTEXITCODE
           }
 
+      - name: Run deterministic tests
+        shell: pwsh
+        run: |
+          $vswherePath = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          if (-not (Test-Path -LiteralPath $vswherePath -PathType Leaf)) {
+            throw "vswhere.exe was not found at $vswherePath."
+          }
+
+          $vstestCandidates = @(
+            & $vswherePath `
+              -latest `
+              -products * `
+              -find '**\CommonExtensions\Microsoft\TestWindow\vstest.console.exe'
+          )
+          if ($vstestCandidates.Count -ne 1) {
+            throw "Expected exactly one vstest.console.exe, found $($vstestCandidates.Count)."
+          }
+
+          & $vstestCandidates[0] tests/GameRoutines.Tests/bin/Release/GameRoutines.Tests.dll
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+
       - name: Download and verify Playnite Toolbox
         id: toolbox
         shell: pwsh
