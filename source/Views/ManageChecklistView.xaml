@@ -63,7 +63,7 @@
                                     <Grid Width="16" Height="16">
                                         <Viewbox x:Name="CheckIcon" Visibility="Collapsed">
                                             <Path Data="{StaticResource GameRoutinesCheckGeometry}"
-                                                  Fill="{DynamicResource SelectedBrush}"
+                                                  Fill="{DynamicResource GlyphBrush}"
                                                   Stretch="Uniform" />
                                         </Viewbox>
                                         <Viewbox x:Name="IndeterminateIcon" Margin="2" Visibility="Collapsed">
