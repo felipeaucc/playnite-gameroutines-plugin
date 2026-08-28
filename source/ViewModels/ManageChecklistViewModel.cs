@@ -66,6 +66,7 @@ namespace GameRoutines
 
         public bool IsTracked => trackedGame != null;
         public bool HasRoutines => Routines.Count > 0;
+        public bool UseFusionXChecklistIconWeight => plugin.UseFusionXChecklistIconWeight;
 
         public bool CountTowardOverallTaskStatus
         {

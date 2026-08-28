@@ -4,7 +4,11 @@
              xmlns:local="clr-namespace:GameRoutines"
              Foreground="{DynamicResource TextBrush}">
     <UserControl.Resources>
-        <Style x:Key="RoutineIconButtonStyle" TargetType="Button">
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../GameRoutinesIconResources.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <Style x:Key="RoutineIconButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="30" />
             <Setter Property="Height" Value="28" />
             <Setter Property="Padding" Value="5" />
@@ -38,18 +42,18 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style>
-        <Style x:Key="RoutineDeleteIconButtonStyle"
-               TargetType="Button"
-               BasedOn="{StaticResource RoutineIconButtonStyle}">
-            <Setter Property="Width" Value="16" />
-            <Setter Property="Height" Value="16" />
-            <Setter Property="Padding" Value="1" />
-            <Setter Property="Margin" Value="4,0,0,0" />
-        </Style>
-        <Style x:Key="RoutineChecklistItemCheckBoxStyle"
-               TargetType="CheckBox"
-               BasedOn="{StaticResource {x:Type CheckBox}}">
+            </Style>
+            <Style x:Key="RoutineDeleteIconButtonStyle"
+                   TargetType="Button"
+                   BasedOn="{StaticResource RoutineIconButtonStyle}">
+                <Setter Property="Width" Value="16" />
+                <Setter Property="Height" Value="16" />
+                <Setter Property="Padding" Value="1" />
+                <Setter Property="Margin" Value="4,0,0,0" />
+            </Style>
+            <Style x:Key="RoutineChecklistItemCheckBoxStyle"
+                   TargetType="CheckBox"
+                   BasedOn="{StaticResource {x:Type CheckBox}}">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="CheckBox">
@@ -65,9 +69,10 @@
                                         CornerRadius="{DynamicResource ControlCornerRadiusSmall}">
                                     <Grid Width="16" Height="16">
                                         <Viewbox x:Name="CheckIcon" Visibility="Collapsed">
-                                            <TextBlock Foreground="{DynamicResource SelectedBrush}"
-                                                       Text="&#xF13E;"
-                                                       Style="{DynamicResource IconFontStyle}" />
+                                            <Canvas Width="1" Height="1">
+                                                <Path Data="{StaticResource GameRoutinesCheckBoxCheckGeometry}"
+                                                      Fill="{DynamicResource GlyphBrush}" />
+                                            </Canvas>
                                         </Viewbox>
                                         <Viewbox x:Name="IndeterminateIcon" Margin="2" Visibility="Collapsed">
                                             <TextBlock HorizontalAlignment="Center"
@@ -107,7 +112,8 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style>
+            </Style>
+        </ResourceDictionary>
     </UserControl.Resources>
 
     <Border Margin="0,0,0,10"
@@ -146,7 +152,12 @@
                                     </Style.Triggers>
                                 </Style>
                             </Button.Style>
-                            <TextBlock FontSize="8" Text="&#xE8BB;" Style="{DynamicResource IconFontStyle}" />
+                            <Viewbox Width="8" Height="8">
+                                <Canvas Width="1" Height="1">
+                                    <Path Data="{StaticResource GameRoutinesDeleteChecklistGeometry}"
+                                          Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                                </Canvas>
+                            </Viewbox>
                         </Button>
                     </StackPanel>
                 </Grid>
@@ -238,12 +249,14 @@
                     <Button Style="{StaticResource RoutineIconButtonStyle}"
                             Command="{Binding ResetChecklistCommand}"
                             ToolTip="Reset Checklist">
-                        <TextBlock Text="&#xE72C;" Style="{DynamicResource IconFontStyle}" />
+                        <Path Data="{StaticResource GameRoutinesResetGeometry}"
+                              Style="{StaticResource GameRoutinesButtonIconStyle}" />
                     </Button>
                     <Button Style="{StaticResource RoutineIconButtonStyle}"
                             Command="{Binding OpenManageChecklistWindowCommand}"
                             ToolTip="Manage Checklist">
-                        <TextBlock Text="&#xE70F;" Style="{DynamicResource IconFontStyle}" />
+                        <Path Data="{StaticResource GameRoutinesEditGeometry}"
+                              Style="{StaticResource GameRoutinesButtonIconStyle}" />
                     </Button>
                     <Button Command="{Binding OpenRoutineChecklistWindowCommand}"
                             ToolTip="Pop-out Checklist">
@@ -256,7 +269,8 @@
                                 </Style.Triggers>
                             </Style>
                         </Button.Style>
-                        <TextBlock Text="&#xE8A7;" Style="{DynamicResource IconFontStyle}" />
+                        <Path Data="{StaticResource GameRoutinesPopOutGeometry}"
+                              Style="{StaticResource GameRoutinesButtonIconStyle}" />
                     </Button>
                 </StackPanel>
             </StackPanel>
@@ -280,14 +294,20 @@
                             IsEnabled="{Binding CanMoveUp, Mode=OneWay}"
                             Command="{Binding MoveRoutineUpCommand}"
                             ToolTip="Move Routine Up">
-                        <TextBlock Text="&#xE70E;" Style="{DynamicResource IconFontStyle}" />
+                        <Path Width="12"
+                              Height="12"
+                              Data="{StaticResource GameRoutinesChevronUpGeometry}"
+                              Style="{StaticResource GameRoutinesButtonIconStyle}" />
                     </Button>
                     <Button Margin="0"
                             Style="{StaticResource RoutineIconButtonStyle}"
                             IsEnabled="{Binding CanMoveDown, Mode=OneWay}"
                             Command="{Binding MoveRoutineDownCommand}"
                             ToolTip="Move Routine Down">
-                        <TextBlock Text="&#xE70D;" Style="{DynamicResource IconFontStyle}" />
+                        <Path Width="12"
+                              Height="12"
+                              Data="{StaticResource GameRoutinesChevronDownGeometry}"
+                              Style="{StaticResource GameRoutinesButtonIconStyle}" />
                     </Button>
                 </StackPanel>
                 <local:RoutineAutoCompletionToggle Grid.Row="1"

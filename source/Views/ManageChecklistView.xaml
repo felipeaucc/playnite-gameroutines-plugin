@@ -4,7 +4,11 @@
              xmlns:local="clr-namespace:GameRoutines"
              Foreground="{DynamicResource TextBrush}">
     <UserControl.Resources>
-        <Style x:Key="ChecklistIconButtonStyle" TargetType="Button">
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../GameRoutinesIconResources.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <Style x:Key="ChecklistIconButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="28" />
             <Setter Property="Height" Value="28" />
             <Setter Property="MinWidth" Value="0" />
@@ -39,10 +43,10 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style>
-        <Style x:Key="CompactHeaderCheckBoxStyle"
-               TargetType="CheckBox"
-               BasedOn="{StaticResource {x:Type CheckBox}}">
+            </Style>
+            <Style x:Key="CompactHeaderCheckBoxStyle"
+                   TargetType="CheckBox"
+                   BasedOn="{StaticResource {x:Type CheckBox}}">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="CheckBox">
@@ -58,9 +62,10 @@
                                         CornerRadius="{DynamicResource ControlCornerRadiusSmall}">
                                     <Grid Width="16" Height="16">
                                         <Viewbox x:Name="CheckIcon" Visibility="Collapsed">
-                                            <TextBlock Foreground="{DynamicResource SelectedBrush}"
-                                                       Text="&#xF13E;"
-                                                       Style="{DynamicResource IconFontStyle}" />
+                                            <Canvas Width="1" Height="1">
+                                                <Path Data="{StaticResource GameRoutinesCheckBoxCheckGeometry}"
+                                                      Fill="{DynamicResource GlyphBrush}" />
+                                            </Canvas>
                                         </Viewbox>
                                         <Viewbox x:Name="IndeterminateIcon" Margin="2" Visibility="Collapsed">
                                             <TextBlock HorizontalAlignment="Center"
@@ -105,7 +110,8 @@
                     <Setter Property="Visibility" Value="Collapsed" />
                 </DataTrigger>
             </Style.Triggers>
-        </Style>
+            </Style>
+        </ResourceDictionary>
     </UserControl.Resources>
 
     <Grid Margin="20">
@@ -206,7 +212,10 @@
                     Style="{StaticResource ChecklistIconButtonStyle}"
                     ToolTip="Add Item"
                     Command="{Binding AddItemCommand}">
-                <TextBlock Text="&#xE710;" Style="{DynamicResource IconFontStyle}" />
+                <Path Width="12"
+                      Height="12"
+                      Data="{StaticResource GameRoutinesPlusGeometry}"
+                      Style="{StaticResource GameRoutinesButtonIconStyle}" />
             </Button>
         </Grid>
 
@@ -254,21 +263,43 @@
                                      ToolTip="Move Item Up"
                                      Command="{Binding DataContext.MoveItemUpCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                      CommandParameter="{Binding}">
-                                 <TextBlock Text="&#xE70E;" Style="{DynamicResource IconFontStyle}" />
+                                 <Path Width="12"
+                                       Height="12"
+                                       Data="{StaticResource GameRoutinesChevronUpGeometry}"
+                                       Style="{StaticResource GameRoutinesButtonIconStyle}" />
                              </Button>
                              <Button Grid.Column="2"
                                      Style="{StaticResource ChecklistIconButtonStyle}"
                                      ToolTip="Move Item Down"
                                      Command="{Binding DataContext.MoveItemDownCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                      CommandParameter="{Binding}">
-                                 <TextBlock Text="&#xE70D;" Style="{DynamicResource IconFontStyle}" />
+                                 <Path Width="12"
+                                       Height="12"
+                                       Data="{StaticResource GameRoutinesChevronDownGeometry}"
+                                       Style="{StaticResource GameRoutinesButtonIconStyle}" />
                              </Button>
                              <Button Grid.Column="3"
                                      Style="{StaticResource ChecklistIconButtonStyle}"
                                      ToolTip="Delete Item"
                                      Command="{Binding DataContext.DeleteItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                      CommandParameter="{Binding}">
-                                 <TextBlock Text="&#xE711;" Style="{DynamicResource IconFontStyle}" />
+                                 <Path Width="12"
+                                       Height="12">
+                                     <Path.Style>
+                                         <Style TargetType="Path"
+                                                BasedOn="{StaticResource GameRoutinesButtonIconStyle}">
+                                             <Setter Property="Data"
+                                                     Value="{StaticResource GameRoutinesMinusGeometry}" />
+                                             <Style.Triggers>
+                                                 <DataTrigger Binding="{Binding DataContext.UseFusionXChecklistIconWeight, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                                                              Value="True">
+                                                     <Setter Property="Data"
+                                                             Value="{StaticResource GameRoutinesFusionXDeleteItemMinusGeometry}" />
+                                                 </DataTrigger>
+                                             </Style.Triggers>
+                                         </Style>
+                                     </Path.Style>
+                                 </Path>
                              </Button>
                         </Grid>
                     </DataTemplate>

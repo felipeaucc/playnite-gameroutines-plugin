@@ -5,6 +5,13 @@
              Width="28"
              Height="30"
              Focusable="False">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../GameRoutinesIconResources.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
     <ToggleButton x:Name="AutomaticCompletionButton"
                   Width="20"
                   Height="20"
@@ -26,10 +33,11 @@
                                  Height="18"
                                  Canvas.Left="0"
                                  Canvas.Top="1">
-                            <TextBlock x:Name="RepeatIcon"
-                                       Text="&#xE895;"
-                                       Foreground="{DynamicResource ControlHoverBorderBrush}"
-                                       Style="{DynamicResource IconFontStyle}" />
+                            <Canvas Width="1" Height="1">
+                                <Path x:Name="RepeatIcon"
+                                      Data="{StaticResource GameRoutinesRepeatGeometry}"
+                                      Fill="{DynamicResource ControlHoverBorderBrush}" />
+                            </Canvas>
                         </Viewbox>
                         <Border Width="12"
                                 Height="12"
@@ -56,12 +64,12 @@
                                          HorizontalAlignment="Center"
                                          VerticalAlignment="Center"
                                          ClipToBounds="False">
-                                    <TextBlock x:Name="AutomaticCompletionOnIcon"
-                                               Text="&#xE73E;"
-                                               FontWeight="Normal"
-                                               Foreground="{DynamicResource ControlHoverBorderBrush}"
-                                               Style="{DynamicResource IconFontStyle}"
-                                               Visibility="Collapsed" />
+                                    <Canvas Width="1" Height="1">
+                                        <Path x:Name="AutomaticCompletionOnIcon"
+                                              Data="{StaticResource GameRoutinesCheckGeometry}"
+                                              Fill="{DynamicResource ControlHoverBorderBrush}"
+                                              Visibility="Collapsed" />
+                                    </Canvas>
                                 </Viewbox>
                             </Grid>
                         </Border>
@@ -76,6 +84,17 @@
                                 Property="Visibility"
                                 Value="Visible" />
                     </Trigger>
+                    <DataTrigger Binding="{Binding UseFusionXChecklistIconWeight}" Value="True">
+                        <Setter TargetName="RepeatIcon"
+                                Property="Stroke"
+                                Value="{DynamicResource ControlHoverBorderBrush}" />
+                        <Setter TargetName="RepeatIcon"
+                                Property="StrokeThickness"
+                                Value="0.035" />
+                        <Setter TargetName="RepeatIcon"
+                                Property="StrokeLineJoin"
+                                Value="Round" />
+                    </DataTrigger>
                     <Trigger Property="IsPressed" Value="True">
                         <Setter Property="Opacity" Value="0.65" />
                     </Trigger>
