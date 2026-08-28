@@ -1,0 +1,33 @@
+{
+  "UseReadyTag": true,
+  "ShowBlockedManualStateWarning": false,
+  "ShowIncompleteCoverIndicator": true,
+  "TrackedGames": [
+    {
+      "GameId": "11111111-1111-1111-1111-111111111111",
+      "CachedGameName": "Legacy V0 Game",
+      "Enabled": true,
+      "WeeklyResetDay": 3,
+      "WeeklyResetTime": "07:15",
+      "CurrentState": 1,
+      "LastResetProcessedLocal": "\/Date(1767165300000)\/",
+      "SecondaryReminderEnabled": true,
+      "SecondaryReminderDay": 6,
+      "SecondaryReminderTime": "20:30",
+      "SecondaryNotificationTitle": "Legacy V0 title",
+      "SecondaryNotificationMessage": "Legacy V0 message",
+      "LastSecondaryReminderProcessedLocal": "\/Date(1767472200000)\/",
+      "Checklist": [
+        {
+          "Id": "55555555-5555-5555-5555-555555555555",
+          "Text": "Legacy V0 item",
+          "IsChecked": false,
+          "Order": 0
+        }
+      ],
+      "AutomaticallyCompleteFromChecklist": true,
+      "CompletedAutomaticallyByChecklist": true,
+      "ShowIncompleteCoverIndicator": false
+    }
+  ]
+}
