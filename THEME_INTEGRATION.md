@@ -1,6 +1,12 @@
 # Theme integration
 
-Game Routines' core routine, checklist, scheduling, reminder, and notification logic operates independently of any Playnite Desktop theme. Themes can optionally host the extension's three custom UI controls by providing suitable hosts, resources, and layout. Version 0.9.0 was developed and tested primarily around [FusionX](https://github.com/sakasakiking/FusionX), and this repository's 2.1.1 reference files are the current supported and tested example. Other Desktop themes are not yet officially supported and require their own integration, styling, and runtime validation before official support can be claimed.
+## Core functionality
+
+Game Routines' core routine, checklist, scheduling, reminder, notification, context-menu, and pop-out window functionality is theme independent. Version 1.0.0 is officially validated for the core experience with Playnite's stock Default Desktop theme.
+
+## Optional theme-hosted elements
+
+Themes can optionally request and host the extension's three custom UI controls by providing suitable hosts, resources, and layout. Stock Default does not host the optional embedded **Checklists** tab, embedded `StateToggle` control, or `IncompleteIndicator`. Their absence is expected and does not affect core compatibility. [FusionX](https://github.com/sakasakiking/FusionX) 2.1.1 is an optional enhanced integration and the primary reference implementation demonstrating all three embedded elements.
 
 For Playnite's host naming convention and installation checks, see the official [Integrating extension elements](https://api.playnite.link/docs/tutorials/themes/extensionIntegration.html) documentation.
 
@@ -21,7 +27,7 @@ The host name is formed from `<SourceName>_<ElementName>`, for example:
 <ContentControl x:Name="GameRoutines_Checklist" />
 ```
 
-The availability of these elements does not by itself make a theme officially compatible with Game Routines. Theme authors must provide suitable hosts, resources and layout, then validate the resulting integration.
+These elements are optional and must be requested and hosted by the active theme. Their availability does not by itself validate an enhanced integration. Theme authors must provide suitable hosts, resources and layout, then validate the resulting integration.
 
 ## Behavior expectations
 
@@ -42,4 +48,4 @@ The availability of these elements does not by itself make a theme officially co
 - `StateToggle` is hosted beside [FusionX](https://github.com/sakasakiking/FusionX)'s other compact game actions.
 - `IncompleteIndicator` is layered over the cover without replacing [FusionX](https://github.com/sakasakiking/FusionX)'s stock cover structure.
 
-These reference files target [FusionX](https://github.com/sakasakiking/FusionX) 2.1.1 only and are used to develop and test the currently supported embedded UI. They also document the version-specific changes as material for a possible future upstream contribution. Reuse the Game Routines hosts and behavior, not unrelated version-specific theme markup, when developing support for another theme or [FusionX](https://github.com/sakasakiking/FusionX) version. Official support is not claimed until an implementation is styled and tested for its target theme.
+These optional reference files target [FusionX](https://github.com/sakasakiking/FusionX) 2.1.1 only and are used to develop and regression-test the enhanced embedded UI. They also document the version-specific changes as material for a possible future upstream contribution. Reuse the Game Routines hosts and behavior, not unrelated version-specific theme markup, when developing an enhanced integration for another theme or [FusionX](https://github.com/sakasakiking/FusionX) version. An embedded integration is not validated until it is styled and tested for its target theme; this does not limit the theme-independent core functionality.
