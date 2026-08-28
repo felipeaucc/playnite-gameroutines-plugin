@@ -5,6 +5,7 @@
     <Geometry x:Key="GameRoutinesChevronDownGeometry">M7.41,8.59 L12,13.17 16.59,8.59 18,10 12,16 6,10Z</Geometry>
     <Geometry x:Key="GameRoutinesPlusGeometry">M19,13 H13 V19 H11 V13 H5 V11 H11 V5 H13 V11 H19Z</Geometry>
     <Geometry x:Key="GameRoutinesMinusGeometry">M19,13 H5 V11 H19Z</Geometry>
+    <Geometry x:Key="GameRoutinesFusionXDeleteItemMinusGeometry">M19,13.25 H5 V10.75 H19Z</Geometry>
     <Geometry x:Key="GameRoutinesResetGeometry">M17.65,6.35 C16.2,4.9 14.21,4 12,4 C7.58,4 4.01,7.58 4.01,12 S7.58,20 12,20 C15.73,20 18.84,17.45 19.73,14 H17.65 C16.83,16.33 14.61,18 12,18 C8.69,18 6,15.31 6,12 S8.69,6 12,6 C13.66,6 15.14,6.69 16.22,7.78 L13,11 H20 V4Z</Geometry>
     <Geometry x:Key="GameRoutinesEditGeometry">M3,17.25 V21 H6.75 L17.81,9.94 14.06,6.19 3,17.25 M20.71,7.04 C21.1,6.65 21.1,6 20.71,5.63 L18.37,3.29 C18,2.9 17.35,2.9 16.96,3.29 L15.12,5.12 18.87,8.87 20.71,7.04Z</Geometry>
     <Geometry x:Key="GameRoutinesPopOutGeometry">M19,19 H5 V5 H12 V3 H5 C3.89,3 3,3.9 3,5 V19 C3,20.1 3.9,21 5,21 H19 C20.1,21 21,20.1 21,19 V12 H19 V19 M14,3 V5 H17.59 L7.76,14.83 9.17,16.24 19,6.41 V10 H21 V3Z</Geometry>

@@ -176,6 +176,7 @@ namespace GameRoutines
         public string StateText => routine.DisplayState;
         public bool IsComplete => routine.IsComplete;
         public bool IsAutomaticCompletionEnabled => routine.AutomaticallyCompleteFromChecklist;
+        public bool UseFusionXChecklistIconWeight => plugin.UseFusionXChecklistIconWeight;
         public string AutomaticCompletionToolTip => routine.AutomaticallyCompleteFromChecklist
             ? "Automatic checklist completion: ON"
             : "Automatic checklist completion: OFF";

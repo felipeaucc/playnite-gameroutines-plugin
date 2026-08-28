@@ -284,9 +284,22 @@
                                      Command="{Binding DataContext.DeleteItemCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                      CommandParameter="{Binding}">
                                  <Path Width="12"
-                                       Height="12"
-                                       Data="{StaticResource GameRoutinesMinusGeometry}"
-                                       Style="{StaticResource GameRoutinesButtonIconStyle}" />
+                                       Height="12">
+                                     <Path.Style>
+                                         <Style TargetType="Path"
+                                                BasedOn="{StaticResource GameRoutinesButtonIconStyle}">
+                                             <Setter Property="Data"
+                                                     Value="{StaticResource GameRoutinesMinusGeometry}" />
+                                             <Style.Triggers>
+                                                 <DataTrigger Binding="{Binding DataContext.UseFusionXChecklistIconWeight, RelativeSource={RelativeSource AncestorType={x:Type UserControl}}}"
+                                                              Value="True">
+                                                     <Setter Property="Data"
+                                                             Value="{StaticResource GameRoutinesFusionXDeleteItemMinusGeometry}" />
+                                                 </DataTrigger>
+                                             </Style.Triggers>
+                                         </Style>
+                                     </Path.Style>
+                                 </Path>
                              </Button>
                         </Grid>
                     </DataTemplate>

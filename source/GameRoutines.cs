@@ -20,6 +20,8 @@ namespace GameRoutines
         private const string LegacyReadyTagName = "WEEKLY READY";
         private const string CustomElementSourceName = "GameRoutines";
         private const string AutomaticCompletionWarningTitle = "Automatic Completion Enabled";
+        private const string FusionXDesktopThemeId =
+            "FusionX_54244ec8-29ec-418e-bce7-415250c8d67b";
         internal const string ChecklistElementName = "Checklist";
         internal const string StateToggleElementName = "StateToggle";
         internal const string IncompleteIndicatorElementName = "IncompleteIndicator";
@@ -368,6 +370,12 @@ namespace GameRoutines
                     incompleteIndicatorSupportedDesktopThemeIds.Contains(themeId);
             }
         }
+
+        internal bool UseFusionXChecklistIconWeight =>
+            string.Equals(
+                PlayniteApi.ApplicationSettings.DesktopTheme,
+                FusionXDesktopThemeId,
+                StringComparison.OrdinalIgnoreCase);
 
         private void RecordIncompleteIndicatorThemeSupport()
         {
