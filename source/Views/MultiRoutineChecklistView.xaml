@@ -4,7 +4,11 @@
              xmlns:local="clr-namespace:GameRoutines"
              Foreground="{DynamicResource TextBrush}">
     <UserControl.Resources>
-        <Style x:Key="ChecklistHeaderIconButtonStyle" TargetType="Button">
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../GameRoutinesIconResources.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <Style x:Key="ChecklistHeaderIconButtonStyle" TargetType="Button">
             <Setter Property="Width" Value="20" />
             <Setter Property="Height" Value="20" />
             <Setter Property="MinWidth" Value="0" />
@@ -40,7 +44,8 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style>
+            </Style>
+        </ResourceDictionary>
     </UserControl.Resources>
     <Grid Margin="12">
         <Grid.RowDefinitions>
@@ -81,7 +86,10 @@
                             </Style.Triggers>
                         </Style>
                     </Button.Style>
-                    <TextBlock FontSize="11" Text="&#xE710;" Style="{DynamicResource IconFontStyle}" />
+                    <Path Width="10"
+                          Height="10"
+                          Data="{StaticResource GameRoutinesPlusGeometry}"
+                          Style="{StaticResource GameRoutinesButtonIconStyle}" />
                 </Button>
             </StackPanel>
             <Button Grid.Column="1"
@@ -98,7 +106,9 @@
                     </Style>
                 </Button.Style>
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Margin="0,0,7,0" Text="&#xE8A7;" Style="{DynamicResource IconFontStyle}" />
+                    <Path Margin="0,0,7,0"
+                          Data="{StaticResource GameRoutinesPopOutGeometry}"
+                          Style="{StaticResource GameRoutinesButtonIconStyle}" />
                     <TextBlock Text="Pop-out All Checklists" />
                 </StackPanel>
             </Button>
