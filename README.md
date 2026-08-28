@@ -2,7 +2,7 @@
 
 Game Routines is a Playnite extension for managing recurring and long-term game activities with routines, checklists, reset schedules, and reminders.
 
-Game Routines works with Playnite's standard Default Desktop theme. No third-party theme is required. Some themes can add optional Game Routines controls directly to the game view.
+Game Routines works with Playnite's standard Default Desktop theme. No third-party theme is required. Some themes can show optional Game Routines controls directly in the game view.
 
 ## Features
 
@@ -76,7 +76,7 @@ Game Routines works with Playnite's standard Default Desktop theme. No third-par
 
 With the Default theme, you can use Game Routines through its settings, context-menu actions, checklist windows, reminders, and notifications. The Default theme does not include the optional embedded **Checklists** tab, embedded state controls, or incomplete cover indicator. Those extra controls are optional and are not needed to use Game Routines.
 
-Some themes can optionally place extra Game Routines controls directly in the game view. [FusionX](https://github.com/sakasakiking/FusionX) 2.1.1 was used as the reference integration during development, but the official FusionX theme does not currently include those extra controls.
+Some themes can show optional Game Routines controls directly in the game view. [FusionX](https://github.com/sakasakiking/FusionX) 2.1.1 was used as the reference integration during development, but the official FusionX theme does not currently include those extra controls.
 
 ### Optional theme-integration example
 
