@@ -1,0 +1,36 @@
+{
+  "SchemaVersion": 1,
+  "UseTasksAvailableTag": true,
+  "ShowBlockedManualStateWarning": false,
+  "ShowIncompleteCoverIndicator": true,
+  "TrackedGames": [
+    {
+      "GameId": "11111111-1111-1111-1111-111111111111",
+      "CachedGameName": "Legacy V1 Game",
+      "Enabled": false,
+      "ResetCadence": 2,
+      "ResetDay": 5,
+      "ResetTime": "06:30",
+      "CurrentState": 0,
+      "LastResetProcessedLocal": "\/Date(1767162600000)\/",
+      "CustomReminderEnabled": true,
+      "ReminderCadence": 1,
+      "ReminderDay": 1,
+      "ReminderTime": "18:45",
+      "CustomReminderTitle": "Legacy V1 title",
+      "CustomReminderMessage": "Legacy V1 message",
+      "LastReminderProcessedLocal": "\/Date(1767379500000)\/",
+      "Checklist": [
+        {
+          "Id": "44444444-4444-4444-4444-444444444444",
+          "Text": "Legacy item",
+          "IsChecked": true,
+          "Order": 0
+        }
+      ],
+      "AutomaticallyCompleteFromChecklist": true,
+      "CompletedAutomaticallyByChecklist": false,
+      "ShowIncompleteCoverIndicator": false
+    }
+  ]
+}

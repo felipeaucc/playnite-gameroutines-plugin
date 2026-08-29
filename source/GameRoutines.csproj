@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Services\ChecklistService.cs" />
+    <Compile Include="Services\RoutineStatePolicy.cs" />
     <Compile Include="Converters\CadenceDisplayConverter.cs" />
     <Compile Include="Services\CustomReminderService.cs" />
     <Compile Include="ViewModels\CustomReminderViewModel.cs" />
@@ -102,6 +103,7 @@
       <DependentUpon>ManageChecklistView.xaml</DependentUpon>
     </Compile>
     <Compile Include="Settings\GameRoutinesSettings.cs" />
+    <Compile Include="Settings\SettingsMigrationService.cs" />
     <Compile Include="Settings\GameRoutinesSettingsView.xaml.cs">
       <DependentUpon>GameRoutinesSettingsView.xaml</DependentUpon>
     </Compile>

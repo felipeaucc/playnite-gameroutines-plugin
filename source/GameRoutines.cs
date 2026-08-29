@@ -525,24 +525,21 @@ namespace GameRoutines
                 return false;
             }
 
-            if (routine.AutomaticallyCompleteFromChecklist)
+            if (RoutineStatePolicy.IsManualStateBlocked(routine, newState))
             {
-                var checklistState = GetChecklistDerivedState(routine);
-                if (checklistState != newState)
-                {
-                    ShowAutomaticCompletionWarning(
-                        new[] { new AutomaticCompletionBlocker(trackedGame, routine, checklistState) },
-                        newState,
-                        false);
-                    return false;
-                }
+                var checklistState = RoutineStatePolicy.GetChecklistDerivedState(routine);
+                ShowAutomaticCompletionWarning(
+                    new[] { new AutomaticCompletionBlocker(trackedGame, routine, checklistState) },
+                    newState,
+                    false);
+                return false;
             }
 
             ApplyRoutineState(
                 trackedGame,
                 routine,
                 newState,
-                routine.AutomaticallyCompleteFromChecklist && newState == TaskState.COMPLETE,
+                RoutineStatePolicy.OwnsAutomaticallyDerivedCompletion(routine, newState),
                 "manual routine-state change");
             if (persistChanges)
             {
@@ -1562,12 +1559,11 @@ namespace GameRoutines
                 }
 
                 var blockers = targets
-                    .Where(a => a.Routine.AutomaticallyCompleteFromChecklist)
+                    .Where(a => RoutineStatePolicy.IsManualStateBlocked(a.Routine, newState))
                     .Select(a => new AutomaticCompletionBlocker(
                         a.Game,
                         a.Routine,
-                        GetChecklistDerivedState(a.Routine)))
-                    .Where(a => a.ChecklistState != newState)
+                        RoutineStatePolicy.GetChecklistDerivedState(a.Routine)))
                     .ToList();
                 if (blockers.Count > 0)
                 {
@@ -1582,7 +1578,7 @@ namespace GameRoutines
                         target.Game,
                         target.Routine,
                         newState,
-                        target.Routine.AutomaticallyCompleteFromChecklist && newState == TaskState.COMPLETE,
+                        RoutineStatePolicy.OwnsAutomaticallyDerivedCompletion(target.Routine, newState),
                         "manual overall task-state change");
                     affectedGames.Add(target.Game);
                 }
@@ -1727,20 +1723,13 @@ namespace GameRoutines
                 return;
             }
 
-            var checklistState = GetChecklistDerivedState(routine);
+            var checklistState = RoutineStatePolicy.GetChecklistDerivedState(routine);
             ApplyRoutineState(
                 trackedGame,
                 routine,
                 checklistState,
-                checklistState == TaskState.COMPLETE,
+                RoutineStatePolicy.OwnsAutomaticallyDerivedCompletion(routine, checklistState),
                 reason);
-        }
-
-        private static TaskState GetChecklistDerivedState(RoutineSettings routine)
-        {
-            return ChecklistService.GetProgress(routine).IsComplete
-                ? TaskState.COMPLETE
-                : TaskState.INCOMPLETE;
         }
 
         private void ReconcileAllChecklistStates()
