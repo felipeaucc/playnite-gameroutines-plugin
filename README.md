@@ -2,26 +2,28 @@
 
 Game Routines is a Playnite extension for managing recurring and long-term game activities with routines, checklists, reset schedules, and reminders.
 
-Game Routines works with Playnite's standard Default Desktop theme. No third-party theme is required. Some themes can show optional Game Routines controls directly in the game view.
+Game Routines works with Playnite's Default theme. No third-party theme is required, although some themes can show optional Game Routines controls directly in the game view.
+
+All screenshots were taken using the [FusionX](https://github.com/sakasakiking/FusionX) theme.
 
 ## Features
 
 - Track games from Playnite's game context menu or the extension settings.
 - Create and order multiple named routines for each game.
 - Maintain an ordered checklist and **COMPLETE** / **INCOMPLETE** state for each routine.
-- Reset routines on a set schedule: **Never**, **Daily**, **Weekly**, or **Biweekly**.
+- Automatically reset routine checklists on a set schedule: **Never**, **Daily**, **Weekly**, or **Biweekly**.
 - Automatically derive a routine's state from its checklist.
 - Choose which routines count toward the game's overall task status.
 - Configure an independent game-level **Custom Reminder**.
 - Receive persistent notifications through Playnite's internal notification system.
-- Open checklists in separate windows while continuing to use Playnite.
+- Open checklists in separate windows while continuing to use Playnite (pop-out window).
 - Use context-menu actions to open, complete, reset, and configure tracked tasks.
-- Optionally manage a `Tasks Available!` tag based on a game's overall task status.
+- Optionally have Game Routines automatically add or remove a `Tasks Available!` tag based on a game's overall task status.
 - Some themes can show optional Game Routines controls directly in the game view.
 
 ## How it works
 
-Each tracked game can have multiple routines. Daily tasks, weekly tasks, biweekly tasks, and a checklist that never resets can all coexist with their own schedules. Every routine has its own name, order, checklist, status, and reset settings.
+Each tracked game can have multiple routines, each with its own name, order, checklist, status, and reset settings. Their checklists can reset daily, weekly, biweekly, or never, allowing different activity cycles to coexist within the same game.
 
 A routine can either count toward the game's overall task status or be excluded from it:
 
@@ -35,14 +37,14 @@ This setting keeps optional or long-term routines from affecting the game's main
 
 If automatic `Tasks Available!` tag management is enabled, the tag is added whenever a game's overall status is incomplete and removed once everything is complete. You can use the tag to filter your library and quickly find games that still have tasks left to do.
 
-## Routine schedules
+## Checklist reset schedules
 
-- **Never** leaves the routine unchanged until you update or reset it manually.
+- **Never** leaves the checklist unchanged until you update or reset it manually.
 - **Daily** resets at the chosen local time each day.
 - **Weekly** resets on the chosen day and local time each week.
-- **Biweekly** resets once every two weeks. The **Start date** defines the 14-day cycle, and the routine resets every 14 days from that date at the chosen local time.
+- **Biweekly** resets once every two weeks. The **Start date** defines the 14-day cycle, and the checklist resets every 14 days from that date at the chosen local time.
 
-If Playnite was not running at a scheduled reset time, Game Routines processes the latest missed reset after startup and does not process the same reset twice.
+If Playnite was not running at a scheduled reset time, Game Routines processes the latest missed reset after startup.
 
 ## Checklists and task status
 
@@ -62,17 +64,17 @@ Checklist management is available through **Open Checklist** and **Manage Checkl
 
 ## Custom Reminders
 
-**Custom Reminder** is configured once per game and is independent of that game's routine reset schedules. It can run **Daily**, **Weekly**, or **Biweekly**, with its own title, message, and schedule. Biweekly reminders also have a **Start date**.
+**Custom Reminder** is configured once per game and is independent of the checklist reset schedules configured for that game's routines. It can run **Daily**, **Weekly**, or **Biweekly**, with its own title, message, and schedule. Biweekly reminders also have a **Start date**.
 
 Biweekly reminders follow a 14-day cycle from the selected start date at the chosen local time. A reminder only creates a notification. It does not reset checklists or change routine status.
 
 ## Notifications
 
-Game Routines uses Playnite's internal notification system instead of external Windows notifications. Its notification records are saved so pending Game Routines notifications remain available after Playnite restarts.
+Game Routines uses Playnite's internal notification system instead of external Windows notifications. Its notification records are saved so pending Game Routines notifications remain available even after a Playnite restart.
 
 ## Theme compatibility
 
-Game Routines works with Playnite's standard Default Desktop theme. No third-party theme is required.
+Game Routines works with Playnite's standard Default theme. No third-party theme is required.
 
 With the Default theme, you can use Game Routines through its settings, context-menu actions, checklist windows, reminders, and notifications. The Default theme does not include the optional embedded **Checklists** tab, embedded state controls, or incomplete cover indicator. Those extra controls are optional and are not needed to use Game Routines.
 
@@ -110,7 +112,7 @@ Until Game Routines is accepted into the Playnite Add-on Database, install updat
 2. Select a game and choose **Game Routines > Start Tracking This Game** from its context menu, or use **Add game** in the Game Routines settings page.
 3. Configure one or more routines and arrange their order.
 4. Add checklist items if desired.
-5. Choose the reset schedule, whether the routine counts toward overall task status, and whether its checklist controls automatic completion.
+5. Choose the checklist reset schedule, whether the routine counts toward overall task status, and whether its checklist controls automatic completion.
 6. Optionally enable and configure the game-level **Custom Reminder**.
 7. Use **Game Routines > Open Checklist** from the game context menu when a separate checklist window is useful.
 
@@ -121,18 +123,6 @@ Until Game Routines is accepted into the Playnite Add-on Database, install updat
 Game Routines exposes three custom UI elements that Playnite Desktop themes can host: the multi-routine checklist, overall-state toggle, and incomplete-state indicator. See [Theme integration](THEME_INTEGRATION.md) for the registered source and element names, hosting guidance, and behavior expectations.
 
 The files under [`Integrations/FusionX/2.1.1/`](Integrations/FusionX/2.1.1/) provide an optional reference implementation for theme developers.
-
-## License
-
-Game Routines is licensed under the [MIT License](LICENSE).
-
-Copied or modified FusionX integration files retain their applicable attribution and MIT license notice in [`Integrations/FusionX/2.1.1/LICENSE.FusionX.txt`](Integrations/FusionX/2.1.1/LICENSE.FusionX.txt).
-
-## Credits
-
-- **Game Routines:** felipeaucc
-- **Playnite:** [JosefNemec/Playnite](https://github.com/JosefNemec/Playnite)
-- **FusionX:** [sakasakiking/FusionX](https://github.com/sakasakiking/FusionX), by sakasakiking
 
 ## Development and source
 
