@@ -16,7 +16,7 @@ All screenshots were taken using the [FusionX](https://github.com/sakasakiking/F
 - Choose which routines count toward the game's overall task status.
 - Configure an independent game-level **Custom Reminder**.
 - Receive persistent notifications through Playnite's internal notification system.
-- Open checklists in separate windows while continuing to use Playnite (pop-out window).
+- Open checklists in separate pop-out windows while continuing to use Playnite.
 - Use context-menu actions to open, complete, reset, and configure tracked tasks.
 - Optionally have Game Routines automatically add or remove a `Tasks Available!` tag based on a game's overall task status.
 - Some themes can show optional Game Routines controls directly in the game view.
